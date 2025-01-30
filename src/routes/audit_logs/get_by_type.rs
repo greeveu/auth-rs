@@ -1,13 +1,20 @@
 use rocket::{get, serde::json::Json};
 use rocket_db_pools::Connection;
 
-use crate::{db::AuthRsDatabase, models::{audit_log::{AuditLog, AuditLogEntityType}, http_response::HttpResponse}};
+use crate::{db::AuthRsDatabase, models::{audit_log::{AuditLog, AuditLogEntityType}, http_response::HttpResponse, user::User}};
 
 
 #[allow(unused)]
 #[get("/audit-logs/<type>", format = "json")] 
-pub async fn get_audit_logs_by_type(db: Connection<AuthRsDatabase>, r#type: &str) -> Json<HttpResponse<Vec<AuditLog>>> {
-    // TODO: Only allow this for admins
+pub async fn get_audit_logs_by_type(db: Connection<AuthRsDatabase>, req_user: User, r#type: &str) -> Json<HttpResponse<Vec<AuditLog>>> {
+    if !req_user.is_global_admin() {
+        return Json(HttpResponse {
+            status: 403,
+            message: "Missing permissions!".to_string(),
+            data: None
+        });
+    }
+
     let entity_type = match AuditLogEntityType::from_string(&r#type) {
         Ok(entity_type) => Some(entity_type),
         Err(err) => return Json(err)

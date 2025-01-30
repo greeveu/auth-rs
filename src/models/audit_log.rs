@@ -8,23 +8,18 @@ use crate::db::{get_logs_db, AuthRsDatabase};
 use super::http_response::HttpResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)] 
-#[serde(crate = "rocket::serde")] 
+#[serde(crate = "rocket::serde")]
+#[serde(rename_all = "camelCase")] 
 pub struct AuditLog {
     #[serde(rename = "_id")]
 	pub id: Uuid,
-    #[serde(rename = "entityId")]
 	pub entity_id: Uuid,
-    #[serde(rename = "entityType")]
     pub entity_type: AuditLogEntityType,
 	pub action: AuditLogAction,
 	pub reason: String,
-    #[serde(rename = "userId")]
 	pub author_id: Uuid,
-    #[serde(rename = "oldValues")]
 	pub old_values: Option<HashMap<String, String>>,
-    #[serde(rename = "newValues")]
 	pub new_values: Option<HashMap<String, String>>,
-    #[serde(rename = "createdAt")]
 	pub created_at: String
 }
 
@@ -41,6 +36,7 @@ pub enum AuditLogAction {
 pub enum AuditLogEntityType {
     User,
     Role,
+    OAuthApplication,
     Unknown
 }
 
@@ -50,6 +46,7 @@ impl AuditLogEntityType {
         match entity_type.to_uppercase().as_str() {
             "USER" => Ok(AuditLogEntityType::User),
             "ROLE" => Ok(AuditLogEntityType::Role),
+            "OAUTH_APPLICATION" => Ok(AuditLogEntityType::OAuthApplication),
             _ => Err(HttpResponse { status: 400, message: format!(""), data: None })
         }
     }
@@ -58,6 +55,7 @@ impl AuditLogEntityType {
         match self {
             &AuditLogEntityType::User => "USER".to_string(),
             &AuditLogEntityType::Role => "ROLE".to_string(),
+            &AuditLogEntityType::OAuthApplication => "OAUTH_APPLICATION".to_string(),
             _ => "UNKNOWN".to_string()
         }
     }
@@ -66,8 +64,9 @@ impl AuditLogEntityType {
 
 
 impl AuditLog {
-    pub const COLLECTION_NAME_USERS: &'static str = "ueser-logs";
+    pub const COLLECTION_NAME_USERS: &'static str = "user-logs";
     pub const COLLECTION_NAME_ROLES: &'static str = "role-logs";
+    pub const COLLECTION_NAME_OAUTH_APPLICATIONS: &'static str = "oauth-application-logs";
 
     #[allow(unused)]
     pub fn new(entity_id: Uuid, entity_type: AuditLogEntityType, action: AuditLogAction, reason: String, author_id: Uuid, old_values: Option<HashMap<String, String>>, new_values: Option<HashMap<String, String>>) -> Self {
@@ -208,6 +207,7 @@ impl AuditLog {
         match entity_type {
             &AuditLogEntityType::User => return Some(db.collection(Self::COLLECTION_NAME_USERS)),
             &AuditLogEntityType::Role => return Some(db.collection(Self::COLLECTION_NAME_ROLES)),
+            &AuditLogEntityType::OAuthApplication => return Some(db.collection(Self::COLLECTION_NAME_OAUTH_APPLICATIONS)),
             &AuditLogEntityType::Unknown => None
         }
     }

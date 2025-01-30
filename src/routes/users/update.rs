@@ -8,18 +8,17 @@ use crate::{db::AuthRsDatabase, models::{audit_log::{AuditLog, AuditLogAction, A
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
+#[serde(rename_all = "camelCase")] 
 pub struct UpdateUserData {
     email: Option<String>,
     password: Option<String>,
-    #[serde(rename = "firstName")]
     first_name: Option<String>,
-    #[serde(rename = "lastName")]
     last_name: Option<String>
 }
 
 #[allow(unused)]
 #[patch("/users/<id>", format = "json", data = "<data>")] 
-pub async fn update_user(db: Connection<AuthRsDatabase>, id: &str, data: Json<UpdateUserData>) -> Json<HttpResponse<UserMinimal>> { 
+pub async fn update_user(db: Connection<AuthRsDatabase>, req_user: User, id: &str, data: Json<UpdateUserData>) -> Json<HttpResponse<UserMinimal>> { 
     let data = data.into_inner();
 
     let uuid = match Uuid::parse_str(id) {
@@ -30,6 +29,14 @@ pub async fn update_user(db: Connection<AuthRsDatabase>, id: &str, data: Json<Up
             data: None
         })
     };
+
+    if req_user.id != uuid && !req_user.is_global_admin() {
+        return Json(HttpResponse {
+            status: 403,
+            message: "Missing permissions!".to_string(),
+            data: None
+        });
+    }
 
     let old_user = match User::get_by_id(uuid, &db).await {
         Ok(user) => user,
@@ -85,7 +92,7 @@ pub async fn update_user(db: Connection<AuthRsDatabase>, id: &str, data: Json<Up
     match new_user.update(&db).await {
         Ok(user) => {
             // TODO: Implement author_id -> maybe admin action
-            match AuditLog::new(user.id, AuditLogEntityType::User, AuditLogAction::Update, "User updated.".to_string(), user.id, Some(old_values), Some(new_values)).insert(&db).await {
+            match AuditLog::new(user.id, AuditLogEntityType::User, AuditLogAction::Update, "User updated.".to_string(), req_user.id, Some(old_values), Some(new_values)).insert(&db).await {
                 Ok(_) => (),
                 Err(err) => error!("{}", err)
             }

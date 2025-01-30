@@ -6,7 +6,7 @@ use crate::{db::AuthRsDatabase, models::{audit_log::{AuditLog, AuditLogAction, A
 
 #[allow(unused)]
 #[delete("/users/<id>", format = "json")]
-pub async fn delete_user(db: Connection<AuthRsDatabase>, id: &str) -> Json<HttpResponse<()>> {
+pub async fn delete_user(db: Connection<AuthRsDatabase>, req_user: User, id: &str) -> Json<HttpResponse<()>> {
     let uuid = match Uuid::parse_str(id) {
         Ok(uuid) => uuid,
         Err(err) => return Json(HttpResponse {
@@ -16,11 +16,19 @@ pub async fn delete_user(db: Connection<AuthRsDatabase>, id: &str) -> Json<HttpR
         })
     };
 
+    if req_user.id != uuid && !req_user.is_global_admin() {
+        return Json(HttpResponse {
+            status: 403,
+            message: "Missing permissions!".to_string(),
+            data: None
+        });
+    }
+
     let user = match User::get_full_by_id(uuid, &db).await {
-        Ok(tenant) => tenant,
+        Ok(user) => user,
         Err(err) => return Json(HttpResponse {
             status: 404,
-            message: format!("Tenant does not exist: {:?}", err),
+            message: format!("User does not exist: {:?}", err),
             data: None
         })
     };
@@ -28,8 +36,7 @@ pub async fn delete_user(db: Connection<AuthRsDatabase>, id: &str) -> Json<HttpR
 
     match user.delete(&db).await {
         Ok(user) => {
-            // TODO: Implement author_id -> maybe admin action
-            match AuditLog::new(user.id, AuditLogEntityType::User, AuditLogAction::Delete, "User deleted.".to_string(), user.id, None, None).insert(&db).await {
+            match AuditLog::new(user.id, AuditLogEntityType::User, AuditLogAction::Delete, "User deleted.".to_string(), req_user.id, None, None).insert(&db).await {
                 Ok(_) => (),
                 Err(err) => error!("{}", err)
             }

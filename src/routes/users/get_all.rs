@@ -5,8 +5,15 @@ use crate::{db::AuthRsDatabase, models::{http_response::HttpResponse, user::{Use
 
 #[allow(unused)]
 #[get("/users", format = "json")] 
-pub async fn get_all_users(db: Connection<AuthRsDatabase>, user: User) -> Json<HttpResponse<Vec<UserMinimal>>> {
-    // TODO: Only allow this for admins
+pub async fn get_all_users(db: Connection<AuthRsDatabase>, req_user: User) -> Json<HttpResponse<Vec<UserMinimal>>> {
+    if !req_user.is_global_admin() {
+        return Json(HttpResponse {
+            status: 403,
+            message: "Missing permissions!".to_string(),
+            data: None
+        });
+    }
+
     match User::get_all(&db).await {
         Ok(users) => Json(HttpResponse {
             status: 200,

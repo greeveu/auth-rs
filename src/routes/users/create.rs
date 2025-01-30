@@ -5,12 +5,11 @@ use crate::{db::AuthRsDatabase, models::{audit_log::{AuditLog, AuditLogAction, A
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
+#[serde(rename_all = "camelCase")]
 pub struct CreateUserData {
     email: String,
     password: String,
-    #[serde(rename = "firstName")]
     first_name: String,
-    #[serde(rename = "lastName")]
     last_name: String,
 }
 

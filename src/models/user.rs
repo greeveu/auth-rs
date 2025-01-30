@@ -1,6 +1,7 @@
 use anyhow::Result;
 use mongodb::bson::{doc, DateTime, Uuid};
 use pwhash::bcrypt;
+use rand::Rng;
 use rocket_db_pools::{mongodb::{Collection, Database}, Connection};
 use rocket::{futures::StreamExt, serde::{Deserialize, Serialize}};
 use crate::db::{get_main_db, AuthRsDatabase};
@@ -8,38 +9,33 @@ use crate::db::{get_main_db, AuthRsDatabase};
 use super::http_response::HttpResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)] 
-#[serde(crate = "rocket::serde")] 
+#[serde(crate = "rocket::serde")]
+#[serde(rename_all = "camelCase")] 
 pub struct User {
     #[serde(rename = "_id")]
     pub id: Uuid,
     pub email: String,
-    #[serde(rename = "passwordHash")]
-    pub password_hash: String,
-    #[serde(rename = "totpSecret")]
-    pub totp_secret: Option<String>,
-    #[serde(rename = "firstName")]
     pub first_name: String,
-    #[serde(rename = "lastName")]
     pub last_name: String,
+    pub password_hash: String,
+    pub totp_secret: Option<String>,
+    pub token: String,
     pub roles: Vec<Uuid>,
     pub disabled: bool,
-    #[serde(rename = "createdAt")]
     pub created_at: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)] 
 #[serde(crate = "rocket::serde")] 
+#[serde(rename_all = "camelCase")] 
 pub struct UserMinimal {
     #[serde(rename = "_id")]
     pub id: Uuid,
     pub email: String,
-    #[serde(rename = "firstName")]
     pub first_name: String,
-    #[serde(rename = "lastName")]
     pub last_name: String,
     pub roles: Vec<Uuid>,
     pub disabled: bool,
-    #[serde(rename = "createdAt")]
     pub created_at: String,
 }
 
@@ -52,7 +48,10 @@ impl UserMinimal {
 impl User {
     pub const COLLECTION_NAME: &'static str = "users";
 
-    // TODO: Implement owner_id
+    fn generate_token() -> String {
+        rand::rng().sample_iter(rand::distr::Alphanumeric).take(128).map(char::from).collect()
+    }
+
     pub fn new(email: String, password: String, first_name: String, last_name: String) -> Result<Self, HttpResponse<UserMinimal>> {
         let password_hash = match bcrypt::hash(password) {
             Ok(hash) => hash,
@@ -66,11 +65,36 @@ impl User {
         Ok(Self {
             id: Uuid::new(),
             email,
-            password_hash,
-            totp_secret: None,
             first_name,
             last_name,
-            roles: Vec::new(),
+            password_hash,
+            totp_secret: None,
+            token: Self::generate_token(),
+            roles: Vec::from([Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()]),
+            disabled: false,
+            created_at: DateTime::now().to_string(),
+        })
+    }
+
+    pub fn new_system(id: Uuid, email: String, password: String, first_name: String, last_name: String, roles: Vec<String>) -> Result<Self, HttpResponse<UserMinimal>> {
+        let password_hash = match bcrypt::hash(password) {
+            Ok(hash) => hash,
+            Err(err) => return Err(HttpResponse {
+                status: 500,
+                message: format!("Failed to hash password: {:?}", err),
+                data: None
+            })
+        };
+
+        Ok(Self {
+            id,
+            email,
+            first_name,
+            last_name,
+            password_hash,
+            totp_secret: None,
+            token: Self::generate_token(),
+            roles: roles.iter().map(|role| Uuid::parse_str(role).unwrap()).collect(),
             disabled: false,
             created_at: DateTime::now().to_string(),
         })
@@ -117,7 +141,7 @@ impl User {
         let db = db.collection(Self::COLLECTION_NAME);
 
         let filter = doc! {
-            "_id": Uuid::parse_str(&token).unwrap()
+            "token": token
         };
         match db.find_one(filter, None).await.unwrap() {
             Some(user) => Ok(user),
