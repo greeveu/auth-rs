@@ -59,18 +59,9 @@ pub async fn get_oauth_token(db: Connection<AuthRsDatabase>, data: Form<TokenOAu
         },
         client_secret: form_data.client_secret,
         grant_type: form_data.grant_type,
-        user_id: match form_data.user_id {
-            Some(user_id) => match Uuid::parse_str(&user_id) {
-                Ok(user_id) => Some(user_id),
-                Err(_) => return None
-            },
-            None => None
-        },
+        user_id: None,
         code: form_data.code,
-        scope: match form_data.scope {
-            Some(scope) => Some(scope.iter().map(|s| OAuthScope::try_from(s.clone())).collect::<Result<Vec<OAuthScope>, _>>().ok()?),
-            None => None
-        },
+        scope: None,
         redirect_uri: form_data.redirect_uri,
     };
 
