@@ -81,6 +81,7 @@ pub async fn get_oauth_token(db: Connection<AuthRsDatabase>, data: Form<TokenOAu
     };
 
     println!("{:?}", code_data);
+    println!("{:?}", data);
 
     if code_data.client_id != data.client_id || code_data.grant_type != data.grant_type || code_data.client_secret != data.client_secret || code_data.redirect_uri != data.redirect_uri {
         return None
