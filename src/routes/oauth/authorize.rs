@@ -50,7 +50,8 @@ pub async fn authorize(db: Connection<AuthRsDatabase>, req_entity: AuthEntity, d
         client_secret: oauth_application.secret,
         user_id: Some(req_entity.user_id),
         code: code,
-        scope: data.scope.clone(),
+        scope: Some(data.scope.clone()),
+        grant_type: "authorization_code".to_string(),
         redirect_uri: data.redirect_uri.clone()
     });
     drop(codes);

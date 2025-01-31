@@ -98,6 +98,46 @@ impl PartialEq for OAuthScope {
     }
 }
 
+impl From<&str> for ScopeActions {
+    fn from(s: &str) -> Self {
+        match s {
+            "create" => ScopeActions::Create,
+            "read" => ScopeActions::Read,
+            "update" => ScopeActions::Update,
+            "delete" => ScopeActions::Delete,
+            "*" => ScopeActions::All,
+            _ => ScopeActions::Read,
+        }
+    }
+}
+
+impl TryFrom<String> for OAuthScope {
+    type Error = &'static str;
+
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        let parts: Vec<&str> = s.split(':').collect();
+        if parts.len() != 2 {
+            return Err("Invalid scope");
+        }
+
+        let actions = match parts[1] {
+            "create" => ScopeActions::Create,
+            "read" => ScopeActions::Read,
+            "update" => ScopeActions::Update,
+            "delete" => ScopeActions::Delete,
+            "*" => ScopeActions::All,
+            _ => return Err("Invalid scope action"),  
+        };
+
+        match parts[0] {
+            "user" => Ok(OAuthScope::Users(actions)),
+            "roles" => Ok(OAuthScope::Roles(actions)),
+            "audit_logs" => Ok(OAuthScope::AuditLogs(actions)),
+            _ => Err("Invalid scope")
+        }
+    }
+}
+
 impl Serialize for OAuthScope {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
