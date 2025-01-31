@@ -40,7 +40,7 @@ pub async fn update_oauth_application(db: Connection<AuthRsDatabase>, req_entity
         Err(err) => return Json(err)
     };
 
-    if req_entity.user_id != old_oauth_application.owner && !req_entity.user.unwrap().is_global_admin() {
+    if req_entity.user_id != old_oauth_application.owner && !req_entity.user.unwrap().is_system_admin() {
         return Json(HttpResponse {
             status: 403,
             message: "Missing permissions!".to_string(),

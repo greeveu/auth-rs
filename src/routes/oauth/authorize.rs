@@ -29,7 +29,7 @@ pub struct AuthorizeOAuthResponse {
 pub async fn authorize_oauth_application(db: Connection<AuthRsDatabase>, req_entity: AuthEntity, data: Json<AuthorizeOAuthData>) -> Option<Json<AuthorizeOAuthResponse>> {
     let data = data.into_inner();
 
-    if !req_entity.is_user() {
+    if !req_entity.is_user() || req_entity.user.clone().unwrap().disabled || req_entity.user.unwrap().is_system_admin() {
         return None
     }
 

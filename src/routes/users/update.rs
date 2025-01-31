@@ -38,7 +38,7 @@ pub async fn update_user(db: Connection<AuthRsDatabase>, req_entity: AuthEntity,
         })
     };
 
-    if req_entity.user_id != uuid && !req_entity.user.unwrap().is_global_admin() {
+    if req_entity.user_id != uuid && !req_entity.user.unwrap().is_system_admin() {
         return Json(HttpResponse {
             status: 403,
             message: "Missing permissions!".to_string(),

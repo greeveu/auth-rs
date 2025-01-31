@@ -6,7 +6,7 @@ use crate::{auth::auth::AuthEntity, db::AuthRsDatabase, models::{http_response::
 #[allow(unused)]
 #[get("/oauth-applications", format = "json")] 
 pub async fn get_all_oauth_applications(db: Connection<AuthRsDatabase>, req_entity: AuthEntity) -> Json<HttpResponse<Vec<OAuthApplicationMinimal>>> {
-    if !req_entity.is_user() || !req_entity.user.unwrap().is_global_admin() {
+    if !req_entity.is_user() || !req_entity.user.unwrap().is_system_admin() {
         return Json(HttpResponse {
             status: 403,
             message: "Forbidden".to_string(),

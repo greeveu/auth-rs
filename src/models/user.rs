@@ -113,7 +113,7 @@ impl User {
     }
 
     #[allow(unused)]
-    pub fn is_global_admin(&self) -> bool {
+    pub fn is_system_admin(&self) -> bool {
         self.id == *SYSTEM_USER_ID
     }
 
