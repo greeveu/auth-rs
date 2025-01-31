@@ -1,12 +1,20 @@
 use rocket::{get, serde::json::Json};
 use rocket_db_pools::Connection;
 
-use crate::{db::AuthRsDatabase, models::{http_response::HttpResponse, role::Role, user::User}};
+use crate::{auth::auth::AuthEntity, db::AuthRsDatabase, models::{http_response::HttpResponse, role::Role}};
 
 #[allow(unused)]
-#[get("/roles", format = "json")] 
-pub async fn get_all_roles(db: Connection<AuthRsDatabase>, req_user: User) -> Json<HttpResponse<Vec<Role>>> {
-    if !req_user.is_global_admin() {
+#[get("/roles", format = "json")]
+pub async fn get_all_roles(db: Connection<AuthRsDatabase>, req_entity: AuthEntity) -> Json<HttpResponse<Vec<Role>>> {
+    if !req_entity.is_user() {
+        return Json(HttpResponse {
+            status: 403,
+            message: "Forbidden".to_string(),
+            data: None
+        });
+    }
+    
+    if !req_entity.user.unwrap().is_global_admin() {
         return Json(HttpResponse {
             status: 403,
             message: "Missing permissions!".to_string(),

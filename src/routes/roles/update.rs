@@ -3,7 +3,7 @@ use mongodb::bson::Uuid;
 use rocket::{error, patch, serde::{json::Json, Deserialize}};
 use rocket_db_pools::Connection;
 
-use crate::{db::AuthRsDatabase, models::{audit_log::{AuditLog, AuditLogAction, AuditLogEntityType}, http_response::HttpResponse, role::Role, user::User}};
+use crate::{auth::auth::AuthEntity, db::AuthRsDatabase, models::{audit_log::{AuditLog, AuditLogAction, AuditLogEntityType}, http_response::HttpResponse, role::Role}};
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -13,10 +13,18 @@ pub struct UpdateRoleData {
 
 #[allow(unused)]
 #[patch("/roles/<id>", format = "json", data = "<data>")] 
-pub async fn update_role(db: Connection<AuthRsDatabase>, req_user: User, id: &str, data: Json<UpdateRoleData>) -> Json<HttpResponse<Role>> { 
+pub async fn update_role(db: Connection<AuthRsDatabase>, req_entity: AuthEntity, id: &str, data: Json<UpdateRoleData>) -> Json<HttpResponse<Role>> { 
     let data = data.into_inner();
 
-    if !req_user.is_global_admin() {
+    if !req_entity.is_user() {
+        return Json(HttpResponse {
+            status: 403,
+            message: "Forbidden".to_string(),
+            data: None
+        });
+    }
+
+    if !req_entity.user.unwrap().is_global_admin() {
         return Json(HttpResponse {
             status: 403,
             message: "Missing permissions!".to_string(),
@@ -59,7 +67,7 @@ pub async fn update_role(db: Connection<AuthRsDatabase>, req_user: User, id: &st
 
     match new_role.update(&db).await {
         Ok(role) => {
-            match AuditLog::new(role.id, AuditLogEntityType::Role, AuditLogAction::Update, "Role updated.".to_string(), req_user.id, Some(old_values), Some(new_values)).insert(&db).await {
+            match AuditLog::new(role.id, AuditLogEntityType::Role, AuditLogAction::Update, "Role updated.".to_string(), req_entity.user_id, Some(old_values), Some(new_values)).insert(&db).await {
                 Ok(_) => (),
                 Err(err) => error!("{}", err)
             }

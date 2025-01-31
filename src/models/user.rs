@@ -137,7 +137,7 @@ impl User {
 
     // ONLY USE THIS INTERNALLY!
     #[allow(unused)]
-    pub async fn get_full_by_token(token: String, mut db: Database) -> Result<User, HttpResponse<UserMinimal>> {
+    pub async fn get_full_by_token(token: String, mut db: &Database) -> Result<User, HttpResponse<UserMinimal>> {
         let db = db.collection(Self::COLLECTION_NAME);
 
         let filter = doc! {

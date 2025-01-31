@@ -3,7 +3,7 @@ use mongodb::bson::Uuid;
 use rocket::{error, patch, serde::{json::Json, Deserialize}};
 use rocket_db_pools::Connection;
 
-use crate::{db::AuthRsDatabase, models::{audit_log::{AuditLog, AuditLogAction, AuditLogEntityType}, http_response::HttpResponse, oauth_application::{OAuthApplication, OAuthApplicationMinimal}, user::User}};
+use crate::{auth::auth::AuthEntity, db::AuthRsDatabase, models::{audit_log::{AuditLog, AuditLogAction, AuditLogEntityType}, http_response::HttpResponse, oauth_application::{OAuthApplication, OAuthApplicationMinimal}}};
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -15,8 +15,16 @@ pub struct UpdateOAuthApplicationData {
 
 #[allow(unused)]
 #[patch("/oauth-applications/<id>", format = "json", data = "<data>")] 
-pub async fn update_oauth_application(db: Connection<AuthRsDatabase>, req_user: User, id: &str, data: Json<UpdateOAuthApplicationData>) -> Json<HttpResponse<OAuthApplicationMinimal>> { 
+pub async fn update_oauth_application(db: Connection<AuthRsDatabase>, req_entity: AuthEntity, id: &str, data: Json<UpdateOAuthApplicationData>) -> Json<HttpResponse<OAuthApplicationMinimal>> { 
     let data = data.into_inner();
+
+    if !req_entity.is_user() {
+        return Json(HttpResponse {
+            status: 403,
+            message: "Forbidden".to_string(),
+            data: None
+        });
+    }
 
     let uuid = match Uuid::parse_str(id) {
         Ok(uuid) => uuid,
@@ -32,7 +40,7 @@ pub async fn update_oauth_application(db: Connection<AuthRsDatabase>, req_user: 
         Err(err) => return Json(err)
     };
 
-    if req_user.id != old_oauth_application.owner && !req_user.is_global_admin() {
+    if req_entity.user_id != old_oauth_application.owner && !req_entity.user.unwrap().is_global_admin() {
         return Json(HttpResponse {
             status: 403,
             message: "Missing permissions!".to_string(),
@@ -77,8 +85,7 @@ pub async fn update_oauth_application(db: Connection<AuthRsDatabase>, req_user: 
 
     match new_oauth_application.update(&db).await {
         Ok(oauth_application) => {
-            // TODO: Implement author_id -> maybe admin action
-            match AuditLog::new(oauth_application.id, AuditLogEntityType::OAuthApplication, AuditLogAction::Update, "OAuthApplication updated.".to_string(), req_user.id, Some(old_values), Some(new_values)).insert(&db).await {
+            match AuditLog::new(oauth_application.id, AuditLogEntityType::OAuthApplication, AuditLogAction::Update, "OAuthApplication updated.".to_string(), req_entity.user_id, Some(old_values), Some(new_values)).insert(&db).await {
                 Ok(_) => (),
                 Err(err) => error!("{}", err)
             }

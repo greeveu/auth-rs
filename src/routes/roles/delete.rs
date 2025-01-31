@@ -2,12 +2,20 @@ use mongodb::bson::Uuid;
 use rocket::{delete, error, serde::json::Json};
 use rocket_db_pools::Connection;
 
-use crate::{db::AuthRsDatabase, models::{audit_log::{AuditLog, AuditLogAction, AuditLogEntityType}, http_response::HttpResponse, role::Role, user::User}};
+use crate::{auth::auth::AuthEntity, db::AuthRsDatabase, models::{audit_log::{AuditLog, AuditLogAction, AuditLogEntityType}, http_response::HttpResponse, role::Role}};
 
 #[allow(unused)]
 #[delete("/roles/<id>", format = "json")]
-pub async fn delete_role(db: Connection<AuthRsDatabase>, req_user: User, id: &str) -> Json<HttpResponse<()>> {
-    if !req_user.is_global_admin() {
+pub async fn delete_role(db: Connection<AuthRsDatabase>, req_entity: AuthEntity, id: &str) -> Json<HttpResponse<()>> {
+    if !req_entity.is_user() {
+        return Json(HttpResponse {
+            status: 403,
+            message: "Forbidden".to_string(),
+            data: None
+        });
+    }
+    
+    if !req_entity.user.unwrap().is_global_admin() {
         return Json(HttpResponse {
             status: 403,
             message: "Missing permissions!".to_string(),
@@ -36,8 +44,7 @@ pub async fn delete_role(db: Connection<AuthRsDatabase>, req_user: User, id: &st
 
     match role.delete(&db).await {
         Ok(role) => {
-            // TODO: Implement author_id -> maybe admin action
-            match AuditLog::new(role.id, AuditLogEntityType::Role, AuditLogAction::Delete, "Role deleted.".to_string(), req_user.id, None, None).insert(&db).await {
+            match AuditLog::new(role.id, AuditLogEntityType::Role, AuditLogAction::Delete, "Role deleted.".to_string(), req_entity.user_id, None, None).insert(&db).await {
                 Ok(_) => (),
                 Err(err) => error!("{}", err)
             }

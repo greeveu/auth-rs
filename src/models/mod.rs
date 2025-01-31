@@ -4,3 +4,4 @@ pub mod role;
 pub mod audit_log;
 pub mod oauth_application;
 pub mod oauth_token;
+pub mod oauth_scope;

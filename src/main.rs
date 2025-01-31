@@ -9,14 +9,14 @@ use db::AuthRsDatabase;
 use dotenv::dotenv;
 use models::{role::Role, user::User};
 use mongodb::bson::Uuid;
-use rocket::{fairing::AdHoc, futures::lock::Mutex, http::Method::{Connect, Delete, Get, Patch, Post, Put}, launch, routes};
+use rocket::{fairing::AdHoc, http::Method::{Connect, Delete, Get, Patch, Post, Put}, launch, routes, tokio::sync::Mutex};
 use rocket_cors::{AllowedHeaders, AllowedOrigins, CorsOptions};
 use rocket_db_pools::{mongodb::Collection, Database};
 use routes::oauth::token::TokenOAuthData;
 
 // oauth codes stored in memory
 lazy_static::lazy_static! {
-    static ref OAUTH_CODES: Mutex<HashMap<String, TokenOAuthData>> = Mutex::new(HashMap::new());
+    static ref OAUTH_CODES: Mutex<HashMap<u16, TokenOAuthData>> = Mutex::new(HashMap::new());
 }
 
 #[launch]
@@ -133,6 +133,7 @@ fn rocket() -> _ {
 
                 // Auth Routes
                 routes::oauth::token::get_oauth_token,
+                routes::oauth::authorize::authorize
             ],
         )
 }

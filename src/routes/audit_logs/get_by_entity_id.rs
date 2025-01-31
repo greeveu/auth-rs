@@ -2,12 +2,12 @@ use mongodb::bson::Uuid;
 use rocket::{get, serde::json::Json};
 use rocket_db_pools::Connection;
 
-use crate::{db::AuthRsDatabase, models::{audit_log::{AuditLog, AuditLogEntityType}, http_response::HttpResponse, user::User}};
+use crate::{auth::auth::AuthEntity, db::AuthRsDatabase, models::{audit_log::{AuditLog, AuditLogEntityType}, http_response::HttpResponse}};
 
 #[allow(unused)]
 #[get("/audit-logs/<type>/entity/<id>", format = "json")] 
-pub async fn get_audit_log_by_entity_id(db: Connection<AuthRsDatabase>, req_user: User, r#type: &str, id: &str) -> Json<HttpResponse<Vec<AuditLog>>> {
-    if !req_user.is_global_admin() {
+pub async fn get_audit_log_by_entity_id(db: Connection<AuthRsDatabase>, req_entity: AuthEntity, r#type: &str, id: &str) -> Json<HttpResponse<Vec<AuditLog>>> {
+    if !req_entity.is_user() || !req_entity.user.unwrap().is_global_admin() {
         return Json(HttpResponse {
             status: 403,
             message: "Missing permissions!".to_string(),

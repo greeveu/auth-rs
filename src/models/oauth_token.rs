@@ -1,11 +1,10 @@
 use anyhow::Result;
 use mongodb::bson::{doc, DateTime, Uuid};
 use rand::Rng;
-use rocket_db_pools::{mongodb::Collection, Connection};
+use rocket_db_pools::{mongodb::{Collection, Database}, Connection};
 use rocket::{futures::StreamExt, serde::{Deserialize, Serialize}};
 use crate::db::{get_main_db, AuthRsDatabase};
-
-use super::http_response::HttpResponse;
+use super::{http_response::HttpResponse, oauth_scope::OAuthScope};
 
 #[derive(Debug, Clone, Serialize, Deserialize)] 
 #[serde(crate = "rocket::serde")]
@@ -16,7 +15,7 @@ pub struct OAuthToken {
     pub application_id: Uuid,
     pub user_id: Uuid,
     pub token: String,
-    pub scope: Vec<String>,
+    pub scope: Vec<OAuthScope>,
     pub expires_in: u64,
     pub created_at: String,
 }
@@ -28,7 +27,7 @@ impl OAuthToken {
         rand::rng().sample_iter(rand::distr::Alphanumeric).take(128).map(char::from).collect()
     }
 
-    pub fn new(application_id: Uuid, user_id: Uuid, scope: Vec<String>, expires_in: u64) -> Result<Self, HttpResponse<OAuthToken>> {
+    pub fn new(application_id: Uuid, user_id: Uuid, scope: Vec<OAuthScope>, expires_in: u64) -> Result<Self, HttpResponse<OAuthToken>> {
         Ok(Self {
             id: Uuid::new(),
             application_id,
@@ -55,8 +54,13 @@ impl OAuthToken {
     }
 
     #[allow(unused)]
-    pub async fn get_by_token(token: &str, connection: &Connection<AuthRsDatabase>) -> Result<OAuthToken, HttpResponse<OAuthToken>> {
-        let db = Self::get_collection(connection);
+    pub fn check_scope(&self, scope: OAuthScope) -> bool {
+        self.scope.contains(&scope)
+    }
+
+    #[allow(unused)]
+    pub async fn get_by_token(token: &str, mut db: &Database) -> Result<OAuthToken, HttpResponse<OAuthToken>> {
+        let db = db.collection(Self::COLLECTION_NAME);
 
         let filter = doc! {
             "token": token

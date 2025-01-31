@@ -4,7 +4,7 @@ use pwhash::bcrypt;
 use rocket::{error, patch, serde::{json::Json, Deserialize}};
 use rocket_db_pools::Connection;
 
-use crate::{db::AuthRsDatabase, models::{audit_log::{AuditLog, AuditLogAction, AuditLogEntityType}, http_response::HttpResponse, user::{User, UserMinimal}}};
+use crate::{auth::auth::AuthEntity, db::AuthRsDatabase, models::{audit_log::{AuditLog, AuditLogAction, AuditLogEntityType}, http_response::HttpResponse, user::{User, UserMinimal}}};
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -18,8 +18,16 @@ pub struct UpdateUserData {
 
 #[allow(unused)]
 #[patch("/users/<id>", format = "json", data = "<data>")] 
-pub async fn update_user(db: Connection<AuthRsDatabase>, req_user: User, id: &str, data: Json<UpdateUserData>) -> Json<HttpResponse<UserMinimal>> { 
+pub async fn update_user(db: Connection<AuthRsDatabase>, req_entity: AuthEntity, id: &str, data: Json<UpdateUserData>) -> Json<HttpResponse<UserMinimal>> { 
     let data = data.into_inner();
+
+    if !req_entity.is_user() {
+        return Json(HttpResponse {
+            status: 403,
+            message: "Missing permissions!".to_string(),
+            data: None
+        });
+    }
 
     let uuid = match Uuid::parse_str(id) {
         Ok(uuid) => uuid,
@@ -30,7 +38,7 @@ pub async fn update_user(db: Connection<AuthRsDatabase>, req_user: User, id: &st
         })
     };
 
-    if req_user.id != uuid && !req_user.is_global_admin() {
+    if req_entity.user_id != uuid && !req_entity.user.unwrap().is_global_admin() {
         return Json(HttpResponse {
             status: 403,
             message: "Missing permissions!".to_string(),
@@ -91,8 +99,7 @@ pub async fn update_user(db: Connection<AuthRsDatabase>, req_user: User, id: &st
 
     match new_user.update(&db).await {
         Ok(user) => {
-            // TODO: Implement author_id -> maybe admin action
-            match AuditLog::new(user.id, AuditLogEntityType::User, AuditLogAction::Update, "User updated.".to_string(), req_user.id, Some(old_values), Some(new_values)).insert(&db).await {
+            match AuditLog::new(user.id, AuditLogEntityType::User, AuditLogAction::Update, "User updated.".to_string(), req_entity.user_id, Some(old_values), Some(new_values)).insert(&db).await {
                 Ok(_) => (),
                 Err(err) => error!("{}", err)
             }
