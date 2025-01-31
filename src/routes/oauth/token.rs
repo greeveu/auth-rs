@@ -39,10 +39,8 @@ pub struct TokenOAuthData {
 
 #[derive(Serialize)]
 #[serde(crate = "rocket::serde")]
-#[serde(rename_all = "camelCase")]
 pub struct TokenOAuthResponse {
     pub access_token: String,
-    pub token: String,
     pub token_type: String,
     pub expires_in: u64,
     pub scope: String,
@@ -103,7 +101,6 @@ pub async fn get_oauth_token(db: Connection<AuthRsDatabase>, data: Form<TokenOAu
 
     Some(Json(TokenOAuthResponse {
         access_token: token.token.clone(),
-        token: token.token,
         token_type: "Bearer".to_string(),
         expires_in: token.expires_in,
         scope: token.scope.iter().map(|s| s.to_string()).collect::<Vec<String>>().join(","),
