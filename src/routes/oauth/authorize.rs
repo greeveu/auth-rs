@@ -26,7 +26,7 @@ pub struct AuthorizeOAuthResponse {
 
 #[allow(unused)]
 #[post("/oauth/authorize", format = "json", data = "<data>")] 
-pub async fn authorize(db: Connection<AuthRsDatabase>, req_entity: AuthEntity, data: Json<AuthorizeOAuthData>) -> Option<Json<AuthorizeOAuthResponse>> {
+pub async fn authorize_oauth_application(db: Connection<AuthRsDatabase>, req_entity: AuthEntity, data: Json<AuthorizeOAuthData>) -> Option<Json<AuthorizeOAuthResponse>> {
     let data = data.into_inner();
 
     if !req_entity.is_user() {

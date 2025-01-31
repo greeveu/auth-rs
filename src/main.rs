@@ -133,7 +133,8 @@ fn rocket() -> _ {
 
                 // Auth Routes
                 routes::oauth::token::get_oauth_token,
-                routes::oauth::authorize::authorize
+                routes::oauth::authorize::authorize_oauth_application,
+                routes::oauth::revoke::revoke_oauth_token,
             ],
         )
 }
