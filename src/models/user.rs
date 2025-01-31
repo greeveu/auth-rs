@@ -4,7 +4,7 @@ use pwhash::bcrypt;
 use rand::Rng;
 use rocket_db_pools::{mongodb::{Collection, Database}, Connection};
 use rocket::{futures::StreamExt, serde::{Deserialize, Serialize}};
-use crate::db::{get_main_db, AuthRsDatabase};
+use crate::{db::{get_main_db, AuthRsDatabase}, ADMIN_ROLE_ID, DEFAULT_ROLE_ID, SYSTEM_USER_ID};
 
 use super::http_response::HttpResponse;
 
@@ -70,7 +70,7 @@ impl User {
             password_hash,
             totp_secret: None,
             token: Self::generate_token(),
-            roles: Vec::from([Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()]),
+            roles: Vec::from([(*DEFAULT_ROLE_ID)]),
             disabled: false,
             created_at: DateTime::now().to_string(),
         })
@@ -114,7 +114,7 @@ impl User {
 
     #[allow(unused)]
     pub fn is_global_admin(&self) -> bool {
-        self.id == Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap()
+        self.id == *SYSTEM_USER_ID
     }
 
     // ONLY USE THIS INTERNALLY!

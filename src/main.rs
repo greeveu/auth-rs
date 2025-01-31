@@ -17,6 +17,10 @@ use routes::oauth::token::TokenOAuthData;
 // oauth codes stored in memory
 lazy_static::lazy_static! {
     static ref OAUTH_CODES: Mutex<HashMap<u16, TokenOAuthData>> = Mutex::new(HashMap::new());
+
+    static ref ADMIN_ROLE_ID: Uuid = Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap();
+    static ref DEFAULT_ROLE_ID: Uuid = Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap();
+    static ref SYSTEM_USER_ID: Uuid = Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap();
 }
 
 #[launch]
@@ -49,8 +53,8 @@ fn rocket() -> _ {
 
             if roles_collection.count_documents(None, None).await.unwrap() == 0 {
                 let roles = vec![
-                    Role::new_system(Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap(), "Default".to_string()).unwrap(),
-                    Role::new_system(Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap(), "Admin".to_string()).unwrap(),
+                    Role::new_system(*ADMIN_ROLE_ID, "Admin".to_string()).unwrap(),
+                    Role::new_system(*DEFAULT_ROLE_ID, "Default".to_string()).unwrap(),
                 ];
 
                 match roles_collection.insert_many(roles, None).await {
@@ -79,12 +83,12 @@ fn rocket() -> _ {
                 };
 
                 let system_user = User::new_system(
-                    Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap(),
+                    *SYSTEM_USER_ID,
                     system_email,
                     system_password,
                     "System".to_string(),
                     "".to_string(),
-                    Vec::from(["00000000-0000-0000-0000-000000000000".to_string(), "00000000-0000-0000-0000-000000000001".to_string()])
+                    Vec::from([(*ADMIN_ROLE_ID).to_string(), (*DEFAULT_ROLE_ID).to_string()]),
                 ).unwrap();
 
                 match users_collection.insert_one(system_user, None).await {
