@@ -1,31 +1,49 @@
 use std::fmt::Display;
+use rocket::serde::{Serialize, Serializer};
+use std::convert::TryFrom;
 
-use rocket::serde::{Deserialize, Deserializer, Serialize, Serializer, de::Error};
+use rocket::serde::{Deserialize, Deserializer, de::Error};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum OAuthScope {
-    Users(ScopeActions),
     Roles(ScopeActions),
     AuditLogs(ScopeActions),
+    Users(ScopeActions),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ScopeActions {
     Create,
     Read,
     Update,
     Delete,
-    All
+    All,
 }
 
 impl Display for ScopeActions {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ScopeActions::Create => write!(f, "create"),
-            ScopeActions::Read => write!(f, "read"),
-            ScopeActions::Update => write!(f, "update"),
-            ScopeActions::Delete => write!(f, "delete"),
-            ScopeActions::All => write!(f, "*"),
+        let s = match self {
+            ScopeActions::Create => "create",
+            ScopeActions::Read => "read",
+            ScopeActions::Update => "update",
+            ScopeActions::Delete => "delete",
+            ScopeActions::All => "*",
+        };
+        write!(f, "{}", s)
+    }
+}
+
+impl TryFrom<&str> for ScopeActions {
+    type Error = &'static str;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
+            "create" => Ok(ScopeActions::Create),
+            "read" => Ok(ScopeActions::Read),
+            "update" => Ok(ScopeActions::Update),
+            "delete" => Ok(ScopeActions::Delete),
+            "*" => Ok(ScopeActions::All),
+            _ => Err("Invalid scope action"),
         }
     }
 }
@@ -63,50 +81,12 @@ impl<'de> Deserialize<'de> for ScopeActions {
     }
 }
 
-impl PartialEq for ScopeActions {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (ScopeActions::Create, ScopeActions::Create) => true,
-            (ScopeActions::Read, ScopeActions::Read) => true,
-            (ScopeActions::Update, ScopeActions::Update) => true,
-            (ScopeActions::Delete, ScopeActions::Delete) => true,
-            (ScopeActions::All, ScopeActions::All) => true,
-            _ => false,
-        }
-    }
-    
-}
-
 impl Display for OAuthScope {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            OAuthScope::Users(actions) => write!(f, "user:{}", actions.to_string()),
             OAuthScope::Roles(actions) => write!(f, "roles:{}", actions.to_string()),
             OAuthScope::AuditLogs(actions) => write!(f, "audit_logs:{}", actions.to_string()),
-        }
-    }
-}
-
-impl PartialEq for OAuthScope {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (OAuthScope::Users(a), OAuthScope::Users(b)) => a == b,
-            (OAuthScope::Roles(a), OAuthScope::Roles(b)) => a == b,
-            (OAuthScope::AuditLogs(a), OAuthScope::AuditLogs(b)) => a == b,
-            _ => false,
-        }
-    }
-}
-
-impl From<&str> for ScopeActions {
-    fn from(s: &str) -> Self {
-        match s {
-            "create" => ScopeActions::Create,
-            "read" => ScopeActions::Read,
-            "update" => ScopeActions::Update,
-            "delete" => ScopeActions::Delete,
-            "*" => ScopeActions::All,
-            _ => ScopeActions::Read,
+            OAuthScope::Users(actions) => write!(f, "user:{}", actions.to_string()),
         }
     }
 }
@@ -114,26 +94,17 @@ impl From<&str> for ScopeActions {
 impl TryFrom<String> for OAuthScope {
     type Error = &'static str;
 
-    fn try_from(s: String) -> Result<Self, Self::Error> {
-        let parts: Vec<&str> = s.split(':').collect();
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        let parts: Vec<&str> = value.split(':').collect();
         if parts.len() != 2 {
-            return Err("Invalid scope");
+            return Err("Invalid scope format");
         }
-
-        let actions = match parts[1] {
-            "create" => ScopeActions::Create,
-            "read" => ScopeActions::Read,
-            "update" => ScopeActions::Update,
-            "delete" => ScopeActions::Delete,
-            "*" => ScopeActions::All,
-            _ => return Err("Invalid scope action"),  
-        };
-
+        let action = ScopeActions::try_from(parts[1]).map_err(|_| "Invalid scope action")?;
         match parts[0] {
-            "user" => Ok(OAuthScope::Users(actions)),
-            "roles" => Ok(OAuthScope::Roles(actions)),
-            "audit_logs" => Ok(OAuthScope::AuditLogs(actions)),
-            _ => Err("Invalid scope")
+            "roles" => Ok(OAuthScope::Roles(action)),
+            "audit_logs" => Ok(OAuthScope::AuditLogs(action)),
+            "user" => Ok(OAuthScope::Users(action)),
+            _ => Err("Unknown scope type"),
         }
     }
 }
@@ -143,10 +114,10 @@ impl Serialize for OAuthScope {
     where
         S: Serializer,
     {
-        let s = match &self {
-            OAuthScope::Users(actions) => format!("user:{:?}", actions.to_string()),
-            OAuthScope::Roles(actions) => format!("roles:{:?}", actions.to_string()),
-            OAuthScope::AuditLogs(actions) => format!("audit_logs:{:?}", actions.to_string()),
+        let s = match self {
+            OAuthScope::Roles(action) => format!("roles:{}", action),
+            OAuthScope::AuditLogs(action) => format!("audit_logs:{}", action),
+            OAuthScope::Users(action) => format!("user:{}", action),
         };
         serializer.serialize_str(&s)
     }
@@ -173,9 +144,9 @@ impl<'de> Deserialize<'de> for OAuthScope {
         };
 
         match parts[0] {
-            "user" => Ok(OAuthScope::Users(actions)),
             "roles" => Ok(OAuthScope::Roles(actions)),
             "audit_logs" => Ok(OAuthScope::AuditLogs(actions)),
+            "user" => Ok(OAuthScope::Users(actions)),
             _ => Err(Error::custom("Invalid scope"))
         }
     }
