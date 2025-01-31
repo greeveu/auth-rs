@@ -28,7 +28,7 @@ pub struct TokenOAuthResponse {
 }
 
 #[allow(unused)]
-#[post("/oauth/token", format = "json", data = "<data>")] 
+#[post("/oauth/token", format = "application/x-www-form-urlencoded", data = "<data>")] 
 pub async fn get_oauth_token(db: Connection<AuthRsDatabase>, data: Json<TokenOAuthData>) -> Option<Json<TokenOAuthResponse>> {
     let data = data.into_inner();
 
