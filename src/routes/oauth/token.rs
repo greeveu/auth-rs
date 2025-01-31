@@ -46,8 +46,6 @@ pub struct TokenOAuthResponse {
 pub async fn get_oauth_token(db: Connection<AuthRsDatabase>, data: Form<TokenOAuthFieldData>) -> Option<Json<TokenOAuthResponse>> {
     let form_data = data.into_inner();
 
-    println!("{:?}", form_data);
-
     let data = TokenOAuthData {
         client_id: match Uuid::parse_str(&form_data.client_id) {
             Ok(client_id) => client_id,
@@ -70,9 +68,6 @@ pub async fn get_oauth_token(db: Connection<AuthRsDatabase>, data: Form<TokenOAu
         None => return None
     };
 
-    println!("{:?}", code_data);
-    println!("{:?}", data);
-
     if code_data.client_id != data.client_id || code_data.grant_type.trim() != data.grant_type.trim() || code_data.client_secret.trim() != data.client_secret.trim() || code_data.redirect_uri.trim() != data.redirect_uri.trim() {
         return None
     }
@@ -82,11 +77,7 @@ pub async fn get_oauth_token(db: Connection<AuthRsDatabase>, data: Form<TokenOAu
         Err(_) => return None
     };
 
-    println!("{:?}", token);
-
     codes.remove(&data.code);
-
-    println!("{:?}", codes);
 
     drop(codes);
 
