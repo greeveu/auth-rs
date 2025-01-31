@@ -2,5 +2,9 @@
 url = "mongodb://192.168.178.99:10000"
 
 [default]
-adress = "0.0.0.0"
+address = "127.0.0.1"
+port = 8000
+
+[debug]
+address = "0.0.0.0"
 port = 8000
