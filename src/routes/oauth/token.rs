@@ -6,7 +6,6 @@ use crate::{db::AuthRsDatabase, models::{oauth_scope::OAuthScope, oauth_token::O
 
 #[derive(Debug, Deserialize, FromForm)]
 #[serde(crate = "rocket::serde")]
-#[serde(rename_all = "camelCase")]
 pub struct TokenOAuthFieldData {
     #[form(field = "client_id")]
     pub client_id: String,
@@ -50,6 +49,8 @@ pub struct TokenOAuthResponse {
 #[post("/oauth/token", format = "application/x-www-form-urlencoded", data = "<data>")] 
 pub async fn get_oauth_token(db: Connection<AuthRsDatabase>, data: Form<TokenOAuthFieldData>) -> Option<Json<TokenOAuthResponse>> {
     let form_data = data.into_inner();
+
+    println!("{:?}", form_data);
 
     let data = TokenOAuthData {
         client_id: match Uuid::parse_str(&form_data.client_id) {
