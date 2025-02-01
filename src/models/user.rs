@@ -4,7 +4,7 @@ use pwhash::bcrypt;
 use rand::Rng;
 use rocket_db_pools::{mongodb::{Collection, Database}, Connection};
 use rocket::{futures::StreamExt, serde::{Deserialize, Serialize}};
-use crate::{db::{get_main_db, AuthRsDatabase}, ADMIN_ROLE_ID, DEFAULT_ROLE_ID, SYSTEM_USER_ID};
+use crate::{db::{get_main_db, AuthRsDatabase}, DEFAULT_ROLE_ID, SYSTEM_USER_ID};
 
 use super::http_response::HttpResponse;
 
