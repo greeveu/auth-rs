@@ -143,7 +143,8 @@ fn rocket() -> _ {
                 routes::oauth::revoke::revoke_oauth_token,
 
                 // Connection Routes
-                routes::connections::get_by_user_id::get_by_user_id
+                routes::connections::get_by_user_id::get_by_user_id,
+                routes::connections::disconnect::disconnect
             ],
         )
 }
