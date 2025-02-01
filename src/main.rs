@@ -105,6 +105,8 @@ fn rocket() -> _ {
         .mount(
             "/api",
             routes![
+                routes::base::base,
+
                 // Audit Log routes
                 routes::audit_logs::get_by_type::get_audit_logs_by_type,
                 routes::audit_logs::get_by_id::get_audit_log_by_id,
