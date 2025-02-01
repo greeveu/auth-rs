@@ -1,5 +1,5 @@
 use anyhow::Result;
-use mongodb::bson::{doc, DateTime, Uuid};
+use mongodb::bson::{doc, DateTime, Document, Uuid};
 use rand::Rng;
 use rocket_db_pools::{mongodb::Collection, Connection};
 use rocket::{futures::StreamExt, serde::{Deserialize, Serialize}};
@@ -106,10 +106,10 @@ impl OAuthApplication {
     }
 
     #[allow(unused)]
-    pub async fn get_all(connection: &Connection<AuthRsDatabase>) -> Result<Vec<OAuthApplicationMinimal>, HttpResponse<Vec<OAuthApplicationMinimal>>> {
+    pub async fn get_all(connection: &Connection<AuthRsDatabase>, filter: Option<Document>) -> Result<Vec<OAuthApplicationMinimal>, HttpResponse<Vec<OAuthApplicationMinimal>>> {
         let db = Self::get_collection(connection);
 
-        match db.find(None, None).await {
+        match db.find(filter, None).await {
             Ok(cursor) => {
                 let oauth_applications = cursor.map(|doc| {
                     let oauth_application: OAuthApplication = doc.unwrap();

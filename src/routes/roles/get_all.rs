@@ -22,7 +22,7 @@ pub async fn get_all_roles(db: Connection<AuthRsDatabase>, req_entity: AuthEntit
         });
     }
 
-    match Role::get_all(&db).await {
+    match Role::get_all(&db, None).await {
         Ok(roles) => Json(HttpResponse {
             status: 200,
             message: "Successfully retrieved all roles".to_string(),

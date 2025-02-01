@@ -9,6 +9,8 @@ pub enum OAuthScope {
     Roles(ScopeActions),
     AuditLogs(ScopeActions),
     Users(ScopeActions),
+    OAuthApplications(ScopeActions),
+    Connections(ScopeActions),
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -87,6 +89,8 @@ impl Display for OAuthScope {
             OAuthScope::Roles(actions) => write!(f, "roles:{}", actions.to_string()),
             OAuthScope::AuditLogs(actions) => write!(f, "audit_logs:{}", actions.to_string()),
             OAuthScope::Users(actions) => write!(f, "user:{}", actions.to_string()),
+            OAuthScope::OAuthApplications(actions) => write!(f, "oauth_applications:{}", actions.to_string()),
+            OAuthScope::Connections(actions) => write!(f, "connections:{}", actions.to_string()),
         }
     }
 }
@@ -104,6 +108,8 @@ impl TryFrom<String> for OAuthScope {
             "roles" => Ok(OAuthScope::Roles(action)),
             "audit_logs" => Ok(OAuthScope::AuditLogs(action)),
             "user" => Ok(OAuthScope::Users(action)),
+            "oauth_applications" => Ok(OAuthScope::OAuthApplications(action)),
+            "connections" => Ok(OAuthScope::Connections(action)),
             _ => Err("Unknown scope type"),
         }
     }
@@ -118,6 +124,8 @@ impl Serialize for OAuthScope {
             OAuthScope::Roles(action) => format!("roles:{}", action),
             OAuthScope::AuditLogs(action) => format!("audit_logs:{}", action),
             OAuthScope::Users(action) => format!("user:{}", action),
+            OAuthScope::OAuthApplications(action) => format!("oauth_applications:{}", action),
+            OAuthScope::Connections(action) => format!("connections:{}", action),
         };
         serializer.serialize_str(&s)
     }
@@ -147,6 +155,8 @@ impl<'de> Deserialize<'de> for OAuthScope {
             "roles" => Ok(OAuthScope::Roles(actions)),
             "audit_logs" => Ok(OAuthScope::AuditLogs(actions)),
             "user" => Ok(OAuthScope::Users(actions)),
+            "oauth_applications" => Ok(OAuthScope::OAuthApplications(actions)),
+            "connections" => Ok(OAuthScope::Connections(actions)),
             _ => Err(Error::custom("Invalid scope"))
         }
     }
