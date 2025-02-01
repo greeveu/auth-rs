@@ -141,6 +141,9 @@ fn rocket() -> _ {
                 routes::oauth::token::get_oauth_token,
                 routes::oauth::authorize::authorize_oauth_application,
                 routes::oauth::revoke::revoke_oauth_token,
+
+                // Connection Routes
+                routes::connections::get_by_user_id::get_by_user_id
             ],
         )
 }
