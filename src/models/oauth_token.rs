@@ -80,7 +80,7 @@ impl OAuthToken {
         let db = Self::get_collection(connection);
 
         let filter = doc! {
-            "application_id": application_id
+            "applicationId": application_id
         };
         match db.find(filter, None).await {
             Ok(cursor) => {
