@@ -9,4 +9,4 @@ RUN cargo build --release
 
 EXPOSE 8000
 
-CMD ["shelf-watcher-backend"]
+CMD ["auth-rs"]
