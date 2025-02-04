@@ -5,3 +5,4 @@ pub mod oauth_applications;
 pub mod oauth;
 pub mod connections;
 pub mod base;
+pub mod auth;
