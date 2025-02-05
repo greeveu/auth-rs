@@ -16,7 +16,8 @@ use routes::oauth::token::TokenOAuthData;
 
 // oauth codes stored in memory
 lazy_static::lazy_static! {
-    static ref OAUTH_CODES: Mutex<HashMap<u16, TokenOAuthData>> = Mutex::new(HashMap::new());
+    static ref OAUTH_CODES: Mutex<HashMap<u32, TokenOAuthData>> = Mutex::new(HashMap::new());
+    static ref AUTH_SESSIONS: Mutex<HashMap<Uuid, Uuid>> = Mutex::new(HashMap::new());
 
     static ref ADMIN_ROLE_ID: Uuid = Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap();
     static ref DEFAULT_ROLE_ID: Uuid = Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap();

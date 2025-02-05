@@ -14,7 +14,7 @@ pub struct TokenOAuthFieldData {
     #[form(field = "grant_type")]
     pub grant_type: String,
     #[form(field = "code")]
-    pub code: u16,
+    pub code: u32,
     #[form(field = "redirect_uri")]
     pub redirect_uri: String,
 }
@@ -27,7 +27,7 @@ pub struct TokenOAuthData {
     pub client_secret: String,
     pub grant_type: String,
     pub user_id: Option<Uuid>,
-    pub code: u16,
+    pub code: u32,
     pub scope: Option<Vec<OAuthScope>>,
     pub redirect_uri: String,
 }

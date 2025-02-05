@@ -21,7 +21,7 @@ pub struct AuthorizeOAuthData {
 pub struct AuthorizeOAuthResponse {
     pub client_id: Uuid,
     pub redirect_uri: String,
-    pub code: u16
+    pub code: u32
 }
 
 #[allow(unused)]
@@ -33,7 +33,7 @@ pub async fn authorize_oauth_application(db: Connection<AuthRsDatabase>, req_ent
         return None
     }
 
-    let code = rand::random::<u16>();
+    let code = rand::random::<u32>();
 
     let oauth_application = match OAuthApplication::get_full_by_id(data.client_id.clone(), &db).await {
         Ok(app) => app,
