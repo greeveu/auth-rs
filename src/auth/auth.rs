@@ -54,7 +54,12 @@ impl<'r> FromRequest<'r> for AuthEntity {
                 }
                 match token.split(" ").nth(0) {
                     Some("Bearer") => match User::get_full_by_token(token.split(" ").nth(1).unwrap().to_owned(), &db).await {
-                        Ok(user) => Outcome::Success(AuthEntity::from_user(user)),
+                        Ok(user) => {
+                            match user.disabled {
+                                true => return Outcome::Forward(Status::Forbidden),
+                                false => return Outcome::Success(AuthEntity::from_user(user))
+                            }
+                        },
                         Err(_) => match OAuthToken::get_by_token(token.split(" ").nth(1).unwrap(), &db).await {
                             Ok(token) => Outcome::Success(AuthEntity::from_token(token)),
                             Err(_) => Outcome::Forward(Status::Unauthorized)
