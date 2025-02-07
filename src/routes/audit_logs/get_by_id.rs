@@ -7,10 +7,10 @@ use crate::{auth::auth::AuthEntity, db::AuthRsDatabase, models::{audit_log::{Aud
 #[allow(unused)]
 #[get("/audit-logs/<type>/id/<id>", format = "json")] 
 pub async fn get_audit_log_by_id(db: Connection<AuthRsDatabase>, req_entity: AuthEntity, r#type: &str, id: &str) -> Json<HttpResponse<AuditLog>> {
-    if !req_entity.is_user() || !req_entity.user.unwrap().is_system_admin() {
+    if !req_entity.is_user() {
         return Json(HttpResponse {
             status: 403,
-            message: "Missing permissions!".to_string(),
+            message: "Forbidden!".to_string(),
             data: None
         });
     }
@@ -23,6 +23,14 @@ pub async fn get_audit_log_by_id(db: Connection<AuthRsDatabase>, req_entity: Aut
             data: None
         })
     };
+
+    if req_entity.user_id != uuid && !req_entity.user.unwrap().is_system_admin() {
+        return Json(HttpResponse {
+            status: 403,
+            message: "Missing permissions!".to_string(),
+            data: None
+        });
+    }
 
     let entity_type = match AuditLogEntityType::from_string(&r#type) {
         Ok(entity_type) => entity_type,
