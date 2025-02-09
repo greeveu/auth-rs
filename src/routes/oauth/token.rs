@@ -49,10 +49,7 @@ pub async fn get_oauth_token(db: Connection<AuthRsDatabase>, data: Form<TokenOAu
     let data = TokenOAuthData {
         client_id: match Uuid::parse_str(&form_data.client_id) {
             Ok(client_id) => client_id,
-            Err(_) => {
-                println!("Failed to parse client_id");
-                return None
-            }
+            Err(_) => return None
         },
         client_secret: form_data.client_secret,
         grant_type: form_data.grant_type,

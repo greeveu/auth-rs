@@ -5,6 +5,7 @@ mod auth;
 
 use std::{collections::HashMap, env};
 
+use auth::mfa::MfaHandler;
 use db::AuthRsDatabase;
 use dotenv::dotenv;
 use models::{role::Role, user::User};
@@ -17,7 +18,7 @@ use routes::oauth::token::TokenOAuthData;
 // oauth codes stored in memory
 lazy_static::lazy_static! {
     static ref OAUTH_CODES: Mutex<HashMap<u32, TokenOAuthData>> = Mutex::new(HashMap::new());
-    static ref AUTH_SESSIONS: Mutex<HashMap<Uuid, Uuid>> = Mutex::new(HashMap::new());
+    static ref MFA_SESSIONS: Mutex<HashMap<Uuid, MfaHandler>> = Mutex::new(HashMap::new());
 
     static ref ADMIN_ROLE_ID: Uuid = Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap();
     static ref DEFAULT_ROLE_ID: Uuid = Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap();
@@ -121,6 +122,8 @@ fn rocket() -> _ {
                 routes::users::me::get_current_user,
                 // this is mainly used for oauth apps
                 routes::users::me::get_current_user_plain,
+                routes::users::mfa::enable_totp_mfa,
+                routes::users::mfa::disable_totp_mfa,
                 routes::users::update::update_user,
                 routes::users::delete::delete_user,
 
@@ -138,14 +141,19 @@ fn rocket() -> _ {
                 routes::oauth_applications::update::update_oauth_application,
                 routes::oauth_applications::delete::delete_oauth_application,
 
-                // Auth Routes
+                // OAuth Routes
                 routes::oauth::token::get_oauth_token,
                 routes::oauth::authorize::authorize_oauth_application,
                 routes::oauth::revoke::revoke_oauth_token,
 
                 // Connection Routes
                 routes::connections::get_by_user_id::get_by_user_id,
-                routes::connections::disconnect::disconnect
+                routes::connections::disconnect::disconnect,
+
+                // Auth Routes
+                routes::auth::register::register,
+                routes::auth::login::login,
+                routes::auth::mfa::mfa
             ],
         )
 }

@@ -10,7 +10,7 @@ use super::http_response::HttpResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)] 
 #[serde(crate = "rocket::serde")]
-#[serde(rename_all = "camelCase")] 
+#[serde(rename_all = "camelCase")]
 pub struct User {
     #[serde(rename = "_id")]
     pub id: Uuid,
@@ -50,6 +50,10 @@ impl User {
 
     fn generate_token() -> String {
         rand::rng().sample_iter(rand::distr::Alphanumeric).take(128).map(char::from).collect()
+    }
+
+    pub fn verify_password(&self, password: &str) -> bool {
+        bcrypt::verify(password, &self.password_hash)
     }
 
     pub fn new(email: String, password: String, first_name: String, last_name: String) -> Result<Self, HttpResponse<UserMinimal>> {
