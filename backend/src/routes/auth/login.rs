@@ -31,7 +31,7 @@ pub async fn login(db: Connection<AuthRsDatabase>, data: Json<LoginData>) -> Jso
         Ok(user) => user,
         Err(err) => return Json(HttpResponse {
             status: 500,
-            message: format!("Failed to get user: {:?}", err),
+            message: err.message,
             data: None
         })
     };
