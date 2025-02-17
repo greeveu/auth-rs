@@ -36,7 +36,9 @@
                 window.location.href = '/';
             })
             .catch((error) => {
+                step = 0;
                 loginText = 'Login';
+                password = '';
                 console.error(error);
             });
     }
@@ -59,6 +61,8 @@
             })
             .catch((error) => {
                 verifyText = 'Verify';
+                step = 2;
+                totp = [null, null, null, null, null, null];
                 console.error(error);
             });
     }
@@ -95,14 +99,14 @@
                 type="email"
                 placeholder="Email"
                 class="border border-gray-300 rounded-md"
-                style="padding: 5px; width: 300px; margin: 10px;"
+                style="padding: 5px 10px; width: 300px; margin: 15px;"
                 bind:value={email}
             >
             <input
                 type="password"
                 placeholder="Password"
                 class="border border-gray-300 rounded-md"
-                style="padding: 5px; width: 300px; margin: 0 10px 10px 10px;"
+                style="padding: 5px 10px; width: 300px; margin-bottom: 15px;"
                 bind:value={password}
             >
         {:else if step == 2}
@@ -148,14 +152,15 @@
         {/if}
         <button
             type="submit"
-            class="bg-blue-500 text-white rounded-md cursor-pointer button"
-            style="padding: 5px; width: {step < 2 ? 300 : 250}px; margin-top: {step < 2 ? 10 : 20}px;"
+            class="bg-blue-500 text-white rounded-md cursor-pointer text-[17px] button"
+            style="padding: 10px; width: {step < 2 ? 300 : 250}px; margin-top: {step < 2 ? 5 : 20}px;"
             class:disabled={step == 0 ? email == '' || password == '' : totp.map(c => c?.toString()).join('').length < 6 || step == 1 || step == 3}
             on:click={step == 0 ? login : completeTotp}
         >{step == 0 ? loginText : verifyText}</button>
     </form>
     {#if step < 2}
-        <a href="/register" class="mt-4">Don't have an account? Register here</a>
+        <p class="text-[14px]" style="margin-top: 15px;">or</p>
+        <a href="/register" class="text-[13px]" style="margin-top: 10px;">Don't have an account? <i>Register here!</i></a>
     {/if}
 </div>
 
@@ -170,6 +175,11 @@
     /* Hide spin buttons in Firefox */
     input[type="number"] {
         -moz-appearance: textfield;
+    }
+
+    input:focus {
+        outline: none;
+        border: solid 2px rgb(59, 130, 246);
     }
 
     .button.disabled {
