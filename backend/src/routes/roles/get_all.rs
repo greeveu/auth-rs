@@ -13,14 +13,6 @@ pub async fn get_all_roles(db: Connection<AuthRsDatabase>, req_entity: AuthEntit
             data: None
         });
     }
-    
-    if !req_entity.user.unwrap().is_system_admin() {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Missing permissions!".to_string(),
-            data: None
-        });
-    }
 
     match Role::get_all(&db, None).await {
         Ok(roles) => Json(HttpResponse {
