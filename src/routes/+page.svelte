@@ -1,5 +1,4 @@
 <script lang="ts">
-	import AuthRsApi from "$lib/api";
 	import AuthStateManager from "$lib/auth";
 	import { onMount } from "svelte";
 
