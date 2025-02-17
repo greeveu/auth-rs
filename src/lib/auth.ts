@@ -1,0 +1,17 @@
+class AuthStateManager {
+    constructor() {}
+
+    getToken() {
+        return localStorage.getItem('token');
+    }
+
+    setToken(token: string) {
+        localStorage.setItem('token', token);
+    }
+
+    clearToken() {
+        localStorage.removeItem('token');
+    }
+}
+
+export default AuthStateManager;
