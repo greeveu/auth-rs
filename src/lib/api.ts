@@ -1,7 +1,8 @@
 import AuthStateManager from "./auth";
+import type OAuthApplication from "./models/OAuthApplication";
 
 class AuthRsApi {
-    public static baseUrl = 'http://localhost:8000/api';
+    public static baseUrl = 'https://oauth.timlohrer.de/api';//'http://localhost:8000/api';
     private token: string | null = null;
     private currentMfaFlowId: string | null = null;
 
@@ -11,9 +12,13 @@ class AuthRsApi {
         this.token = token;
     }
 
+    async checkOnlineState(): Promise<boolean> {
+        const response = await fetch(AuthRsApi.baseUrl);
+
+        return response.ok;
+    }
+
     async login(email: string, password: string) {
-        console.log('login', email, password);
-        
         const response = await fetch(`${AuthRsApi.baseUrl}/auth/login`, {
             method: 'POST',
             headers: {
@@ -95,6 +100,29 @@ class AuthRsApi {
         }
 
         const response = await fetch(`${AuthRsApi.baseUrl}/roles`, {
+            headers: {
+                method: 'GET',
+                Authorization: `Bearer ${this.token}`,
+            },
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.status != 200) {
+                throw new Error(data.message);
+            }
+            return data.data;
+        } else {
+            throw new Error(`(${response.status}): ${response.statusText}`);
+        }
+    }
+
+    async getOAuthApplication(id: string): Promise<OAuthApplication> {
+        if (!this.token) {
+            throw new Error('No token');
+        }
+
+        const response = await fetch(`${AuthRsApi.baseUrl}/oauth-applications/${id}`, {
             headers: {
                 method: 'GET',
                 Authorization: `Bearer ${this.token}`,
