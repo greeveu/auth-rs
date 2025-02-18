@@ -1,3 +1,6 @@
+import { goto } from "$app/navigation";
+import AuthRsApi from "./api";
+
 class AuthStateManager {
     constructor() {}
 
@@ -11,6 +14,25 @@ class AuthStateManager {
 
     clearToken() {
         localStorage.removeItem('token');
+    }
+
+    async handlePageLoad(params: string[] | null = null): Promise<[AuthRsApi, UserMinimal] | null> {
+        const token = this.getToken();
+        if (token) {
+            const api = new AuthRsApi();
+            api.setToken(token);
+            try {
+                const user = await api.getCurrentUser();
+                return [api, user];
+            } catch {
+                this.clearToken();
+                goto(`/login${params ? `?${params.join('&')}` : ''}`);
+                return null;
+            }
+        } else {
+            goto(`/login${params ? `?${params.join('&')}` : ''}`);
+            return null;
+        }
     }
 }
 
