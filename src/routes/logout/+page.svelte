@@ -2,13 +2,27 @@
     import AuthStateManager from "$lib/auth";
     import { onMount } from "svelte";
 
-    const authStateManager = new AuthStateManager();
+    let redirectCooldown = 5;
+    let redirect: string | null = null;
 
     onMount(() => {
-        authStateManager.clearToken();
+        new AuthStateManager().clearToken();
+
+        redirect =  new URL(window.location.href).searchParams.get('redirect_uri');
+        if (redirect) {
+            setInterval(() => {
+                redirectCooldown--;
+                if (redirectCooldown <= 0) {
+                    window.location.href = redirect!;
+                }
+            }, 1000);
+        }
     })
 </script>
 
-<div class="flex items-center justify-center">
-    <h1>Successfully logged out!</h1>
+<div class="flex flex-col gap-[20px] items-center justify-center h-screen w-screen">
+    <h1 class="text-3xl">Successfully logged out!</h1>
+    {#if redirect}
+        <p>Redirecting to <i>{redirect}</i> in {redirectCooldown}...</p>
+    {/if}
 </div>
