@@ -25,21 +25,11 @@ pub async fn get_oauth_application_by_id(db: Connection<AuthRsDatabase>, req_ent
     };
 
     match OAuthApplication::get_by_id(uuid, &db).await {
-        Ok(oauth_application) => {
-            if req_entity.user_id != oauth_application.owner && !req_entity.user.unwrap().is_system_admin() {
-                return Json(HttpResponse {
-                    status: 403,
-                    message: "Missing permissions!".to_string(),
-                    data: None
-                });
-            }
-
-            Json(HttpResponse {
-                status: 200,
-                message: "Found oauth_application by id".to_string(),
-                data: Some(oauth_application),
-            })
-        }
+        Ok(oauth_application) => Json(HttpResponse {
+            status: 200,
+            message: "Found oauth_application by id".to_string(),
+            data: Some(oauth_application),
+        }),
         Err(err) => Json(err)
     }
 }
