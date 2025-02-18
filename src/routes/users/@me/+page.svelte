@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from "$app/navigation";
 	import AuthRsApi from "$lib/api";
 	import AuthStateManager from "$lib/auth";
 	import { onMount } from "svelte";
@@ -32,10 +33,10 @@
                     console.error(error);
                     api.setToken(null);
                     authStateManager.clearToken();
-                    window.location.href = '/login';
+                    goto('/login?redirect_uri=/users/@me');
                 });
         } else {
-            window.location.href = '/login';
+            goto('/login?redirect_uri=/users/@me');
         }
     })
 </script>

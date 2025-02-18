@@ -16,6 +16,8 @@
     let loginText = 'Login';
     let verifyText = 'Verify';
 
+    let redirect: string | null = null;
+
     async function login() {
         if (email == '' || password == '') {
             console.error('Email and password are required');
@@ -33,7 +35,7 @@
                     return;
                 }
                 step = 4;
-                window.location.href = '/';
+                window.location.href = redirect ?? '/';
             })
             .catch((error) => {
                 step = 0;
@@ -55,9 +57,7 @@
 
         api.mfa(code)
             .then((data) => {
-                verifyText = 'Verify';
-                step = 4;
-                window.location.href = '/';
+                window.location.href = redirect ?? '/';
             })
             .catch((error) => {
                 verifyText = 'Verify';
@@ -68,12 +68,14 @@
     }
 
     onMount(() => {
+        redirect = new URL(window.location.href).searchParams.get('redirect_uri');
+
         const token = authStateManager.getToken();
         if (token) {
             api.setToken(token);
             api.getCurrentUser()
                 .then(() => {
-                    window.location.href = '/';
+                    window.location.href = redirect ?? '/';
                     return;
                 })
                 .catch(() => {
@@ -98,14 +100,14 @@
             <input
                 type="email"
                 placeholder="Email"
-                class="border border-gray-300 rounded-md"
+                class="border border-gray-300 rounded-md opacity-75"
                 style="padding: 5px 10px; width: 300px; margin: 15px;"
                 bind:value={email}
             >
             <input
                 type="password"
                 placeholder="Password"
-                class="border border-gray-300 rounded-md"
+                class="border border-gray-300 rounded-md opacity-75"
                 style="padding: 5px 10px; width: 300px; margin-bottom: 15px;"
                 bind:value={password}
             >
@@ -114,7 +116,7 @@
                 {#each [0, 1, 2, 3, 4, 5] as index}
                     <input
                         type="number"
-                        class="border border-gray-300 rounded-md"
+                        class="border border-gray-300 rounded-md opacity-75"
                         style="padding: 5px; width: 30px; height: 40px;"
                         maxlength="1"
                         max="9"
@@ -153,10 +155,10 @@
         <button
             type="submit"
             class="bg-blue-500 text-white rounded-md cursor-pointer text-[17px] button"
-            style="padding: 10px; width: {step < 2 ? 300 : 250}px; margin-top: {step < 2 ? 5 : 20}px;"
+            style="padding: 7.5px; width: {step < 2 ? 300 : 250}px; margin-top: {step < 2 ? 5 : 20}px;"
             class:disabled={step == 0 ? email == '' || password == '' : totp.map(c => c?.toString()).join('').length < 6 || step == 1 || step == 3}
             on:click={step == 0 ? login : completeTotp}
-        >{step == 0 ? loginText : verifyText}</button>
+        >{step < 2 ? loginText : verifyText}</button>
     </form>
     {#if step < 2}
         <p class="text-[14px]" style="margin-top: 15px;">or</p>
@@ -179,7 +181,7 @@
 
     input:focus {
         outline: none;
-        border: solid 2px rgb(59, 130, 246);
+        border: solid 1px rgb(59, 130, 246);
     }
 
     .button.disabled {

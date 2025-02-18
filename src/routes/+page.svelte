@@ -1,15 +1,12 @@
 <script lang="ts">
+	import { goto } from "$app/navigation";
 	import AuthStateManager from "$lib/auth";
 	import { onMount } from "svelte";
 
-    const authStateManager = new AuthStateManager();
-
-    onMount(() => {
-        const token = authStateManager.getToken();
-        if (token) {
-            window.location.href = '/users/@me';
-        } else {
-            window.location.href = '/login';
+    onMount(async () => {
+        const loadData = await new AuthStateManager().handlePageLoad();
+        if (loadData && loadData.length > 1) {
+            goto('/users/@me');
         }
     })
 </script>
