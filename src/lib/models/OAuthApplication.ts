@@ -4,9 +4,9 @@ class OAuthApplication {
     description: string;
     redirectUris: string[];
     owner: string;
-    createdAt: Date;
+    createdAt: string;
 
-    constructor(id: string, name: string, description: string, redirectUris: string[], owner: string, createdAt: Date) {
+    constructor(id: string, name: string, description: string, redirectUris: string[], owner: string, createdAt: string) {
         this.id = id;
         this.name = name;
         this.description = description;

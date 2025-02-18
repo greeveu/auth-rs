@@ -35,7 +35,7 @@
                     return;
                 }
                 step = 4;
-                window.location.href = redirect ?? '/';
+                window.location.href = redirect ? redirect : '/';
             })
             .catch((error) => {
                 step = 0;
@@ -57,7 +57,7 @@
 
         api.mfa(code)
             .then((data) => {
-                window.location.href = redirect ?? '/';
+                window.location.href = redirect ? redirect : '/';
             })
             .catch((error) => {
                 verifyText = 'Verify';
@@ -75,7 +75,7 @@
             api.setToken(token);
             api.getCurrentUser()
                 .then(() => {
-                    window.location.href = redirect ?? '/';
+                    window.location.href = redirect ? redirect : '/';
                     return;
                 })
                 .catch(() => {

@@ -2,7 +2,7 @@ import AuthStateManager from "./auth";
 import type OAuthApplication from "./models/OAuthApplication";
 
 class AuthRsApi {
-    public static baseUrl = 'https://oauth.timlohrer.de/api';//'http://localhost:8000/api';
+    public static baseUrl = 'http://localhost:8000/api';//'https://oauth.timlohrer.de/api';//
     private token: string | null = null;
     private currentMfaFlowId: string | null = null;
 
@@ -77,8 +77,8 @@ class AuthRsApi {
         }
 
         const response = await fetch(`${AuthRsApi.baseUrl}/users/@me`, {
+            method: 'GET',
             headers: {
-                method: 'GET',
                 Authorization: `Bearer ${this.token}`,
             },
         });
@@ -100,8 +100,8 @@ class AuthRsApi {
         }
 
         const response = await fetch(`${AuthRsApi.baseUrl}/roles`, {
+            method: 'GET',
             headers: {
-                method: 'GET',
                 Authorization: `Bearer ${this.token}`,
             },
         });
@@ -123,8 +123,8 @@ class AuthRsApi {
         }
 
         const response = await fetch(`${AuthRsApi.baseUrl}/oauth-applications/${id}`, {
+            method: 'GET',
             headers: {
-                method: 'GET',
                 Authorization: `Bearer ${this.token}`,
             },
         });
@@ -135,6 +135,32 @@ class AuthRsApi {
                 throw new Error(data.message);
             }
             return data.data;
+        } else {
+            throw new Error(`(${response.status}): ${response.statusText}`);
+        }
+    }
+
+    async authorizeOAuthApplication(clientId: string, redirectUri: string, scope: string[]) {
+        if (!this.token) {
+            throw new Error('No token');
+        }
+
+        const response = await fetch(`${AuthRsApi.baseUrl}/oauth/authorize`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${this.token}`,
+            },
+            body: JSON.stringify({
+                clientId,
+                redirectUri,
+                scope,
+            })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            return data;
         } else {
             throw new Error(`(${response.status}): ${response.statusText}`);
         }
