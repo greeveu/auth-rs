@@ -1,6 +1,5 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { goto } from "$app/navigation";
 	import type AuthRsApi from "$lib/api";
 	import AuthStateManager from "$lib/auth";
 	import type OAuthApplication from "$lib/models/OAuthApplication";
@@ -58,19 +57,18 @@
         const scope = url.searchParams.get('scope');
         const redirect = url.searchParams.get('redirect_uri');
 
-        if (!clientId || !state || !scope || !redirect) {
+        if (!clientId || !state || !scope || !redirect) { 
             console.error('Missing parameters!');
-            goto(redirect ?? '/');
+            window.location.href = redirect ?? '/';
             return;
         }
-
-        const pageData = await new AuthStateManager().handlePageLoad([`redirect_uri=${url}`]);
+        
+        const pageData = await new AuthStateManager().handlePageLoad([`redirect_uri=${encodeURIComponent(window.location.href)}`]);
         api = pageData?.[0] ?? null;
         user = pageData?.[1] ?? null;
 
         if (!api || !user) {
             console.error('Failed to load page data!');
-            goto(redirect);
             return;
         }
 
@@ -79,7 +77,7 @@
             state,
             scopes: scope.split(','),
             redirect,
-            redirectBase: `${redirect.split('//')[0]}//${redirect.split('//')[1].split('/')[0]}`,
+            redirectBase: url.origin,
             activeSince: ''
         };
 
@@ -91,7 +89,7 @@
             })
             .catch((err) => {
                 console.error('Failed to load OAuth application data!', err);
-                goto(redirect);
+                window.location.href = redirect;
             });
 
     });
