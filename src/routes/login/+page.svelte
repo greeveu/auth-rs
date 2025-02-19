@@ -122,7 +122,7 @@
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <!-- svelte-ignore a11y_no_static_element_interactions -->
             <span
-                class="absolute"
+                class="absolute cursor-pointer"
                 style="margin-left: 260px; margin-top: 5px;"
                 on:click={() => showPassword = !showPassword}
             >
@@ -176,9 +176,9 @@
         {/if}
         <button
             type="submit"
-            class="border-[1.5px] border-blue-500 bg-blue-500 text-white rounded-md cursor-pointer text-[17px] button"
+            class="border-[1.5px] border-blue-500 bg-blue-500 text-white rounded-md text-[17px] button"
             style="padding: 7.5px; width: {step < 2 ? 300 : 250}px; margin-top: {step < 2 ? 5 : 20}px;"
-            class:disabled={step == 0 ? email == '' || password == '' : totp.map(c => c?.toString()).join('').length < 6 || step == 1 || step == 3}
+            class:enabled={step == 0 ? email != '' && password != '' : totp.map(c => c?.toString()).join('').length >= 6 && (step == 0 || step == 2)}
             on:click={step == 0 ? login : completeTotp}
         >{step < 2 ? loginText : verifyText}</button>
     </form>
@@ -208,14 +208,16 @@
 
     .button {
         transition-duration: .2s;
-    }
-
-    .button.disabled {
         opacity: 0.5;
         cursor: default;
     }
 
-    .button:hover {
+    .button.enabled {
+        opacity: 1;
+        cursor: pointer;
+    }
+
+    .button.enabled:hover {
         background-color: transparent;
         color: var(--color-blue-500);
     }
