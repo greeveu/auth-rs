@@ -1,7 +1,7 @@
 <script lang="ts">
     import AuthRsApi from '$lib/api';
 	import AuthStateManager from '$lib/auth';
-	import { onMount } from "svelte";
+	import { onMount, tick } from "svelte";
 
     const authStateManager = new AuthStateManager();
     const api = new AuthRsApi();
@@ -28,14 +28,16 @@
         loginText = 'Logging in...';
 
         api.login(email, password)
-            .then((data) => {
+            .then(async (data) => {
                 loginText = 'Login';
                 if (data.mfaRequired) {
                     step = 2;
+                    await tick();
+                    document.getElementById('totp-0')?.focus();
                     return;
                 }
                 step = 4;
-                window.location.href = redirect ? redirect : '/';
+                window.location.href = redirect ?? '/';
             })
             .catch((error) => {
                 step = 0;
@@ -57,7 +59,7 @@
 
         api.mfa(code)
             .then((data) => {
-                window.location.href = redirect ? redirect : '/';
+                window.location.href = redirect ?? '/';
             })
             .catch((error) => {
                 verifyText = 'Verify';
@@ -75,7 +77,7 @@
             api.setToken(token);
             api.getCurrentUser()
                 .then(() => {
-                    window.location.href = redirect ? redirect : '/';
+                    window.location.href = redirect ?? '/';
                     return;
                 })
                 .catch(() => {
@@ -97,11 +99,13 @@
     >{step < 2 ? 'Login' : 'Verify Login'}</h1>
     <form id="form" class="flex flex-col items-center justify-center mt-4">
         {#if step < 2}
+            <!-- svelte-ignore a11y_autofocus -->
             <input
                 type="email"
                 placeholder="Email"
                 class="border border-gray-300 rounded-md opacity-75"
                 style="padding: 5px 10px; width: 300px; margin: 15px;"
+                autofocus={true}
                 bind:value={email}
             >
             <input
@@ -114,6 +118,7 @@
         {:else if step == 2}
             <div class="flex flex-row w-[250px] justify-between">
                 {#each [0, 1, 2, 3, 4, 5] as index}
+                    <!-- svelte-ignore a11y_autofocus -->
                     <input
                         type="number"
                         class="border border-gray-300 rounded-md opacity-75"
