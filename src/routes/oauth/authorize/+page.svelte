@@ -3,10 +3,12 @@
 	import type AuthRsApi from "$lib/api";
 	import AuthStateManager from "$lib/auth";
 	import type OAuthApplication from "$lib/models/OAuthApplication";
-    import { Bot, Link, User, UserPen, UserMinus, UserCog, SquareArrowOutUpRight, Clock } from "lucide-svelte";
+    import { Bot, Link, User, UserPen, UserMinus, UserCog, SquareArrowOutUpRight, Clock, Lock } from "lucide-svelte";
 
     let api: AuthRsApi | null = null;
     let user: UserMinimal | null = null;
+
+    let currentPath: string | null = null;
 
     let oAuthData: {
         clientId: string;
@@ -27,10 +29,11 @@
 
     let step = 0;
 
+    const INVALID_SCOPES = ['user:delete'];
+
     const SCOPES: Record<string, { icon: string; description: string }> = {
-        'user:read': { icon: 'user', description: 'Read your profile data (e.g. name or email)' },
-        'user:update': { icon: 'user-pen', description: 'Change your profile data (e.g. name)' },
-        'user:delete': { icon: 'user-minus', description: 'Delete your profile' },
+        'user:read': { icon: 'user', description: 'Read your profile data' },
+        'user:update': { icon: 'user-pen', description: 'Change your profile data' },
         'user:*': { icon: 'user-cog', description: 'Read and manage your entire profile' },
     };
 
@@ -51,7 +54,8 @@
     }
 
     onMount(async () => {
-        const url = new URL(window.location.href);
+        currentPath = window.location.href;
+        const url = new URL(currentPath);
         const clientId = url.searchParams.get('client_id');
         const state = url.searchParams.get('state');
         const scope = url.searchParams.get('scope');
@@ -63,7 +67,7 @@
             return;
         }
         
-        const pageData = await new AuthStateManager().handlePageLoad([`redirect_uri=${encodeURIComponent(window.location.href)}`]);
+        const pageData = await new AuthStateManager().handlePageLoad([`redirect_uri=${encodeURIComponent(currentPath)}`]);
         api = pageData?.[0] ?? null;
         user = pageData?.[1] ?? null;
 
@@ -75,7 +79,7 @@
         oAuthData = {
             clientId,
             state,
-            scopes: scope.split(','),
+            scopes: scope.split(',').map(s => s.toLowerCase()).filter((scope) => !INVALID_SCOPES.includes(scope)),
             redirect,
             redirectBase: url.origin,
             activeSince: ''
@@ -96,7 +100,8 @@
 </script>
 
 <div class="flex items-center justify-center h-screen w-screen">
-    <div class="flex flex-col items-center border-white border-1 rounded-md" style="padding: 30px;">
+
+    <div class="flex flex-col items-center border-[2.5px] rounded-md" style="padding: 30px; border-color: #333;">
         <div class="flex flex-col gap-2 items-center">
             <div class="flex flex-row items-center justify-center gap-[10px]" style="margin-bottom: 20px;">
                 <Bot class="size-[80px]" />
@@ -110,11 +115,11 @@
             <div class="flex flex-row gap-[10px] text-[12px]">
                 <p class="opacity-50">Signed in as</p>
                 <p class="opacity-85">{user?.firstName} {user?.lastName}</p>
-                <a class="text-blue-400" style="margin-left: 7.5px;" href="/logout?redirect_uri={oAuthData.redirectBase}">Not you?</a>
+                <a class="text-blue-400" style="margin-left: 7.5px;" href="/logout?redirect_uri={encodeURIComponent(currentPath ?? '/')}">Not you?</a>
             </div>
         </div>
-        <hr class="h-[2px] w-full bg-white opacity-25" style="margin: 15px;" />
-        <div class="flex flex-col items-center gap-[10px]" style="padding: 7.5px;">
+        <hr class="h-[2px] w-full bg-white opacity-25 rounded-[2px]" style="margin: 15px;" />
+        <div class="flex flex-col items-center gap-[10px] w-full" style="padding: 2.5px 17.5px;">
             {#each oAuthData.scopes as scope}
                 <div class="flex flex-row items-start w-full gap-[15px]">
                     {#if SCOPES[scope].icon == 'user'}
@@ -130,7 +135,7 @@
                 </div>
             {/each}
         </div>
-        <hr class="h-[2px] w-full bg-white opacity-25" style="margin: 10px;" />
+        <hr class="h-[2px] w-full bg-white opacity-25 rounded-[2px]" style="margin: 10px;" />
         <div class="flex flex-col items-start justify-center w-full max-w-[450px] gap-[10px]" style="padding: 2.5px 17.5px;">
             <div class="flex flex-row items-center gap-[15px]">
                 <SquareArrowOutUpRight class="w-[20px] h-[20px] opacity-50" />
@@ -141,10 +146,14 @@
             </div>
             <div class="flex flex-row items-center gap-[12.5px]">
                 <Clock class="w-[17.5px] h-[17.5px] opacity-50" />
-                <p class="text-[11px] opacity-85">{oAuthApplication?.name} <span class="opacity-70">is active since</span> {oAuthData.activeSince}</p>
+                <p class="text-[11px] opacity-85"><span class="opacity-70">Active since</span> {oAuthData.activeSince}</p>
+            </div>
+            <div class="flex flex-row items-center gap-[12.5px]">
+                <Lock class="w-[30px] h-[30px] opacity-50" />
+                <p class="text-[11px] opacity-70">This application will never be able to access anything outside of the permissions mentioned above.</p>
             </div>
         </div>
-        <hr class="h-[2px] w-full bg-white opacity-25" style="margin: 10px;" />
+        <hr class="h-[2px] w-full bg-white opacity-25 rounded-[2px]" style="margin: 10px;" />
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
         <div class="flex flex-row items-center justify-between w-full" style="margin-top: 10px;">
