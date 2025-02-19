@@ -2,7 +2,7 @@
     import AuthStateManager from "$lib/auth";
     import { onMount } from "svelte";
 
-    let redirectCooldown = 5;
+    let redirectCooldown = 3;
     let redirect: string | null = null;
 
     onMount(() => {
