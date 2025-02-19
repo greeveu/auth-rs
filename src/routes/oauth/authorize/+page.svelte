@@ -2,7 +2,6 @@
     import { onMount } from "svelte";
 	import type AuthRsApi from "$lib/api";
 	import AuthStateManager from "$lib/auth";
-	import type OAuthApplication from "$lib/models/OAuthApplication";
     import {
         Bot,
         Link,
@@ -42,37 +41,6 @@
     let oAuthApplication: OAuthApplication | null = null;
 
     let step = 0;
-
-    const INVALID_SCOPES = [
-        'user:create',
-        'user:delete',
-        'roles:create',
-        'roles:update',
-        'roles:delete',
-        'roles:*',
-        'audit_logs:create',
-        'audit_logs:update',
-        'audit_logs:delete',
-        'audit_logs:*',
-        'oauth_applications:create',
-        'oauth_applications:update',
-        'oauth_applications:delete',
-        'oauth_applications:*',
-        'connections:create',
-        'connections:update'
-    ];
-
-    const SCOPES: Record<string, { icon: string; description: string }> = {
-        'user:read': { icon: 'user', description: 'Read your profile data' },
-        'user:update': { icon: 'user-pen', description: 'Change your profile data' },
-        'user:*': { icon: 'user-cog', description: 'Read and modify your profile' },
-        'roles:read': { icon: 'crown', description: 'Read your roles' },
-        'audit_logs:read': { icon: 'clipboard-list', description: 'Read your audit logs' },
-        'oauth_applications:read': { icon: 'code-xml', description: 'Read your OAuth applications' },
-        'connections:read': { icon: 'link', description: 'Read your connected OAuth Apps' },
-        'connections:delete': { icon: 'unlink', description: 'Disconnect OAuth Apps' },
-        'connections:*': { icon: 'link', description: 'Read and disconnect your connected OAuth Apps' }
-    };
 
     async function authorize() {
         step = 1;
@@ -164,23 +132,23 @@
             {#each oAuthData.scopes as scope}
                 <div class="flex flex-row items-start w-full gap-[15px]">
                     {#if SCOPES[scope].icon == 'user'}
-                        <User class="w-[20px] h-[20px]"  />
+                        <User height="20px" width="20px"  />
                     {:else if SCOPES[scope].icon == 'user-pen'}
-                        <UserPen class="w-[20px] h-[20px]" />
+                        <UserPen height="20px" width="20px" />
                     {:else if SCOPES[scope].icon == 'user-minus'}
-                        <UserMinus class="w-[20px] h-[20px]" />
+                        <UserMinus height="20px" width="20px" />
                     {:else if SCOPES[scope].icon == 'user-cog'}
-                        <UserCog class="w-[20px] h-[20px]" />
+                        <UserCog height="20px" width="20px" />
                     {:else if SCOPES[scope].icon == 'crown'}
-                        <Crown class="w-[20px] h-[20px]" />
+                        <Crown height="20px" width="20px" />
                     {:else if SCOPES[scope].icon == 'clipboard-list'}
-                        <ClipboardList class="w-[20px] h-[20px]" />
+                        <ClipboardList height="20px" width="20px" />
                     {:else if SCOPES[scope].icon == 'code-xml'}
-                        <CodeXml class="w-[20px] h-[20px]" />
+                        <CodeXml height="20px" width="20px" />
                     {:else if SCOPES[scope].icon == 'link'}
-                        <Link class="w-[20px] h-[20px]" />
+                        <Link height="20px" width="20px" />
                     {:else if SCOPES[scope].icon == 'unlink'}
-                        <Unlink class="w-[20px] h-[20px]" />
+                        <Unlink height="20px" width="20px" />
                     {/if}
                     <p class="text-[14px]">{SCOPES[scope].description}</p>
                 </div>

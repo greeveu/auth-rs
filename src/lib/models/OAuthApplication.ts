@@ -14,6 +14,4 @@ class OAuthApplication {
         this.owner = owner;
         this.createdAt = createdAt;
     }
-};
-
-export default OAuthApplication;
+}
