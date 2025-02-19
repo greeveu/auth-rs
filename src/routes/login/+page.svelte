@@ -2,6 +2,7 @@
     import AuthRsApi from '$lib/api';
 	import AuthStateManager from '$lib/auth';
 	import { onMount, tick } from "svelte";
+    import { Eye, EyeOff } from 'lucide-svelte';
 
     const authStateManager = new AuthStateManager();
     const api = new AuthRsApi();
@@ -9,6 +10,7 @@
 
     let email = '';
     let password = '';
+    let showPassword = false;
     /**
 	 * @type {number[] | null[]}
 	 */
@@ -58,13 +60,15 @@
         verifyText = 'Verifying...';
 
         api.mfa(code)
-            .then((data) => {
+            .then(() => {
                 window.location.href = redirect ?? '/';
             })
-            .catch((error) => {
+            .catch(async (error) => {
                 verifyText = 'Verify';
                 step = 2;
                 totp = [null, null, null, null, null, null];
+                await tick();
+                document.getElementById('totp-0')?.focus();
                 console.error(error);
             });
     }
@@ -103,25 +107,38 @@
             <input
                 type="email"
                 placeholder="Email"
-                class="border border-gray-300 rounded-md opacity-75"
+                class="border-[1.5px] border-gray-300 rounded-md opacity-75"
                 style="padding: 5px 10px; width: 300px; margin: 15px;"
                 autofocus={true}
                 bind:value={email}
             >
             <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="Password"
-                class="border border-gray-300 rounded-md opacity-75"
+                class="border-[1.5px] border-gray-300 rounded-md opacity-75"
                 style="padding: 5px 10px; width: 300px; margin-bottom: 15px;"
                 bind:value={password}
             >
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <!-- svelte-ignore a11y_no_static_element_interactions -->
+            <span
+                class="absolute"
+                style="margin-left: 260px; margin-top: 5px;"
+                on:click={() => showPassword = !showPassword}
+            >
+                {#if showPassword}
+                    <Eye class="size-[18px]" />
+                {:else}
+                    <EyeOff class="size-[18px]" />
+                {/if}
+            </span>
         {:else if step == 2}
             <div class="flex flex-row w-[250px] justify-between">
                 {#each [0, 1, 2, 3, 4, 5] as index}
                     <!-- svelte-ignore a11y_autofocus -->
                     <input
                         type="number"
-                        class="border border-gray-300 rounded-md opacity-75"
+                        class="border-[1.5px] border-gray-300 rounded-md opacity-75"
                         style="padding: 5px; width: 30px; height: 40px;"
                         maxlength="1"
                         max="9"
@@ -159,7 +176,7 @@
         {/if}
         <button
             type="submit"
-            class="bg-blue-500 text-white rounded-md cursor-pointer text-[17px] button"
+            class="border-[1.5px] border-blue-500 bg-blue-500 text-white rounded-md cursor-pointer text-[17px] button"
             style="padding: 7.5px; width: {step < 2 ? 300 : 250}px; margin-top: {step < 2 ? 5 : 20}px;"
             class:disabled={step == 0 ? email == '' || password == '' : totp.map(c => c?.toString()).join('').length < 6 || step == 1 || step == 3}
             on:click={step == 0 ? login : completeTotp}
@@ -186,11 +203,20 @@
 
     input:focus {
         outline: none;
-        border: solid 1px rgb(59, 130, 246);
+        border: solid 1.5px var(--color-blue-500);
+    }
+
+    .button {
+        transition-duration: .2s;
     }
 
     .button.disabled {
         opacity: 0.5;
         cursor: default;
+    }
+
+    .button:hover {
+        background-color: transparent;
+        color: var(--color-blue-500);
     }
 </style>
