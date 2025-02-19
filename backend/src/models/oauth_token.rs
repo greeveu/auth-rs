@@ -122,6 +122,51 @@ impl OAuthToken {
     }
 
     #[allow(unused)]
+    pub async fn get_by_user_and_application_id(user_id: Uuid, application_id: Uuid, connection: &Connection<AuthRsDatabase>) -> Result<Vec<OAuthToken>, HttpResponse<Vec<OAuthToken>>> {
+        let db = Self::get_collection(connection);
+
+        let filter = doc! {
+            "userId": user_id,
+            "applicationId": application_id
+        };
+        match db.find(filter, None).await {
+            Ok(cursor) => {
+                let tokens = cursor.map(|doc| {
+                    let token: OAuthToken = doc.unwrap();
+                    return token;
+                }).collect::<Vec<OAuthToken>>().await;
+                Ok(tokens)
+            },
+            Err(err) => Err(HttpResponse {
+                status: 500,
+                message: format!("Error fetching tokens: {:?}", err),
+                data: None
+            })
+        }
+    }
+
+    #[allow(unused)]
+    pub async fn reauthenticate(&mut self, scope: Vec<OAuthScope>, connection: &Connection<AuthRsDatabase>) -> Result<OAuthToken, HttpResponse<OAuthToken>> {
+        let db = Self::get_collection(connection);
+
+        let filter = doc! {
+            "_id": self.id
+        };
+        
+        self.scope = scope;
+        self.expires_in = 30 * 24 * 60 * 60;
+
+        match db.replace_one(filter, self.clone(), None).await {
+            Ok(_) => Ok(self.clone()),
+            Err(err) => Err(HttpResponse {
+                status: 500,
+                message: format!("Error reauthenticating token: {:?}", err),
+                data: None
+            })
+        }
+    }
+
+    #[allow(unused)]
     pub async fn delete(&self, connection: &Connection<AuthRsDatabase>) -> Result<OAuthToken, HttpResponse<()>> {
         let db = Self::get_collection(connection);
 
