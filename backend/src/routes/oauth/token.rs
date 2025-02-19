@@ -75,7 +75,12 @@ pub async fn get_oauth_token(db: Connection<AuthRsDatabase>, data: Form<TokenOAu
     };
 
     let token = if existing_tokens.len() > 0 {
-        existing_tokens.clone()[0].reauthenticate(code_data.scope.clone().unwrap(), &db).await.unwrap()
+        // TODO: implement a proper scope check here
+        if existing_tokens[0].clone().scope.len() > code_data.scope.clone().unwrap().len() {
+            existing_tokens[0].clone()
+        } else {
+            existing_tokens[0].clone().reauthenticate(code_data.scope.clone().unwrap(), &db).await.unwrap()
+        }
     } else {
         match OAuthToken::new(code_data.client_id, code_data.user_id.unwrap(), code_data.scope.clone().unwrap(), 30 * 24 * 60 * 60).unwrap().insert(&db).await {
             Ok(token) => token,
