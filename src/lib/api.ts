@@ -1,5 +1,4 @@
 import AuthStateManager from "./auth";
-import type OAuthApplication from "./models/OAuthApplication";
 
 class AuthRsApi {
     public static baseUrl = 'http://localhost:8000/api';//'https://oauth.timlohrer.de/api';//
