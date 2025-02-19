@@ -17,6 +17,7 @@
         Clock,
         Lock
     } from "lucide-svelte";
+	import { INVALID_SCOPES, SCOPES } from "$lib/models/OAuthScopes";
 
     let api: AuthRsApi | null = null;
     let user: UserMinimal | null = null;

@@ -28,3 +28,5 @@ const SCOPES: Record<string, { icon: string; description: string }> = {
     'connections:delete': { icon: 'unlink', description: 'Disconnect OAuth Apps' },
     'connections:*': { icon: 'link', description: 'Read and disconnect your connected OAuth Apps' }
 }
+
+export { SCOPES, INVALID_SCOPES }

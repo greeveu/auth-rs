@@ -1,12 +1,11 @@
 <script lang="ts">
-	import { goto } from "$app/navigation";
 	import AuthRsApi from "$lib/api";
 	import AuthStateManager from "$lib/auth";
 	import { ClipboardList, CodeXml, Link, User } from "lucide-svelte";
 	import { onMount } from "svelte";
 
     const authStateManager = new AuthStateManager();
-    const api = new AuthRsApi();
+    let api = new AuthRsApi();
 
     let currentTabIndex = 0;
 
@@ -27,22 +26,11 @@
         { name: 'Logs', icon: 'clipboard-list', requiredRoleId: null },
     ];
     
-    onMount(() => {
-        const token = authStateManager.getToken();
-        if (token) {
-            api.setToken(token);
-            api.getCurrentUser()
-                .then((data) => {
-                    user = data;
-                })
-                .catch((error) => {
-                    console.error(error);
-                    api.setToken(null);
-                    authStateManager.clearToken();
-                    goto('/login?redirect_uri=/dashboard');
-                });
-        } else {
-            goto('/login?redirect_uri=/dashboard');
+    onMount(async () => {
+        const loadData = await authStateManager.handlePageLoad(['redirect_uri=/dashboard']);
+        if (loadData) {
+            api = loadData[0];
+            user = loadData[1];
         }
     })
 </script>

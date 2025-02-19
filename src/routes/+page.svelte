@@ -6,7 +6,7 @@
     onMount(async () => {
         const loadData = await new AuthStateManager().handlePageLoad();
         if (loadData && loadData.length > 1) {
-            goto('/users/@me');
+            goto('/dashboard');
         }
     })
 </script>
