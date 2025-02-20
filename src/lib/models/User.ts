@@ -5,9 +5,9 @@ class UserMinimal {
     lastName: string;
     roles: string[];
     disabled: boolean;
-    createdAt: Date;
+    createdAt: string;
 
-    constructor(_id: string, email: string, firstName: string, lastName: string, roles: string[], disabled: boolean, createdAt: Date) {
+    constructor(_id: string, email: string, firstName: string, lastName: string, roles: string[], disabled: boolean, createdAt: string) {
         this._id = _id;
         this.email = email;
         this.firstName = firstName;
