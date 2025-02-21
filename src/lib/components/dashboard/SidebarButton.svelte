@@ -1,0 +1,46 @@
+<script lang="ts">
+	import { ClipboardList, CodeXml, Link, LogOut, User } from "lucide-svelte";
+
+    export let tab: {
+        name: string;
+        icon: string;
+        requiredRoleId: string | null;
+    };
+    export let active: boolean;
+    export let selectTab: () => void;
+    export let isLogout: boolean = false;
+</script>
+
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<div
+    class="flex flex-row items-center justify-start gap-[15px] w-[275px] border-[2px] border-[#222] rounded-md cursor-pointer {isLogout ? 'hover:text-red-500' : 'hover:text-blue-500'} {isLogout ? 'hover:border-red-500' : 'hover:border-blue-500'} transition-all"
+    class:active={active}
+    style="padding: 10px 15px;"
+    on:click={selectTab}
+>
+    {#if tab.icon == 'user'}
+        <User height="30" width="30" />
+    {:else if tab.icon == 'link'}
+        <Link height="30" width="30" />
+    {:else if tab.icon == 'code-xml'}
+        <CodeXml height="30" width="30" />
+    {:else if tab.icon == 'clipboard-list'}
+        <ClipboardList height="30" width="30" />
+    {:else if tab.icon == 'log-out'}
+        <LogOut height="30" width="30" />
+    {/if}
+    <p>{tab.name}</p>
+</div>
+
+<style>
+    .active {
+        background-color: var(--color-blue-500);
+        border-color: var(--color-blue-500);
+    }
+
+    .active:hover {
+        color: white;
+        cursor: default;
+    }
+</style>

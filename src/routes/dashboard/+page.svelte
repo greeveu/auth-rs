@@ -1,8 +1,8 @@
 <script lang="ts">
+	import SidebarButton from '$lib/components/dashboard/SidebarButton.svelte';
 	import Profile from './profile.svelte';
 	import AuthRsApi from "$lib/api";
 	import AuthStateManager from "$lib/auth";
-	import { ClipboardList, CodeXml, Link, User } from "lucide-svelte";
 	import { onMount } from "svelte";
 
     const authStateManager = new AuthStateManager();
@@ -38,28 +38,13 @@
 
 <div class="flex w-screen h-screen items-center justify-center">
     <div class="flex flex-row items-center h-[80%] w-[70%] border-[2.5px] border-[#333] rounded-md" style="padding: 10px;">
-        <div class="flex flex-col gap-[15px] h-[90%]">
-            {#each TABS.filter(t => t.requiredRoleId ? user?.roles.includes(t.requiredRoleId) : true) as tab, index}
-                <!-- svelte-ignore a11y_no_static_element_interactions -->
-                <!-- svelte-ignore a11y_click_events_have_key_events -->
-                <div
-                    class="flex flex-row items-center justify-start gap-[15px] w-[275px] border-[2px] border-[#222] rounded-md cursor-pointer hover:text-blue-500 hover:border-blue-500 transition-all"
-                    class:active={currentTabIndex == index}
-                    style="padding: 10px 15px;"
-                    on:click={() => currentTabIndex = index}
-                >
-                    {#if tab.icon == 'user'}
-                        <User height="30" width="30" />
-                    {:else if tab.icon == 'link'}
-                        <Link height="30" width="30" />
-                    {:else if tab.icon == 'code-xml'}
-                        <CodeXml height="30" width="30" />
-                    {:else if tab.icon == 'clipboard-list'}
-                        <ClipboardList height="30" width="30" />
-                    {/if}
-                    <p>{tab.name}</p>
-                </div>
-            {/each}
+        <div class="flex flex-col justify-between h-[90%]">
+            <div class="flex flex-col gap-[15px]">
+                {#each TABS.filter(t => t.requiredRoleId ? user?.roles.includes(t.requiredRoleId) : true) as tab, index}
+                    <SidebarButton tab={tab} active={currentTabIndex == index} selectTab={() => currentTabIndex = index} />
+                {/each}
+            </div>
+            <SidebarButton tab={{ name: 'Logout', icon: 'log-out', requiredRoleId: null }} active={false} selectTab={() => authStateManager.logout()} isLogout={true} />
         </div>
         <!-- svelte-ignore element_invalid_self_closing_tag -->
         <div class="w-[4px] h-[90%] bg-[#333] rounded-[2px]" style="margin: 0 15px;" />
@@ -70,15 +55,3 @@
         {/if}
     </div>
 </div>
-
-<style>
-    .active {
-        background-color: var(--color-blue-500);
-        border-color: var(--color-blue-500);
-    }
-
-    .active:hover {
-        color: white;
-        cursor: default;
-    }
-</style>
