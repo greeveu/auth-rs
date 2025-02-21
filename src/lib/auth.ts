@@ -34,6 +34,11 @@ class AuthStateManager {
             return null;
         }
     }
+
+    logout() {
+        this.clearToken();
+        goto(`/logout`);
+    }
 }
 
 export default AuthStateManager;
