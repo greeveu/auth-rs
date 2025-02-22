@@ -22,9 +22,13 @@
         requiredRoleId: string | null;
     }[] = [
         { name: 'Your Profile', icon: 'user', requiredRoleId: null },
+        { name: 'Security', icon: 'shield', requiredRoleId: null },
         { name: 'Connections', icon: 'link', requiredRoleId: null },
         { name: 'OAuth Applications', icon: 'code-xml', requiredRoleId: null },
         { name: 'Logs', icon: 'clipboard-list', requiredRoleId: null },
+        { name: 'Users', icon: 'users', requiredRoleId: '00000000-0000-0000-0000-00000000000' },
+        { name: 'Roles', icon: 'crown', requiredRoleId: '00000000-0000-0000-0000-00000000000' },
+        { name: 'Global Logs', icon: 'scroll-text', requiredRoleId: '00000000-0000-0000-0000-00000000000' },
     ];
     
     onMount(async () => {
@@ -48,10 +52,15 @@
         </div>
         <!-- svelte-ignore element_invalid_self_closing_tag -->
         <div class="w-[4px] h-[90%] bg-[#333] rounded-[2px]" style="margin: 0 15px;" />
-        {#if user && roles}
-            {#if currentTabIndex == 0}
-                <Profile bind:user={user!} bind:roles />
+        <div class="flex flex-col h-[90%]">
+            {#if user && roles}
+                <div class="flex items-center h-[75px]">
+                    <p class="text-[14px]">> Dashboard > {TABS[currentTabIndex].name}</p>
+                </div>
+                {#if currentTabIndex == 0}
+                    <Profile bind:user={user!} bind:roles />
+                {/if}
             {/if}
-        {/if}
+        </div>
     </div>
 </div>

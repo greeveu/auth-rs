@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ClipboardList, CodeXml, Link, LogOut, User } from "lucide-svelte";
+	import { ClipboardList, CodeXml, Link, LogOut, Shield, User } from "lucide-svelte";
 
     export let tab: {
         name: string;
@@ -21,6 +21,8 @@
 >
     {#if tab.icon == 'user'}
         <User height="30" width="30" />
+    {:else if tab.icon == 'shield'}
+        <Shield height="30" width="30" />
     {:else if tab.icon == 'link'}
         <Link height="30" width="30" />
     {:else if tab.icon == 'code-xml'}
