@@ -1,7 +1,8 @@
 import AuthStateManager from "./auth";
+import type UserMinimal from "./models/User";
 
 class AuthRsApi {
-    public static baseUrl = 'http://localhost:8000/api';//'https://oauth.timlohrer.de/api';//
+    public static baseUrl = 'http://localhost:8000/api';//'https://oauth.timlohrer.de/api';
     private token: string | null = null;
     private currentMfaFlowId: string | null = null;
 
@@ -80,6 +81,30 @@ class AuthRsApi {
             headers: {
                 Authorization: `Bearer ${this.token}`,
             },
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.status != 200) {
+                throw new Error(data.message);
+            }
+            return data.data;
+        } else {
+            throw new Error(`(${response.status}): ${response.statusText}`);
+        }
+    }
+
+    async updateUser(userId: string, updates: UserUpdates): Promise<UserMinimal> {
+        if (!this.token) {
+            throw new Error('No token');
+        }
+
+        const response = await fetch(`${AuthRsApi.baseUrl}/users/${userId}`, {
+            method: 'PATCH',
+            headers: {
+                Authorization: `Bearer ${this.token}`,
+            },
+            body: JSON.stringify(updates),
         });
 
         if (response.ok) {

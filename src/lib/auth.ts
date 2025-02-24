@@ -1,5 +1,6 @@
 import { goto } from "$app/navigation";
 import AuthRsApi from "./api";
+import type UserMinimal from "./models/User";
 
 class AuthStateManager {
     constructor() {}

@@ -1,4 +1,4 @@
-class UserMinimal {
+export default class UserMinimal {
     _id: string;
     email: string;
     firstName: string;
@@ -16,4 +16,10 @@ class UserMinimal {
         this.disabled = disabled;
         this.createdAt = createdAt;
     }
+
+    static isSystemAdmin(user: UserMinimal): boolean {
+        return user._id == '00000000-0000-0000-0000-000000000000';
+    }
+
+    static DEFAULT_USER_ID = '00000000-0000-0000-0000-000000000001';
 }

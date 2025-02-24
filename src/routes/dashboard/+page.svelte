@@ -4,6 +4,7 @@
 	import AuthRsApi from "$lib/api";
 	import AuthStateManager from "$lib/auth";
 	import { onMount } from "svelte";
+	import type UserMinimal from '$lib/models/User';
 
     const authStateManager = new AuthStateManager();
     let api = new AuthRsApi();
@@ -58,7 +59,7 @@
                     <p class="text-[14px]">> Dashboard > {TABS[currentTabIndex].name}</p>
                 </div>
                 {#if currentTabIndex == 0}
-                    <Profile bind:user={user!} bind:roles />
+                    <Profile bind:api bind:user={user!} bind:roles />
                 {/if}
             {/if}
         </div>
