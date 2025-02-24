@@ -15,6 +15,7 @@ pub struct UpdateUserData {
     first_name: Option<String>,
     last_name: Option<String>,
     roles: Option<Vec<Uuid>>,
+    disabled: Option<bool>,
 }
 
 #[allow(unused)]
@@ -91,13 +92,18 @@ pub async fn update_user(db: Connection<AuthRsDatabase>, req_entity: AuthEntity,
         old_values.insert("lastName".to_string(), old_user.last_name.clone());
         new_values.insert("lastName".to_string(), new_user.last_name.clone());
     }
-    if data.roles.is_some() && req_entity.user.unwrap().is_system_admin() {
+    if data.roles.is_some() && req_entity.user.clone().unwrap().is_system_admin() {
         new_user.roles = data.roles.unwrap();
         if !new_user.roles.contains(&DEFAULT_ROLE_ID) {
             new_user.roles.push(*DEFAULT_ROLE_ID);
         }
         old_values.insert("roles".to_string(), old_user.roles.iter().map(|r| r.to_string()).collect::<Vec<String>>().join(","));
         new_values.insert("roles".to_string(), new_user.roles.iter().map(|r| r.to_string()).collect::<Vec<String>>().join(","));
+    }
+    if data.disabled.is_some() && req_entity.user.unwrap().is_system_admin() {
+        new_user.disabled = data.disabled.unwrap();
+        old_values.insert("disabled".to_string(), old_user.disabled.to_string());
+        new_values.insert("disabled".to_string(), new_user.disabled.to_string());
     }
 
     if new_values.is_empty() {
