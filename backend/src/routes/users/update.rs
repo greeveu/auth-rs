@@ -4,7 +4,7 @@ use pwhash::bcrypt;
 use rocket::{error, patch, serde::{json::Json, Deserialize}};
 use rocket_db_pools::Connection;
 
-use crate::{auth::auth::AuthEntity, db::AuthRsDatabase, models::{audit_log::{AuditLog, AuditLogAction, AuditLogEntityType}, http_response::HttpResponse, user::{User, UserMinimal}}};
+use crate::{auth::auth::AuthEntity, db::AuthRsDatabase, models::{audit_log::{AuditLog, AuditLogAction, AuditLogEntityType}, http_response::HttpResponse, user::{User, UserMinimal}}, DEFAULT_ROLE_ID};
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -13,7 +13,8 @@ pub struct UpdateUserData {
     email: Option<String>,
     password: Option<String>,
     first_name: Option<String>,
-    last_name: Option<String>
+    last_name: Option<String>,
+    roles: Option<Vec<Uuid>>,
 }
 
 #[allow(unused)]
@@ -38,7 +39,7 @@ pub async fn update_user(db: Connection<AuthRsDatabase>, req_entity: AuthEntity,
         })
     };
 
-    if req_entity.user_id != uuid && !req_entity.user.unwrap().is_system_admin() {
+    if req_entity.user_id != uuid && !req_entity.user.clone().unwrap().is_system_admin() {
         return Json(HttpResponse {
             status: 403,
             message: "Missing permissions!".to_string(),
@@ -59,11 +60,13 @@ pub async fn update_user(db: Connection<AuthRsDatabase>, req_entity: AuthEntity,
     let mut old_values: HashMap<String, String> = HashMap::new();
     let mut new_values: HashMap<String, String> = HashMap::new();
 
+    // TODO: Add password / 2fa validation
     if data.email.is_some() {
         new_user.email = data.email.unwrap();
         old_values.insert("email".to_string(), old_user.email.clone());
         new_values.insert("email".to_string(), new_user.email.clone());
     }
+    // TODO: Add password / 2fa validation
     if data.password.is_some() {
         let password_hash = match bcrypt::hash(data.password.unwrap()) {
             Ok(hash) => hash,
@@ -87,6 +90,14 @@ pub async fn update_user(db: Connection<AuthRsDatabase>, req_entity: AuthEntity,
         new_user.last_name = data.last_name.unwrap();
         old_values.insert("lastName".to_string(), old_user.last_name.clone());
         new_values.insert("lastName".to_string(), new_user.last_name.clone());
+    }
+    if data.roles.is_some() && req_entity.user.unwrap().is_system_admin() {
+        new_user.roles = data.roles.unwrap();
+        if !new_user.roles.contains(&DEFAULT_ROLE_ID) {
+            new_user.roles.push(*DEFAULT_ROLE_ID);
+        }
+        old_values.insert("roles".to_string(), old_user.roles.iter().map(|r| r.to_string()).collect::<Vec<String>>().join(","));
+        new_values.insert("roles".to_string(), new_user.roles.iter().map(|r| r.to_string()).collect::<Vec<String>>().join(","));
     }
 
     if new_values.is_empty() {
