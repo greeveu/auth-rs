@@ -5,6 +5,7 @@
     export let label: string;
     export let roles: Role[];
     export let readOnly: boolean = true;
+    export let isSystemAdmin: boolean = false;
     export let onAdd: () => void;
     export let onRemove: (role: Role) => void;
 </script>
@@ -29,7 +30,7 @@
         {#each roles as role}
             <div class="flex flex-row items-center justify-between gap-[10px] text-[13px] h-[40px] bg-[#111] rounded-md" style="padding: 10px;">
                 <p style="color: white !important;">{role.name}</p>
-                {#if role._id != UserMinimal.DEFAULT_USER_ID && !readOnly}
+                {#if role._id != UserMinimal.DEFAULT_ROLE_ID && !(role._id == UserMinimal.ADMIN_ROLE_ID && !isSystemAdmin) && !readOnly}
                     <div on:click={() => onRemove(role)}>
                         <X size="15" class="hover:text-red-500 cursor-pointer transition-all" />
                     </div>

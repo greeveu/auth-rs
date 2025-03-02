@@ -17,9 +17,15 @@ export default class UserMinimal {
         this.createdAt = createdAt;
     }
 
-    static isSystemAdmin(user: UserMinimal): boolean {
-        return user._id == '00000000-0000-0000-0000-000000000000';
+    static isAdmin(user: UserMinimal): boolean {
+        return user._id == this.DEFAULT_USER_ID || user.roles.includes(this.ADMIN_ROLE_ID);
     }
 
-    static DEFAULT_USER_ID = '00000000-0000-0000-0000-000000000001';
+    static isSystemAdmin(user: UserMinimal): boolean {
+        return user._id == this.DEFAULT_USER_ID;
+    }
+
+    static DEFAULT_USER_ID = '00000000-0000-0000-0000-000000000000';
+    static DEFAULT_ROLE_ID = '00000000-0000-0000-0000-000000000001';
+    static ADMIN_ROLE_ID = '00000000-0000-0000-0000-000000000000';
 }

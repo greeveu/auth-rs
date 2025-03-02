@@ -1,4 +1,4 @@
-class UserUpdates {
+export default class UserUpdates {
     email: string | null;
     password: string | null;
     firstName: string | null;

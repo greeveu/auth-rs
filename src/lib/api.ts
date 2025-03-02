@@ -1,5 +1,6 @@
 import AuthStateManager from "./auth";
 import type UserMinimal from "./models/User";
+import type UserUpdates from "./models/UserUpdates";
 
 class AuthRsApi {
     public static baseUrl = 'http://localhost:8000/api';//'https://oauth.timlohrer.de/api';
@@ -102,7 +103,8 @@ class AuthRsApi {
         const response = await fetch(`${AuthRsApi.baseUrl}/users/${userId}`, {
             method: 'PATCH',
             headers: {
-                Authorization: `Bearer ${this.token}`,
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.token}`,
             },
             body: JSON.stringify(updates),
         });

@@ -4,7 +4,7 @@ use pwhash::bcrypt;
 use rocket::{error, patch, serde::{json::Json, Deserialize}};
 use rocket_db_pools::Connection;
 
-use crate::{auth::auth::AuthEntity, db::AuthRsDatabase, models::{audit_log::{AuditLog, AuditLogAction, AuditLogEntityType}, http_response::HttpResponse, user::{User, UserMinimal}}, DEFAULT_ROLE_ID};
+use crate::{auth::auth::AuthEntity, db::AuthRsDatabase, models::{audit_log::{AuditLog, AuditLogAction, AuditLogEntityType}, http_response::HttpResponse, role::Role, user::{User, UserMinimal}}, DEFAULT_ROLE_ID};
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -94,6 +94,26 @@ pub async fn update_user(db: Connection<AuthRsDatabase>, req_entity: AuthEntity,
     }
     if data.roles.is_some() && req_entity.user.clone().unwrap().is_system_admin() {
         new_user.roles = data.roles.unwrap();
+
+        let available_roles = match Role::get_all(&db, None).await {
+            Ok(roles) => roles,
+            Err(err) => return Json(HttpResponse {
+                status: 500,
+                message: err.message,
+                data: None
+            })
+        };
+
+        for role_id in new_user.roles.iter() {
+            if !available_roles.iter().any(|r| r.id == *role_id) {
+                return Json(HttpResponse {
+                    status: 400,
+                    message: format!("Role with ID {:?} does not exist.", role_id),
+                    data: None
+                });
+            }
+        }
+
         if !new_user.roles.contains(&DEFAULT_ROLE_ID) {
             new_user.roles.push(*DEFAULT_ROLE_ID);
         }

@@ -4,7 +4,7 @@ use pwhash::bcrypt;
 use rand::Rng;
 use rocket_db_pools::{mongodb::{Collection, Database}, Connection};
 use rocket::{futures::StreamExt, serde::{Deserialize, Serialize}};
-use crate::{db::{get_main_db, AuthRsDatabase}, DEFAULT_ROLE_ID, SYSTEM_USER_ID};
+use crate::{db::{get_main_db, AuthRsDatabase}, ADMIN_ROLE_ID, DEFAULT_ROLE_ID, SYSTEM_USER_ID};
 
 use super::http_response::HttpResponse;
 
@@ -118,7 +118,7 @@ impl User {
 
     #[allow(unused)]
     pub fn is_system_admin(&self) -> bool {
-        self.id == *SYSTEM_USER_ID
+        self.id == *SYSTEM_USER_ID || self.roles.contains(&*ADMIN_ROLE_ID)
     }
 
     // ONLY USE THIS INTERNALLY!
