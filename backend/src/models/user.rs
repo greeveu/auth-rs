@@ -35,6 +35,7 @@ pub struct UserMinimal {
     pub first_name: String,
     pub last_name: String,
     pub roles: Vec<Uuid>,
+    pub mfa: bool,
     pub disabled: bool,
     pub created_at: String,
 }
@@ -111,6 +112,7 @@ impl User {
             first_name: self.first_name.clone(),
             last_name: self.last_name.clone(),
             roles: self.roles.clone(),
+            mfa: self.totp_secret.is_some(),
             disabled: self.disabled.clone(),
             created_at: self.created_at.clone()
         }
