@@ -85,7 +85,8 @@ pub async fn enable_totp_mfa(db: Connection<AuthRsDatabase>, req_entity: AuthEnt
 #[serde(crate = "rocket::serde")]
 #[serde(rename_all = "camelCase")]
 pub struct DisableMfaData {
-    pub code: String
+    pub code: String,
+    pub password: String
 }
 
 #[allow(unused)]
@@ -143,6 +144,15 @@ pub async fn disable_totp_mfa(db: Connection<AuthRsDatabase>, req_entity: AuthEn
             data: None
         })
     };
+
+    match user.verify_password(&mfa_data.password) {
+        true => (),
+        false => return Json(HttpResponse {
+            status: 401,
+            message: "Incorrect password!".to_string(),
+            data: None
+        })
+    }
 
     match MfaHandler::disable_totp(&mut user, req_entity, &db).await {
         Ok(_) => Json(HttpResponse {

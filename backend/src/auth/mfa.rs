@@ -145,11 +145,17 @@ impl MfaHandler {
     }
 
     pub async fn disable_totp(user: &mut User, req_user: AuthEntity, db: &Connection<AuthRsDatabase>) -> Result<(), String> {
-        let new_values = HashMap::from([("totpSecret".to_string(), "".to_string())]);
-        let old_values = HashMap::from([("totpSecret".to_string(), user.totp_secret.clone().unwrap_or("".to_string()))]);
-
+        let mut new_values = HashMap::from([("totpSecret".to_string(), "".to_string())]);
+        let mut old_values = HashMap::from([("totpSecret".to_string(), user.totp_secret.clone().unwrap_or("".to_string()))]);
+        
         user.totp_secret = None;
         
+        let new_token = User::generate_token();
+        new_values.insert("token".to_string(), new_token.clone());
+        old_values.insert("token".to_string(), user.token.clone());
+        
+        user.token = new_token;
+
         let filter = doc! {
             "_id": user.id
         };

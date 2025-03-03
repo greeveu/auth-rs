@@ -49,7 +49,7 @@ impl UserMinimal {
 impl User {
     pub const COLLECTION_NAME: &'static str = "users";
 
-    fn generate_token() -> String {
+    pub fn generate_token() -> String {
         rand::rng().sample_iter(rand::distr::Alphanumeric).take(128).map(char::from).collect()
     }
 
