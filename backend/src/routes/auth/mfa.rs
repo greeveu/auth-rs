@@ -70,7 +70,7 @@ pub async fn mfa(db: Connection<AuthRsDatabase>, data: Json<MfaData>) -> Json<Ht
                         status: 200,
                         message: "TOTP enabled".to_string(),
                         data: Some(LoginResponse {
-                            user: Some(flow.user.to_minimal()),
+                            user: Some(user.to_minimal()),
                             token: Some(TOTP::get_qr_base64(&flow.totp.clone().unwrap()).unwrap()),
                             mfa_required: false,
                             mfa_flow_id: None

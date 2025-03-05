@@ -14,7 +14,7 @@
         <input
             type="number"
             class="border-[1.5px] border-gray-300 rounded-md opacity-75"
-            style="padding: 5px; width: 30px; height: 40px;"
+            style="padding: 5px 5px 5px 7.5px; width: 30px; height: 40px;"
             maxlength="1"
             max="9"
             id="totp-{index}"

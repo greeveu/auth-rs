@@ -144,7 +144,7 @@ impl MfaHandler {
         }
     }
 
-    pub async fn disable_totp(user: &mut User, req_user: AuthEntity, db: &Connection<AuthRsDatabase>) -> Result<(), String> {
+    pub async fn disable_totp(user: &mut User, req_user: AuthEntity, db: &Connection<AuthRsDatabase>) -> Result<User, String> {
         let mut new_values = HashMap::from([("totpSecret".to_string(), "".to_string())]);
         let mut old_values = HashMap::from([("totpSecret".to_string(), user.totp_secret.clone().unwrap_or("".to_string()))]);
         
@@ -165,7 +165,7 @@ impl MfaHandler {
                     Ok(_) => (),
                     Err(err) => eprintln!("{:?}", err)
                 };
-                Ok(())
+                Ok(user.clone())
             },
             Err(err) => Err(format!("Failed to disable TOTP: {:?}", err))
         }

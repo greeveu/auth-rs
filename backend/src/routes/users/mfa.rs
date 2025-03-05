@@ -2,7 +2,7 @@ use mongodb::bson::Uuid;
 use rocket::{post, serde::{json::Json, Deserialize}};
 use rocket_db_pools::Connection;
 
-use crate::{auth::{auth::AuthEntity, mfa::MfaHandler}, db::AuthRsDatabase, models::{http_response::HttpResponse, user::User}, routes::auth::login::LoginResponse};
+use crate::{auth::{auth::AuthEntity, mfa::MfaHandler}, db::AuthRsDatabase, models::{http_response::HttpResponse, user::{User, UserMinimal}}, routes::auth::login::LoginResponse};
 
 
 #[derive(Deserialize)]
@@ -85,13 +85,13 @@ pub async fn enable_totp_mfa(db: Connection<AuthRsDatabase>, req_entity: AuthEnt
 #[serde(crate = "rocket::serde")]
 #[serde(rename_all = "camelCase")]
 pub struct DisableMfaData {
-    pub code: String,
-    pub password: String
+    pub code: Option<String>,
+    pub password: Option<String>
 }
 
 #[allow(unused)]
 #[post("/users/<id>/mfa/totp/disable", format = "json", data= "<data>")] 
-pub async fn disable_totp_mfa(db: Connection<AuthRsDatabase>, req_entity: AuthEntity, id: &str, data: Json<DisableMfaData>) -> Json<HttpResponse<()>> {
+pub async fn disable_totp_mfa(db: Connection<AuthRsDatabase>, req_entity: AuthEntity, id: &str, data: Json<DisableMfaData>) -> Json<HttpResponse<UserMinimal>> {
     let mfa_data = data.into_inner();
     
     if req_entity.is_token() {
@@ -136,29 +136,39 @@ pub async fn disable_totp_mfa(db: Connection<AuthRsDatabase>, req_entity: AuthEn
         });
     }
 
-    match MfaHandler::verify_totp(&user, user.totp_secret.clone().unwrap(), &mfa_data.code).await {
-        true => (),
-        false => return Json(HttpResponse {
-            status: 401,
-            message: "Invalid TOTP code!".to_string(),
+    if mfa_data.code.is_none() && mfa_data.password.is_none() {
+        return Json(HttpResponse {
+            status: 400,
+            message: "Missing TOTP code or password!".to_string(),
             data: None
-        })
-    };
+        });
+    }
 
-    match user.verify_password(&mfa_data.password) {
-        true => (),
-        false => return Json(HttpResponse {
-            status: 401,
-            message: "Incorrect password!".to_string(),
-            data: None
-        })
+    if mfa_data.code.is_some() {
+        match MfaHandler::verify_totp(&user, user.totp_secret.clone().unwrap(), &mfa_data.code.unwrap()).await {
+            true => (),
+            false => return Json(HttpResponse {
+                status: 401,
+                message: "Invalid TOTP code!".to_string(),
+                data: None
+            })
+        };
+    } else {
+        match user.verify_password(&mfa_data.password.unwrap()) {
+            true => (),
+            false => return Json(HttpResponse {
+                status: 401,
+                message: "Incorrect password!".to_string(),
+                data: None
+            })
+        }
     }
 
     match MfaHandler::disable_totp(&mut user, req_entity, &db).await {
-        Ok(_) => Json(HttpResponse {
+        Ok(user) => Json(HttpResponse {
             status: 200,
             message: "TOTP MFA disabled.".to_string(),
-            data: None
+            data: Some(user.to_minimal())
         }),
         Err(err) => Json(HttpResponse {
             status: 500,

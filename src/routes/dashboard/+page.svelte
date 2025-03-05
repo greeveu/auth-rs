@@ -47,7 +47,7 @@
     <div class="flex flex-row items-center h-[80%] w-[70%] border-[2.5px] border-[#333] rounded-md" style="padding: 10px;">
         <div class="flex flex-col justify-between h-[90%]">
             <div class="flex flex-col gap-[15px]">
-                {#each TABS.filter(t => t.requiredRoleId ? user?.roles.includes(t.requiredRoleId) : true) as tab, index}
+                {#each TABS.filter(t => t.requiredRoleId ? user?.roles?.includes(t.requiredRoleId) : true) as tab, index}
                     {#if tab.name == 'SPACER'}
                         <!-- svelte-ignore element_invalid_self_closing_tag -->
                         <div class="flex items-center justify-center w-[275px] h-[2px] bg-[#333]" style="margin-top: 20px;">
