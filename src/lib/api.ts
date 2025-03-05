@@ -1,4 +1,5 @@
 import AuthStateManager from "./auth";
+import type OAuthApplication from "./models/OAuthApplication";
 import type UserMinimal from "./models/User";
 import type UserUpdates from "./models/UserUpdates";
 
@@ -100,7 +101,7 @@ class AuthRsApi {
         }
     }
 
-    async disableMfa(user: UserMinimal, code: string | null, password: string | null) {
+    async disableMfa(user: UserMinimal, code: string | null, password: string | null): Promise<UserMinimal> {
         if (!this.token) {
             throw new Error('No token');
         }
@@ -195,6 +196,52 @@ class AuthRsApi {
             throw new Error(`(${response.status}): ${response.statusText}`);
         }
     }
+
+    async getConnections(user: UserMinimal): Promise<OAuthApplication[]> {
+        if (!this.token) {
+            throw new Error('No token');
+        }
+
+        const response = await fetch(`${AuthRsApi.baseUrl}/users/${user._id}/connections`, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${this.token}`,
+            },
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.status != 200) {
+                throw new Error(data.message);
+            }
+            return data.data;
+        } else {
+            throw new Error(`(${response.status}): ${response.statusText}`);
+        }
+    }
+
+    async disconnectConnection(connection: OAuthApplication): Promise<OAuthApplication> {
+        if (!this.token) {
+            throw new Error('No token');
+        }
+
+        const response = await fetch(`${AuthRsApi.baseUrl}/connections/${connection._id}`, {
+            method: 'DELETE',
+            headers: {
+                Authorization: `Bearer ${this.token}`,
+            },
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.status != 200) {
+                throw new Error(data.message);
+            }
+            return data.data;
+        } else {
+            throw new Error(`(${response.status}): ${response.statusText}`);
+        }
+    }	
 
     async getOAuthApplication(id: string): Promise<OAuthApplication> {
         if (!this.token) {

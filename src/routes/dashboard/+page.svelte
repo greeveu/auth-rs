@@ -6,6 +6,8 @@
 	import AuthStateManager from "$lib/auth";
 	import { onMount } from "svelte";
 	import UserMinimal from '$lib/models/User';
+	import type OAuthApplication from '$lib/models/OAuthApplication';
+	import Connections from './connections.svelte';
 
     const authStateManager = new AuthStateManager();
     let api = new AuthRsApi();
@@ -71,6 +73,8 @@
                     <Profile bind:api bind:user={user!} bind:roles />
                 {:else if currentTabIndex == 1}
                     <Security bind:api bind:user={user} />
+                {:else if currentTabIndex == 2}
+                    <Connections bind:api bind:user={user} bind:connections />
                 {/if}
             {/if}
         </div>

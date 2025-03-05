@@ -1,13 +1,13 @@
-class OAuthApplication {
-    id: string;
+export default class OAuthApplication {
+    _id: string;
     name: string;
     description: string;
     redirectUris: string[];
     owner: string;
     createdAt: string;
 
-    constructor(id: string, name: string, description: string, redirectUris: string[], owner: string, createdAt: string) {
-        this.id = id;
+    constructor(_id: string, name: string, description: string, redirectUris: string[], owner: string, createdAt: string) {
+        this._id = _id;
         this.name = name;
         this.description = description;
         this.redirectUris = redirectUris;

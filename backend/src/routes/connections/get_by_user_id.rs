@@ -4,7 +4,7 @@ use rocket::{get, serde::json::Json};
 use crate::{auth::auth::AuthEntity, db::AuthRsDatabase, models::{http_response::HttpResponse, oauth_application::{OAuthApplication, OAuthApplicationMinimal}, oauth_scope::{OAuthScope, ScopeActions}, oauth_token::OAuthToken}};
 
 #[allow(unused)]
-#[get("/connections/<id>", format = "json")] 
+#[get("/users/<id>/connections", format = "json")] 
 pub async fn get_by_user_id(db: Connection<AuthRsDatabase>, req_entity: AuthEntity, id: &str) -> Json<HttpResponse<Vec<OAuthApplicationMinimal>>> {
     if req_entity.is_token() && (!req_entity.token.clone().unwrap().check_scope(OAuthScope::Connections(ScopeActions::Read)) || req_entity.token.clone().unwrap().check_scope(OAuthScope::Connections(ScopeActions::All))) {
         return Json(HttpResponse {
