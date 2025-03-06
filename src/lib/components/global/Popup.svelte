@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { X } from "lucide-svelte";
 
-    export let title;
+    export let title: string;
     export let onClose: () => void;
 </script>
 <!-- svelte-ignore element_invalid_self_closing_tag -->

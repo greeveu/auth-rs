@@ -24,7 +24,7 @@
                     roles: [...user.roles, role._id], 
                     disabled: null 
                 });
-                api.updateUser(user._id, updates)
+                api.updateUser(user, updates)
                     .then(u => user = u)
                     .catch(e => console.error(e));
             }
@@ -40,7 +40,7 @@
             roles: roles.filter(r => r._id != role._id).map(r => r._id), 
             disabled: null 
         });
-        api.updateUser(user._id, updates)
+        api.updateUser(user, updates)
             .then(u => user = u)
             .catch(e => console.error(e));
     }

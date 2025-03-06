@@ -1,6 +1,6 @@
 <script lang="ts">
-	import TotpInput from './../../lib/components/auth/TotpInput.svelte';
-	import Popup from './../../lib/components/global/Popup.svelte';
+	import TotpInput from '../../lib/components/auth/TotpInput.svelte';
+	import Popup from '../../lib/components/global/Popup.svelte';
 	import { Eye, EyeOff, ShieldCheck, ShieldX } from 'lucide-svelte';
 	import type AuthRsApi from "$lib/api";
 	import type UserMinimal from "$lib/models/User";
@@ -49,9 +49,9 @@
 
 <div class="flex flex-col items-center justify-start h-full" style="padding-top: 10%;">
     {#if user.mfa}
-    <ShieldCheck size="120" class="text-green-600" />
+        <ShieldCheck size="120" class="text-green-600" />
     {:else}
-    <ShieldX size="120" class="text-red-600" />
+        <ShieldX size="120" class="text-red-600" />
     {/if}
     <p class="text-[24px]" style="margin-top: 10px;">MFA is {user.mfa ? 'enabled' : 'disabled'}.</p>
     <!-- svelte-ignore a11y_click_events_have_key_events -->
