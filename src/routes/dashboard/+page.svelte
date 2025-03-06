@@ -68,7 +68,7 @@
         <div class="w-[4px] h-[90%] bg-[#333] rounded-[2px]" style="margin: 0 15px;" />
         <div class="flex flex-col h-[90%] w-full">
             {#if user && roles}
-                <div class="flex items-center h-[75px]">
+                <div class="flex items-center min-h-[75px]">
                     <p class="text-[14px]">> {TABS[currentTabIndex].requiredRoleId == UserMinimal.ADMIN_ROLE_ID ? 'Admin' : ''} Dashboard > {TABS[currentTabIndex].name}</p>
                 </div>
                 {#if currentTabIndex == 0}
