@@ -2,7 +2,7 @@ use mongodb::bson::Uuid;
 use rocket::{delete, error, serde::json::Json};
 use rocket_db_pools::Connection;
 
-use crate::{auth::auth::AuthEntity, db::AuthRsDatabase, models::{audit_log::{AuditLog, AuditLogAction, AuditLogEntityType}, http_response::HttpResponse, role::{self, Role}}};
+use crate::{auth::auth::AuthEntity, db::AuthRsDatabase, models::{audit_log::{AuditLog, AuditLogAction, AuditLogEntityType}, http_response::HttpResponse, role::Role}};
 
 #[allow(unused)]
 #[delete("/roles/<id>", format = "json")]
