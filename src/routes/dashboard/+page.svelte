@@ -1,13 +1,15 @@
 <script lang="ts">
-	import Security from './security.svelte';
+	import Security from './Security.svelte';
 	import SidebarButton from '$lib/components/dashboard/SidebarButton.svelte';
-	import Profile from './profile.svelte';
+	import Profile from './Profile.svelte';
 	import AuthRsApi from "$lib/api";
 	import AuthStateManager from "$lib/auth";
 	import { onMount } from "svelte";
 	import UserMinimal from '$lib/models/User';
 	import type OAuthApplication from '$lib/models/OAuthApplication';
-	import Connections from './connections.svelte';
+	import Connections from './Connections.svelte';
+	import type OAuthConnection from '$lib/models/OAuthConnection';
+	import Applications from './Applications.svelte';
 
     const authStateManager = new AuthStateManager();
     let api = new AuthRsApi();
@@ -16,8 +18,8 @@
 
     let user: UserMinimal | null = null;
     let roles: Role[] = [];
-    let connections: OAuthApplication[] = [];
-    let OAuthApplications: OAuthApplication[] = [];
+    let connections: OAuthConnection[] = [];
+    let applications: OAuthApplication[] = [];
     let auditLogs: AuditLog[] = [];
 
     const TABS: {
@@ -70,11 +72,13 @@
                     <p class="text-[14px]">> {TABS[currentTabIndex].requiredRoleId == UserMinimal.ADMIN_ROLE_ID ? 'Admin' : ''} Dashboard > {TABS[currentTabIndex].name}</p>
                 </div>
                 {#if currentTabIndex == 0}
-                    <Profile bind:api bind:user={user!} bind:roles />
+                    <Profile bind:api bind:user bind:roles />
                 {:else if currentTabIndex == 1}
-                    <Security bind:api bind:user={user} />
+                    <Security bind:api bind:user />
                 {:else if currentTabIndex == 2}
-                    <Connections bind:api bind:user={user} bind:connections />
+                    <Connections bind:api bind:user bind:connections />
+                {:else if currentTabIndex == 3}
+                    <Applications bind:api bind:user bind:applications />
                 {/if}
             {/if}
         </div>

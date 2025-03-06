@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ScopeList from './../../../lib/components/global/ScopeList.svelte';
     import { onMount } from "svelte";
 	import type AuthRsApi from "$lib/api";
 	import AuthStateManager from "$lib/auth";
@@ -6,18 +7,13 @@
         Bot,
         Link,
         User,
-        UserPen,
-        UserMinus,
-        UserCog,
-        Crown,
-        ClipboardList,
-        CodeXml,
-        Unlink,
         SquareArrowOutUpRight,
         Clock,
         Lock
     } from "lucide-svelte";
-	import { INVALID_SCOPES, SCOPES } from "$lib/models/OAuthScopes";
+	import { INVALID_SCOPES } from "$lib/models/OAuthScopes";
+	import type UserMinimal from "$lib/models/User";
+	import type OAuthApplication from "$lib/models/OAuthApplication";
 
     let api: AuthRsApi | null = null;
     let user: UserMinimal | null = null;
@@ -130,30 +126,7 @@
         </div>
         <hr class="h-[2px] w-full bg-white opacity-25 rounded-[2px]" style="margin: 15px;" />
         <div class="flex flex-col items-center gap-[10px] w-full" style="padding: 2.5px 17.5px;">
-            {#each oAuthData.scopes as scope}
-                <div class="flex flex-row items-start w-full gap-[15px]">
-                    {#if SCOPES[scope].icon == 'user'}
-                        <User height="20px" width="20px"  />
-                    {:else if SCOPES[scope].icon == 'user-pen'}
-                        <UserPen height="20px" width="20px" />
-                    {:else if SCOPES[scope].icon == 'user-minus'}
-                        <UserMinus height="20px" width="20px" />
-                    {:else if SCOPES[scope].icon == 'user-cog'}
-                        <UserCog height="20px" width="20px" />
-                    {:else if SCOPES[scope].icon == 'crown'}
-                        <Crown height="20px" width="20px" />
-                    {:else if SCOPES[scope].icon == 'clipboard-list'}
-                        <ClipboardList height="20px" width="20px" />
-                    {:else if SCOPES[scope].icon == 'code-xml'}
-                        <CodeXml height="20px" width="20px" />
-                    {:else if SCOPES[scope].icon == 'link'}
-                        <Link height="20px" width="20px" />
-                    {:else if SCOPES[scope].icon == 'unlink'}
-                        <Unlink height="20px" width="20px" />
-                    {/if}
-                    <p class="text-[14px]">{SCOPES[scope].description}</p>
-                </div>
-            {/each}
+            <ScopeList scopes={oAuthData.scopes} />
         </div>
         <hr class="h-[2px] w-full bg-white opacity-25 rounded-[2px]" style="margin: 10px;" />
         <div class="flex flex-col items-start justify-center w-full max-w-[450px] gap-[10px]" style="padding: 2.5px 17.5px;">

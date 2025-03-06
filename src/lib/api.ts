@@ -1,5 +1,7 @@
 import AuthStateManager from "./auth";
 import type OAuthApplication from "./models/OAuthApplication";
+import type OAuthApplicationUpdates from "./models/OAuthApplicationUpdates";
+import type OAuthConnection from "./models/OAuthConnection";
 import type UserMinimal from "./models/User";
 import type UserUpdates from "./models/UserUpdates";
 
@@ -149,12 +151,12 @@ class AuthRsApi {
         }
     }
 
-    async updateUser(userId: string, updates: UserUpdates): Promise<UserMinimal> {
+    async updateUser(user: UserMinimal, updates: UserUpdates): Promise<UserMinimal> {
         if (!this.token) {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/users/${userId}`, {
+        const response = await fetch(`${AuthRsApi.baseUrl}/users/${user._id}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -197,7 +199,7 @@ class AuthRsApi {
         }
     }
 
-    async getConnections(user: UserMinimal): Promise<OAuthApplication[]> {
+    async getConnections(user: UserMinimal): Promise<OAuthConnection[]> {
         if (!this.token) {
             throw new Error('No token');
         }
@@ -220,12 +222,12 @@ class AuthRsApi {
         }
     }
 
-    async disconnectConnection(connection: OAuthApplication): Promise<OAuthApplication> {
+    async disconnectConnection(connection: OAuthConnection): Promise<null> {
         if (!this.token) {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/connections/${connection._id}`, {
+        const response = await fetch(`${AuthRsApi.baseUrl}/connections/${connection.application._id}`, {
             method: 'DELETE',
             headers: {
                 Authorization: `Bearer ${this.token}`,
@@ -243,12 +245,35 @@ class AuthRsApi {
         }
     }	
 
-    async getOAuthApplication(id: string): Promise<OAuthApplication> {
+    async getOAuthApplication(application: OAuthApplication): Promise<OAuthApplication> {
         if (!this.token) {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/oauth-applications/${id}`, {
+        const response = await fetch(`${AuthRsApi.baseUrl}/oauth-applications/${application._id}`, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${this.token}`,
+            },
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.status != 200) {
+                throw new Error(data.message);
+            }
+            return data.data;
+        } else {
+            throw new Error(`(${response.status}): ${response.statusText}`);
+        }
+    }
+
+    async getOAuthApplications(): Promise<OAuthApplication[]> {
+        if (!this.token) {
+            throw new Error('No token');
+        }
+
+        const response = await fetch(`${AuthRsApi.baseUrl}/oauth-applications`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${this.token}`,
@@ -287,6 +312,54 @@ class AuthRsApi {
         if (response.ok) {
             const data = await response.json();
             return data;
+        } else {
+            throw new Error(`(${response.status}): ${response.statusText}`);
+        }
+    }
+
+    async updateOAuthApplication(application: OAuthApplication, updates: OAuthApplicationUpdates): Promise<OAuthApplication> {
+        if (!this.token) {
+            throw new Error('No token');
+        }
+
+        const response = await fetch(`${AuthRsApi.baseUrl}/oauth-applications/${application._id}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${this.token}`,
+            },
+            body: JSON.stringify(updates)
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.status != 200) {
+                throw new Error(data.message);
+            }
+            return data.data;
+        } else {
+            throw new Error(`(${response.status}): ${response.statusText}`);
+        }
+    }
+
+    async deleteOAuthApplication(application: OAuthApplication): Promise<OAuthApplication> {
+        if (!this.token) {
+            throw new Error('No token');
+        }
+
+        const response = await fetch(`${AuthRsApi.baseUrl}/oauth-applications/${application._id}`, {
+            method: 'DELETE',
+            headers: {
+                Authorization: `Bearer ${this.token}`,
+            },
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.status != 200) {
+                throw new Error(data.message);
+            }
+            return data.data;
         } else {
             throw new Error(`(${response.status}): ${response.statusText}`);
         }
