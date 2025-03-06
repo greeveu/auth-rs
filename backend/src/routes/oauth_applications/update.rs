@@ -5,8 +5,9 @@ use rocket_db_pools::Connection;
 
 use crate::{auth::auth::AuthEntity, db::AuthRsDatabase, models::{audit_log::{AuditLog, AuditLogAction, AuditLogEntityType}, http_response::HttpResponse, oauth_application::{OAuthApplication, OAuthApplicationMinimal}}};
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 #[serde(crate = "rocket::serde")]
+#[serde(rename_all = "camelCase")]
 pub struct UpdateOAuthApplicationData {
     name: Option<String>,
     description: Option<String>,
