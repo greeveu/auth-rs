@@ -24,7 +24,7 @@ pub async fn update_role(db: Connection<AuthRsDatabase>, req_entity: AuthEntity,
         });
     }
 
-    if !req_entity.user.unwrap().is_system_admin() {
+    if !req_entity.user.unwrap().is_admin() {
         return Json(HttpResponse {
             status: 403,
             message: "Missing permissions!".to_string(),

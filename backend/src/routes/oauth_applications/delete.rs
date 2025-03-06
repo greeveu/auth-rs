@@ -33,7 +33,7 @@ pub async fn delete_oauth_application(db: Connection<AuthRsDatabase>, req_entity
         })
     };
 
-    if req_entity.user_id != oauth_application.owner && !req_entity.user.unwrap().is_system_admin() {
+    if req_entity.user_id != oauth_application.owner && !req_entity.user.unwrap().is_admin() {
         return Json(HttpResponse {
             status: 403,
             message: "Missing permissions!".to_string(),

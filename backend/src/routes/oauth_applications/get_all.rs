@@ -15,7 +15,7 @@ pub async fn get_all_oauth_applications(db: Connection<AuthRsDatabase>, req_enti
         });
     }
 
-    let filter = match req_entity.user.unwrap().is_system_admin() {
+    let filter = match req_entity.user.unwrap().is_admin() {
         true => None,
         false => Some(doc! {
             "owner": req_entity.user_id

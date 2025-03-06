@@ -24,7 +24,7 @@ pub async fn get_audit_log_by_id(db: Connection<AuthRsDatabase>, req_entity: Aut
         })
     };
 
-    if req_entity.user_id != uuid && !req_entity.user.unwrap().is_system_admin() {
+    if req_entity.user_id != uuid && !req_entity.user.unwrap().is_admin() {
         return Json(HttpResponse {
             status: 403,
             message: "Missing permissions!".to_string(),

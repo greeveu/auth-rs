@@ -23,7 +23,7 @@ pub async fn get_by_user_id(db: Connection<AuthRsDatabase>, req_entity: AuthEnti
         })
     };
 
-    if (req_entity.is_user() && req_entity.user_id != uuid && !req_entity.user.clone().unwrap().is_system_admin()) || req_entity.is_token() && req_entity.user_id != uuid {
+    if (req_entity.is_user() && req_entity.user_id != uuid && !req_entity.user.clone().unwrap().is_admin()) || req_entity.is_token() && req_entity.user_id != uuid {
         return Json(HttpResponse {
             status: 403,
             message: "Missing permissions!".to_string(),

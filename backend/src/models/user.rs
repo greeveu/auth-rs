@@ -119,8 +119,13 @@ impl User {
     }
 
     #[allow(unused)]
-    pub fn is_system_admin(&self) -> bool {
+    pub fn is_admin(&self) -> bool {
         self.id == *SYSTEM_USER_ID || self.roles.contains(&*ADMIN_ROLE_ID)
+    }
+
+    #[allow(unused)]
+    pub fn is_system_admin(&self) -> bool {
+        self.id == *SYSTEM_USER_ID
     }
 
     // ONLY USE THIS INTERNALLY!

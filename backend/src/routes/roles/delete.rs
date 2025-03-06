@@ -2,7 +2,7 @@ use mongodb::bson::Uuid;
 use rocket::{delete, error, serde::json::Json};
 use rocket_db_pools::Connection;
 
-use crate::{auth::auth::AuthEntity, db::AuthRsDatabase, models::{audit_log::{AuditLog, AuditLogAction, AuditLogEntityType}, http_response::HttpResponse, role::Role}};
+use crate::{auth::auth::AuthEntity, db::AuthRsDatabase, models::{audit_log::{AuditLog, AuditLogAction, AuditLogEntityType}, http_response::HttpResponse, role::{self, Role}}};
 
 #[allow(unused)]
 #[delete("/roles/<id>", format = "json")]
@@ -15,7 +15,7 @@ pub async fn delete_role(db: Connection<AuthRsDatabase>, req_entity: AuthEntity,
         });
     }
     
-    if !req_entity.user.unwrap().is_system_admin() {
+    if !req_entity.user.unwrap().is_admin() {
         return Json(HttpResponse {
             status: 403,
             message: "Missing permissions!".to_string(),
@@ -33,7 +33,7 @@ pub async fn delete_role(db: Connection<AuthRsDatabase>, req_entity: AuthEntity,
     };
 
     let role = match Role::get_by_id(uuid, &db).await {
-        Ok(tenant) => tenant,
+        Ok(role) => role,
         Err(err) => return Json(HttpResponse {
             status: 404,
             message: format!("Role does not exist: {:?}", err),
@@ -41,6 +41,13 @@ pub async fn delete_role(db: Connection<AuthRsDatabase>, req_entity: AuthEntity,
         })
     };
 
+    if role.system {
+        return Json(HttpResponse {
+            status: 400,
+            message: "Cannot delete system role".to_string(),
+            data: None
+        });
+    }
 
     match role.delete(&db).await {
         Ok(role) => {

@@ -30,6 +30,7 @@ pub async fn authorize_oauth_application(db: Connection<AuthRsDatabase>, req_ent
     let data = data.into_inner();
 
     if !req_entity.is_user() || req_entity.user.clone().unwrap().disabled || req_entity.user.unwrap().is_system_admin() {
+        eprintln!("User is not allowed to authorize applications");
         return None
     }
 
@@ -37,10 +38,14 @@ pub async fn authorize_oauth_application(db: Connection<AuthRsDatabase>, req_ent
 
     let oauth_application = match OAuthApplication::get_full_by_id(data.client_id.clone(), &db).await {
         Ok(app) => app,
-        Err(err) => return None
+        Err(err) => {
+            eprintln!("Error getting oauth application: {:?}", err);
+            return None
+        }
     };
 
     if !oauth_application.redirect_uris.contains(&data.redirect_uri) {
+        eprintln!("Redirect uri is not allowed for this application");
         return None
     }
 

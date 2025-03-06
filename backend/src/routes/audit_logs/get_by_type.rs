@@ -7,7 +7,7 @@ use crate::{auth::auth::AuthEntity, db::AuthRsDatabase, models::{audit_log::{Aud
 #[allow(unused)]
 #[get("/audit-logs/<type>", format = "json")] 
 pub async fn get_audit_logs_by_type(db: Connection<AuthRsDatabase>, req_entity: AuthEntity, r#type: &str) -> Json<HttpResponse<Vec<AuditLog>>> {
-    if !req_entity.is_user() || !req_entity.user.unwrap().is_system_admin() {
+    if !req_entity.is_user() || !req_entity.user.unwrap().is_admin() {
         return Json(HttpResponse {
             status: 403,
             message: "Missing permissions!".to_string(),

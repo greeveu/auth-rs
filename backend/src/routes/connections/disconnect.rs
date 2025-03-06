@@ -24,7 +24,7 @@ pub async fn disconnect(db: Connection<AuthRsDatabase>, req_entity: AuthEntity, 
         })
     };
 
-    if (req_entity.is_user() && req_entity.user_id != uuid && !req_entity.user.clone().unwrap().is_system_admin()) {
+    if (req_entity.is_user() && req_entity.user_id != uuid && !req_entity.user.clone().unwrap().is_admin()) {
         return Json(HttpResponse {
             status: 403,
             message: "Missing permissions!".to_string(),

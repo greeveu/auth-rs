@@ -14,7 +14,7 @@ pub async fn get_all_users(db: Connection<AuthRsDatabase>, req_entity: AuthEntit
         });
     }
     
-    if !req_entity.user.unwrap().is_system_admin() {
+    if !req_entity.user.unwrap().is_admin() {
         return Json(HttpResponse {
             status: 403,
             message: "Missing permissions!".to_string(),
