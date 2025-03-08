@@ -20,7 +20,7 @@ pub struct AuditLog {
 	pub author_id: Uuid,
 	pub old_values: Option<HashMap<String, String>>,
 	pub new_values: Option<HashMap<String, String>>,
-	pub created_at: String
+	pub created_at: DateTime
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -79,7 +79,7 @@ impl AuditLog {
             author_id,
             old_values,
             new_values,
-            created_at: DateTime::now().to_string(),
+            created_at: DateTime::now(),
         }
     }
 
@@ -137,31 +137,59 @@ impl AuditLog {
     }
 
     #[allow(unused)]
-    pub async fn get_by_user_id<T>(user_id: Uuid, entity_type: AuditLogEntityType, connection: &Connection<AuthRsDatabase>) -> Result<Vec<Self>, HttpResponse<T>> {
-        let db = match Self::get_collection(&entity_type, connection) {
-            Some(db) => db,
-            None => return Err(HttpResponse {
-                status: 400,
-                message: "Invalid audit log entity type provided".to_string(),
-                data: None
-            })
-        };
-        
+    pub async fn get_by_user_id<T>(author_id: Uuid, connection: &Connection<AuthRsDatabase>) -> Result<Vec<Self>, HttpResponse<T>> {
+        let mut all_logs = vec![];
+        let user_logs_collection = Self::get_collection(&AuditLogEntityType::User, &connection).unwrap();
+        let role_logs_collection = Self::get_collection(&AuditLogEntityType::Role, &connection).unwrap();
+        let oauth_application_logs_collection = Self::get_collection(&AuditLogEntityType::OAuthApplication, &connection).unwrap();
 
         let filter = doc! {
-            "userId": user_id
+            "authorId": author_id
         };
-        match db.find(filter, None).await {
+
+        let user_logs = match user_logs_collection.find(filter.clone(), None).await {
             Ok(cursor) => {
                 let audit_logs = cursor.map(|doc| doc.unwrap()).collect::<Vec<Self>>().await;
-                Ok(audit_logs)
+                audit_logs
             },
-            Err(err) => Err(HttpResponse {
+            Err(err) => return Err(HttpResponse {
                 status: 500,
-                message: format!("Error fetching audit logs: {:?}", err),
+                message: format!("Error fetching user audit logs: {:?}", err),
                 data: None
             })
-        }
+        };
+
+        let role_logs = match role_logs_collection.find(filter.clone(), None).await {
+            Ok(cursor) => {
+                let audit_logs = cursor.map(|doc| doc.unwrap()).collect::<Vec<Self>>().await;
+                audit_logs
+            },
+            Err(err) => return Err(HttpResponse {
+                status: 500,
+                message: format!("Error fetching role audit logs: {:?}", err),
+                data: None
+            })
+        };
+
+        let oauth_application_logs = match oauth_application_logs_collection.find(filter.clone(), None).await {
+            Ok(cursor) => {
+                let audit_logs = cursor.map(|doc| doc.unwrap()).collect::<Vec<Self>>().await;
+                audit_logs
+            },
+            Err(err) => return Err(HttpResponse {
+                status: 500,
+                message: format!("Error fetching oauth application audit logs: {:?}", err),
+                data: None
+            })
+        };
+
+        all_logs.extend(user_logs);
+        all_logs.extend(role_logs);
+        all_logs.extend(oauth_application_logs);
+
+        all_logs.sort_by(|a, b| a.created_at.cmp(&b.created_at));
+
+        Ok(all_logs)
     }
 
     #[allow(unused)]

@@ -10,6 +10,7 @@
 	import Connections from './Connections.svelte';
 	import type OAuthConnection from '$lib/models/OAuthConnection';
 	import Applications from './Applications.svelte';
+	import Logs from './Logs.svelte';
 
     const authStateManager = new AuthStateManager();
     let api = new AuthRsApi();
@@ -79,6 +80,8 @@
                     <Connections bind:api bind:user bind:connections />
                 {:else if currentTabIndex == 3}
                     <Applications bind:api bind:applications />
+                {:else if currentTabIndex == 4}
+                    <Logs bind:api bind:user bind:auditLogs />
                 {/if}
             {/if}
         </div>

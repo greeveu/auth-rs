@@ -1,24 +1,29 @@
 class AuditLog {
     public _id: string;
-    public entity_id: string;
-    public entity_type: AuditLogEntityType;
+    public entityId: string;
+    public entityType: AuditLogEntityType;
     public action: AuditLogAction;
     public reason: string;
-    public author_id: string;
-    public old_values: Map<string, string>;
-    public new_values: Map<string, string>;
-    public created_at: string;
+    public authorId: string;
+    public oldValues: Map<string, string>;
+    public newValues: Map<string, string>;
+    public createdAt: any;
 
-    constructor(_id: string, entity_id: string, entity_type: AuditLogEntityType, action: AuditLogAction, reason: string, author_id: string, old_values: Map<string, string>, new_values: Map<string, string>, created_at: string) {
+    constructor(_id: string, entityId: string, entityType: AuditLogEntityType, action: AuditLogAction, reason: string, authorId: string, oldValues: Map<string, string>, newValues: Map<string, string>, createdAt: any) {
         this._id = _id;
-        this.entity_id = entity_id;
-        this.entity_type = entity_type;
+        this.entityId = entityId;
+        this.entityType = entityType;
         this.action = action;
         this.reason = reason;
-        this.author_id = author_id;
-        this.old_values = old_values;
-        this.new_values = new_values;
-        this.created_at = created_at;
+        this.authorId = authorId;
+        this.oldValues = oldValues;
+        this.newValues = newValues;
+        this.createdAt = createdAt;
+    }
+
+    static getCreatedAt(auditLog: AuditLog): Date {
+        // @ts-ignore
+        return new Date(parseInt(auditLog.createdAt.$date.$numberLong) ?? 0);
     }
 }
 

@@ -17,7 +17,7 @@ pub struct OAuthToken {
     pub token: String,
     pub scope: Vec<OAuthScope>,
     pub expires_in: u64,
-    pub created_at: String,
+    pub created_at: DateTime,
 }
 
 impl OAuthToken {
@@ -35,7 +35,7 @@ impl OAuthToken {
             token: Self::generate_token(),
             scope,
             expires_in,
-            created_at: DateTime::now().to_string(),
+            created_at: DateTime::now(),
         })
     }
 

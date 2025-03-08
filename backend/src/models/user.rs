@@ -22,7 +22,7 @@ pub struct User {
     pub token: String,
     pub roles: Vec<Uuid>,
     pub disabled: bool,
-    pub created_at: String,
+    pub created_at: DateTime,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)] 
@@ -37,7 +37,7 @@ pub struct UserMinimal {
     pub roles: Vec<Uuid>,
     pub mfa: bool,
     pub disabled: bool,
-    pub created_at: String,
+    pub created_at: DateTime,
 }
 
 impl UserMinimal {
@@ -77,7 +77,7 @@ impl User {
             token: Self::generate_token(),
             roles: Vec::from([(*DEFAULT_ROLE_ID)]),
             disabled: false,
-            created_at: DateTime::now().to_string(),
+            created_at: DateTime::now(),
         })
     }
 
@@ -101,7 +101,7 @@ impl User {
             token: Self::generate_token(),
             roles: roles.iter().map(|role| Uuid::parse_str(role).unwrap()).collect(),
             disabled: false,
-            created_at: DateTime::now().to_string(),
+            created_at: DateTime::now(),
         })
     }
 

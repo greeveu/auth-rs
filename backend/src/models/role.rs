@@ -14,7 +14,7 @@ pub struct Role {
     pub id: Uuid,
     pub name: String,
     pub system: bool,
-    pub created_at: String,
+    pub created_at: DateTime,
 }
 
 impl Role {
@@ -25,7 +25,7 @@ impl Role {
             id: Uuid::new(),
             name,
             system: false,
-            created_at: DateTime::now().to_string(),
+            created_at: DateTime::now(),
         })
     }
 
@@ -34,7 +34,7 @@ impl Role {
             id,
             name,
             system: true,
-            created_at: DateTime::now().to_string(),
+            created_at: DateTime::now(),
         })
     }
 

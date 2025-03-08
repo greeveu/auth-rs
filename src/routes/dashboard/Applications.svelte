@@ -2,7 +2,7 @@
 	import Popup from './../../lib/components/global/Popup.svelte';
 	import RedirectUriList from './../../lib/components/dashboard/RedirectUriList.svelte';
 	import type AuthRsApi from "$lib/api";
-	import type OAuthApplication from "$lib/models/OAuthApplication";
+	import OAuthApplication from "$lib/models/OAuthApplication";
 	import type UserMinimal from "$lib/models/User";
 	import { BotOff, Pen, Trash } from "lucide-svelte";
 	import { onMount } from "svelte";
@@ -14,6 +14,8 @@
     let showNewApplicationPopup: boolean = false;
     let newApplicationName: string = '';
     let newApplicationDescription: string = '';
+    let newApplicationRedirectUris: string = '';
+    let newApplicationRedirectUrisError: boolean = false;
 
     let editApplicationPopup: boolean = false;
     let editApplication: OAuthApplication | null = null;
@@ -30,6 +32,8 @@
     function openCreateApplicationPopup() {
         newApplicationName = '';
         newApplicationDescription = '';
+        newApplicationRedirectUris = '';
+        newApplicationRedirectUrisError = false;
         showNewApplicationPopup = true;
     }
 
@@ -65,7 +69,7 @@
 
 {#if showNewApplicationPopup}
     <Popup title="Create Application" onClose={() => showNewApplicationPopup = false}>
-        <div class="flex flex-col items-center justify-center min-w-[350px]">
+        <div class="flex flex-col items-center justify-center min-w-[350px] max-w-[400px]">
             <p class="text-[14px] self-start h-[17.5px] opacity-50">Name</p>
             <!-- svelte-ignore a11y_autofocus -->
             <input
@@ -82,16 +86,31 @@
                 placeholder="Description"
                 bind:value={newApplicationDescription}
                 class="border-[1.5px] border-gray-300 rounded-md opacity-75 w-full"
-                style="padding: 5px 10px; margin-top: 5px;"
+                style="padding: 5px 10px; margin-top: 5px; margin-bottom: 10px;"
             >
+            <p class="text-[14px] self-start h-[17.5px] opacity-50">Redirect URI's</p>
+            <input
+            type="text"
+            placeholder="https://test.com/callback,https://test2.com/callback"
+            bind:value={newApplicationRedirectUris}
+            class="border-[1.5px] border-gray-300 rounded-md opacity-75 w-full"
+            style="padding: 5px 10px; margin-top: 5px;"
+            >
+            {#if newApplicationRedirectUrisError}
+                <p class="text-[14px] text-red-600 self-start h-[10px] opacity-75" style="margin-bottom: 20px;">Invalid redirect URI's. Make sure you use the following format: '[url1],[url2],[url3]'.</p>
+            {/if}
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
                 class="text-green-600 rounded-md {newApplicationName.length > 3 ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px] button green-button"
-                style="margin-top: 25px;"
+                style="margin-top: 25px; margin-bottom: 10px;"
                 on:click={newApplicationName.length > 3 ? () => {
+                    if (newApplicationRedirectUris.length > 0 && newApplicationRedirectUris.split(',').filter(uri => uri.includes('http') && uri.includes('://') && uri.includes('.')).length != newApplicationRedirectUris.split(',').length) {
+                        newApplicationRedirectUrisError = true;
+                        return;
+                    }
                     showNewApplicationPopup = false;
-                    api.createOAuthApplication(newApplicationName, newApplicationDescription.length > 0 ? newApplicationDescription : null, [])
+                    api.createOAuthApplication(newApplicationName, newApplicationDescription.length > 0 ? newApplicationDescription : null, newApplicationRedirectUris.length > 0 ? newApplicationRedirectUris.split(',') : [])
                         .then(newApplication => applications = [...applications, newApplication])
                         .catch(e => console.error(e));
                 } : null}
@@ -184,16 +203,16 @@
 {/if}
 
 {#if applications.length < 1}
-<div class="flex flex-col items-center justify-center gap-[25px] h-full w-full">
-    <BotOff size="75" class="opacity-40" />
-    <p class="text-[20px] opacity-50">You don't have any OAuth apps.</p>
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-        <p
-            class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md button"
-            style="padding: 10px; margin-top: 25px;"
-            on:click={openCreateApplicationPopup}
-        >Create Application</p>
+    <div class="flex flex-col items-center justify-center gap-[25px] h-full w-full">
+        <BotOff size="75" class="opacity-40" />
+        <p class="text-[20px] opacity-50">You don't have any OAuth apps.</p>
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+            <p
+                class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md button"
+                style="padding: 10px; margin-top: 25px;"
+                on:click={openCreateApplicationPopup}
+            >Create Application</p>
     </div>
 {:else}
     <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
@@ -209,7 +228,7 @@
         {#each applications as application}
             <div class="flex flex-col items-start justify start gap-[10px] min-w-[350px] max-w-[400px] min-h-[200px] border-[2px] border-[#333] rounded-md" style="padding: 15px;">
                 <p class="text-[20px] font-bold h-[20px]">{application.name}</p>
-                <p class="text-[12px] opacity-35 h-[20px]">Created at {application.createdAt.split(' ')[0].replaceAll('-', ' ').split(' ').reverse().join('.')}</p>
+                <p class="text-[12px] opacity-35 h-[20px]">Created at {OAuthApplication.getCreatedAt(application).getDate()}.{OAuthApplication.getCreatedAt(application).getMonth()}.{OAuthApplication.getCreatedAt(application).getFullYear()}</p>
                 <p class="text-[12px] opacity-50">{@html (application.description?.length ?? 0) > 1 ? application.description?.substring(0, 200) + ((application.description?.length ?? 0) > 200 ? '...' : '') : '<i>This application does not have a description.</i>'}</p>
                 <RedirectUriList bind:redirectUris={application.redirectUris} onAdd={() => openAddRedirectUriPopup(application)} onRemove={(redirectUri) => removeRedirectUri(application, redirectUri)} />
                 <!-- svelte-ignore a11y_click_events_have_key_events -->

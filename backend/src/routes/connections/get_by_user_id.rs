@@ -1,4 +1,4 @@
-use mongodb::bson::{doc, Uuid};
+use mongodb::bson::{doc, DateTime, Uuid};
 use rocket_db_pools::Connection;
 use rocket::{get, serde::{json::Json, Deserialize, Serialize}};
 use crate::{auth::auth::AuthEntity, db::AuthRsDatabase, models::{http_response::HttpResponse, oauth_application::{OAuthApplication, OAuthApplicationMinimal}, oauth_scope::{OAuthScope, ScopeActions}, oauth_token::OAuthToken}};
@@ -13,7 +13,7 @@ pub struct OAuthConnection {
     pub user_id: Uuid,
     pub scope: Vec<OAuthScope>,
     pub expires_in: u64,
-    pub created_at: String,
+    pub created_at: DateTime,
 }
 
 #[allow(unused)]

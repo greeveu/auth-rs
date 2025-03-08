@@ -6,9 +6,9 @@ export default class UserMinimal {
     roles: string[];
     mfa: boolean;
     disabled: boolean;
-    createdAt: string;
+    createdAt: any;
 
-    constructor(_id: string, email: string, firstName: string, lastName: string, roles: string[], mfa: boolean, disabled: boolean, createdAt: string) {
+    constructor(_id: string, email: string, firstName: string, lastName: string, roles: string[], mfa: boolean, disabled: boolean, createdAt: any) {
         this._id = _id;
         this.email = email;
         this.firstName = firstName;
@@ -17,6 +17,11 @@ export default class UserMinimal {
         this.mfa = mfa;
         this.disabled = disabled;
         this.createdAt = createdAt;
+    }
+
+    static getCreatedAt(user: UserMinimal): Date {
+        // @ts-ignore
+        return new Date(parseInt(user.createdAt.$date.$numberLong) ?? 0);
     }
 
     static isAdmin(user: UserMinimal): boolean {

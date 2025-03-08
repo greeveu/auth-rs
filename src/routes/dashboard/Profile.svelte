@@ -58,5 +58,5 @@
     <TextField label="Full Name" value={`${user.firstName} ${user.lastName}`} readonly={UserMinimal.isSystemAdmin(user)} />
     <TextField label="Email" value={user.email} readonly={UserMinimal.isSystemAdmin(user)} />
     <RoleList label="Roles" roles={roles.filter(r => user.roles.includes(r._id))} onAdd={addRole} onRemove={removeRole} readOnly={!UserMinimal.isAdmin(user)} isSystemAdmin={UserMinimal.isSystemAdmin(user)} />
-    <TextField label="Creation Date" value={`${user.createdAt.split(' ')[0].split('-').reverse().join('.')} ${user.createdAt.split(' ')[1].split('.')[0]}`} readonly />
+    <TextField label="Creation Date" value={`${UserMinimal.getCreatedAt(user).getDate()}.${UserMinimal.getCreatedAt(user).getMonth() + 1}.${UserMinimal.getCreatedAt(user).getFullYear()} ${UserMinimal.getCreatedAt(user).getHours()}:${UserMinimal.getCreatedAt(user).getMinutes()}:${UserMinimal.getCreatedAt(user).getSeconds()}`} readonly />
 </div>

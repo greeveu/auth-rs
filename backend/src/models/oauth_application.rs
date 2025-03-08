@@ -18,7 +18,7 @@ pub struct OAuthApplication {
     pub redirect_uris: Vec<String>,
     pub secret: String,
     pub owner: Uuid,
-    pub created_at: String,
+    pub created_at: DateTime,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)] 
@@ -31,7 +31,7 @@ pub struct OAuthApplicationMinimal {
     pub description: Option<String>,
     pub redirect_uris: Vec<String>,
     pub owner: Uuid,
-    pub created_at: String,
+    pub created_at: DateTime,
 }
 
 impl OAuthApplicationMinimal {
@@ -55,7 +55,7 @@ impl OAuthApplication {
             redirect_uris,
             secret: Self::generate_secret(),
             owner,
-            created_at: DateTime::now().to_string(),
+            created_at: DateTime::now(),
         })
     }
 

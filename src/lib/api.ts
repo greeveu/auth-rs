@@ -395,6 +395,29 @@ class AuthRsApi {
             throw new Error(`(${response.status}): ${response.statusText}`);
         }
     }
+
+    async getAuditLogs(user: UserMinimal): Promise<AuditLog[]> {
+        if (!this.token) {
+            throw new Error('No token');
+        }
+
+        const response = await fetch(`${AuthRsApi.baseUrl}/users/${user._id}/audit-logs`, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${this.token}`,
+            },
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.status != 200) {
+                throw new Error(data.message);
+            }
+            return data.data;
+        } else {
+            throw new Error(`(${response.status}): ${response.statusText}`);
+        }
+    }
 }
 
 export default AuthRsApi;
