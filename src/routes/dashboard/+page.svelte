@@ -78,7 +78,7 @@
                 {:else if currentTabIndex == 2}
                     <Connections bind:api bind:user bind:connections />
                 {:else if currentTabIndex == 3}
-                    <Applications bind:api bind:user bind:applications />
+                    <Applications bind:api bind:applications />
                 {/if}
             {/if}
         </div>

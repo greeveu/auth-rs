@@ -243,7 +243,37 @@ class AuthRsApi {
         } else {
             throw new Error(`(${response.status}): ${response.statusText}`);
         }
-    }	
+    }
+
+    async createOAuthApplication(name: string, description: string | null, redirectUris: string[]): Promise<OAuthApplication> {
+        if (!this.token) {
+            throw new Error('No token');
+        }
+
+        const response = await fetch(`${AuthRsApi.baseUrl}/oauth-applications`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${this.token}`,
+            },
+            body: JSON.stringify({
+                name,
+                description,
+                redirectUris
+            }),
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.status != 201) {
+                throw new Error(data.message);
+            }
+            return data.data;
+        } else {
+            throw new Error(`(${response.status}): ${response.statusText}`);
+        }
+    }
+
 
     async getOAuthApplication(application: OAuthApplication): Promise<OAuthApplication> {
         if (!this.token) {
@@ -350,6 +380,7 @@ class AuthRsApi {
         const response = await fetch(`${AuthRsApi.baseUrl}/oauth-applications/${application._id}`, {
             method: 'DELETE',
             headers: {
+                'Content-Type': 'application/json',
                 Authorization: `Bearer ${this.token}`,
             },
         });

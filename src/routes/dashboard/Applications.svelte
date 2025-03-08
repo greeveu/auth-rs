@@ -9,8 +9,11 @@
 	import OAuthApplicationUpdates from '$lib/models/OAuthApplicationUpdates';
 
     export let api: AuthRsApi;
-    export let user: UserMinimal;
     export let applications: OAuthApplication[];
+
+    let showNewApplicationPopup: boolean = false;
+    let newApplicationName: string = '';
+    let newApplicationDescription: string = '';
 
     let editApplicationPopup: boolean = false;
     let editApplication: OAuthApplication | null = null;
@@ -23,6 +26,12 @@
     let addRedirectUriPopup: boolean = false;
     let newRedirectUri: string = '';
     let newRedirectUriApplication: OAuthApplication | null = null;
+
+    function openCreateApplicationPopup() {
+        newApplicationName = '';
+        newApplicationDescription = '';
+        showNewApplicationPopup = true;
+    }
 
     function openAddRedirectUriPopup(application: OAuthApplication) {
         newRedirectUri = '';
@@ -53,6 +62,43 @@
             .catch(e => console.error(e));
     });
 </script>
+
+{#if showNewApplicationPopup}
+    <Popup title="Create Application" onClose={() => showNewApplicationPopup = false}>
+        <div class="flex flex-col items-center justify-center min-w-[350px]">
+            <p class="text-[14px] self-start h-[17.5px] opacity-50">Name</p>
+            <!-- svelte-ignore a11y_autofocus -->
+            <input
+                type="text"
+                placeholder="Name"
+                bind:value={newApplicationName}
+                class="border-[1.5px] border-gray-300 rounded-md opacity-75 w-full"
+                style="padding: 5px 10px; margin-top: 5px; margin-bottom: 10px;"
+                autofocus
+            >
+            <p class="text-[14px] self-start h-[17.5px] opacity-50">Description</p>
+            <input
+                type="text"
+                placeholder="Description"
+                bind:value={newApplicationDescription}
+                class="border-[1.5px] border-gray-300 rounded-md opacity-75 w-full"
+                style="padding: 5px 10px; margin-top: 5px;"
+            >
+            <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <p
+                class="text-green-600 rounded-md {newApplicationName.length > 3 ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px] button green-button"
+                style="margin-top: 25px;"
+                on:click={newApplicationName.length > 3 ? () => {
+                    showNewApplicationPopup = false;
+                    api.createOAuthApplication(newApplicationName, newApplicationDescription.length > 0 ? newApplicationDescription : null, [])
+                        .then(newApplication => applications = [...applications, newApplication])
+                        .catch(e => console.error(e));
+                } : null}
+            >Create</p>
+        </div>
+    </Popup>
+{/if}
 
 {#if editApplicationPopup}
     <Popup title="Edit Application" onClose={() => editApplicationPopup = false}>
@@ -138,20 +184,33 @@
 {/if}
 
 {#if applications.length < 1}
-    <div class="flex flex-col items-center justify-center gap-[25px] h-full w-full">
-        <BotOff size="75" class="opacity-40" />
-        <p class="text-[20px] opacity-50">You don't have any OAuth apps.</p>
+<div class="flex flex-col items-center justify-center gap-[25px] h-full w-full">
+    <BotOff size="75" class="opacity-40" />
+    <p class="text-[20px] opacity-50">You don't have any OAuth apps.</p>
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+        <p
+            class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md button"
+            style="padding: 10px; margin-top: 25px;"
+            on:click={openCreateApplicationPopup}
+        >Create Application</p>
     </div>
 {:else}
+    <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
     <div class="absolute flex flex-col min-h-[70px] items-center justify-center self-end" style="margin-right: 50px;">
-        <p class="border-blue-500 text-blue-500 border-[1.5px] cursor-pointer rounded-md" style="padding: 10px;">Create Application</p>
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <p
+            class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md button"
+            style="padding: 10px;"
+            on:click={openCreateApplicationPopup}
+        >Create Application</p>
     </div>
     <div class="flex flex-wrap overflow-y-scroll gap-[25px]">
         {#each applications as application}
             <div class="flex flex-col items-start justify start gap-[10px] min-w-[350px] max-w-[400px] min-h-[200px] border-[2px] border-[#333] rounded-md" style="padding: 15px;">
                 <p class="text-[20px] font-bold h-[20px]">{application.name}</p>
                 <p class="text-[12px] opacity-35 h-[20px]">Created at {application.createdAt.split(' ')[0].replaceAll('-', ' ').split(' ').reverse().join('.')}</p>
-                <p class="text-[12px] opacity-50">{@html application.description?.length > 1 ? application.description?.substring(0, 200) + (application.description?.length > 200 ? '...' : '') : '<i>This application does not have a description.</i>'}</p>
+                <p class="text-[12px] opacity-50">{@html (application.description?.length ?? 0) > 1 ? application.description?.substring(0, 200) + ((application.description?.length ?? 0) > 200 ? '...' : '') : '<i>This application does not have a description.</i>'}</p>
                 <RedirectUriList bind:redirectUris={application.redirectUris} onAdd={() => openAddRedirectUriPopup(application)} onRemove={(redirectUri) => removeRedirectUri(application, redirectUri)} />
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
