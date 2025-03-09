@@ -1,9 +1,9 @@
 <script lang="ts">
+	import TextField from '$lib/components/dashboard/TextField.svelte';
 	import Popup from './../../lib/components/global/Popup.svelte';
 	import RedirectUriList from './../../lib/components/dashboard/RedirectUriList.svelte';
 	import type AuthRsApi from "$lib/api";
 	import OAuthApplication from "$lib/models/OAuthApplication";
-	import type UserMinimal from "$lib/models/User";
 	import { BotOff, Pen, Trash } from "lucide-svelte";
 	import { onMount } from "svelte";
 	import OAuthApplicationUpdates from '$lib/models/OAuthApplicationUpdates';
@@ -12,6 +12,7 @@
     export let applications: OAuthApplication[];
 
     let showNewApplicationPopup: boolean = false;
+    let newApplication: OAuthApplication | null = null;
     let newApplicationName: string = '';
     let newApplicationDescription: string = '';
     let newApplicationRedirectUris: string = '';
@@ -30,6 +31,7 @@
     let newRedirectUriApplication: OAuthApplication | null = null;
 
     function openCreateApplicationPopup() {
+        newApplication = null;
         newApplicationName = '';
         newApplicationDescription = '';
         newApplicationRedirectUris = '';
@@ -44,7 +46,6 @@
     }
 
     function addRedirectUri(application: OAuthApplication) {
-        console.log(application);
         addRedirectUriPopup = false;
         application.redirectUris.push(newRedirectUri);
         
@@ -66,6 +67,19 @@
             .catch(e => console.error(e));
     });
 </script>
+
+{#if newApplication != null}
+    <Popup title="Copy Application Secret" onClose={() => newApplication = null}>
+        <div class="flex flex-col items-center justify-center min-w-[350px]">
+            <p class="text-[14px] opacity-50 text-center" style="margin-bottom: 10px;">This is your applications ID and secret.<br>Copy it now, you will never be able to get it again!</p>
+            <TextField label="ID" value={newApplication._id} fullWidth readonly />
+            <TextField label="Secret" value={newApplication.secret!} readonly />
+            <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <p class="text-[16px] text-green-600 cursor-pointer" style="margin-top: 20px; margin-bottom: 15px;" on:click={() => newApplication = null}>Okay</p>
+        </div>
+    </Popup>
+{/if}
 
 {#if showNewApplicationPopup}
     <Popup title="Create Application" onClose={() => showNewApplicationPopup = false}>
@@ -111,8 +125,11 @@
                     }
                     showNewApplicationPopup = false;
                     api.createOAuthApplication(newApplicationName, newApplicationDescription.length > 0 ? newApplicationDescription : null, newApplicationRedirectUris.length > 0 ? newApplicationRedirectUris.split(',') : [])
-                        .then(newApplication => applications = [...applications, newApplication])
-                        .catch(e => console.error(e));
+                        .then(createdApplication => {
+                            newApplication = createdApplication;
+                            applications = [...applications, createdApplication]
+                        })
+                        .catch(console.error);
                 } : null}
             >Create</p>
         </div>
@@ -227,34 +244,38 @@
     <div class="flex flex-wrap overflow-y-scroll gap-[25px]">
         {#each applications as application}
             <div class="flex flex-col items-start justify start gap-[10px] min-w-[350px] max-w-[400px] min-h-[200px] border-[2px] border-[#333] rounded-md" style="padding: 15px;">
-                <p class="text-[20px] font-bold h-[20px]">{application.name}</p>
+                <div class="flex flex-row justify-between w-full">
+                    <p class="text-[20px] font-bold h-[20px]">{application.name}</p>
+                    <div class="flex flex-row">
+                        <!-- svelte-ignore a11y_click_events_have_key_events -->
+                        <!-- svelte-ignore a11y_no_static_element_interactions -->
+                        <div class="flex self-end" style="margin-right: 12.5px;" on:click={() => {
+                            editApplication = application;
+                            editApplicationName = application.name;
+                            editApplicationDescription = application.description ?? '';
+                            editApplicationPopup = true;
+                        }}>
+                            <Pen
+                                class="cursor-pointer hover:text-blue-500 transition-all"
+                                size=20
+                            />
+                        </div>
+                        <!-- svelte-ignore a11y_click_events_have_key_events -->
+                        <!-- svelte-ignore a11y_no_static_element_interactions -->
+                        <div class="flex self-end" on:click={() => {
+                            deleteApplication = application;
+                            deleteApplicationPopup = true;
+                        }}>
+                            <Trash
+                                class="cursor-pointer hover:text-red-600 transition-all"
+                                size=20
+                            />
+                        </div>
+                    </div>
+                </div>
                 <p class="text-[12px] opacity-35 h-[20px]">Created at {OAuthApplication.getCreatedAt(application).getDate()}.{OAuthApplication.getCreatedAt(application).getMonth()}.{OAuthApplication.getCreatedAt(application).getFullYear()}</p>
                 <p class="text-[12px] opacity-50">{@html (application.description?.length ?? 0) > 1 ? application.description?.substring(0, 200) + ((application.description?.length ?? 0) > 200 ? '...' : '') : '<i>This application does not have a description.</i>'}</p>
                 <RedirectUriList bind:redirectUris={application.redirectUris} onAdd={() => openAddRedirectUriPopup(application)} onRemove={(redirectUri) => removeRedirectUri(application, redirectUri)} />
-                <!-- svelte-ignore a11y_click_events_have_key_events -->
-                <!-- svelte-ignore a11y_no_static_element_interactions -->
-                <div class="absolute self-end" on:click={() => {
-                    deleteApplication = application;
-                    deleteApplicationPopup = true;
-                }}>
-                    <Trash
-                        class="cursor-pointer hover:text-red-600 transition-all"
-                        size=20
-                    />
-                </div>
-                <!-- svelte-ignore a11y_click_events_have_key_events -->
-                <!-- svelte-ignore a11y_no_static_element_interactions -->
-                <div class="absolute self-end" style="margin-right: 35px;" on:click={() => {
-                    editApplication = application;
-                    editApplicationName = application.name;
-                    editApplicationDescription = application.description ?? '';
-                    editApplicationPopup = true;
-                }}>
-                    <Pen
-                        class="cursor-pointer hover:text-blue-500 transition-all"
-                        size=20
-                    />
-                </div>
             </div>
         {/each}
     </div>
@@ -267,6 +288,11 @@
     }
 
     ::-webkit-scrollbar {
-        width: 0px;
+        width: 5px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background-color: var(--color-blue-500);
+        border-radius: 10px;
     }
 </style>

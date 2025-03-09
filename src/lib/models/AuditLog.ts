@@ -28,14 +28,16 @@ class AuditLog {
 }
 
 enum AuditLogAction {
-    Create,
-    Update,
-    Delete
+    Create = 'User',
+    Update = 'Update',
+    Delete = 'Delete',
 }
 
 enum AuditLogEntityType {
-    User,
-    Role,
-    OAuthApplication,
-    Unknown
+    User = 'User',
+    Role = 'Role',
+    OAuthApplication = 'OAuthApplication',
+    Unknown = 'Unknown',
 }
+
+export { AuditLog, AuditLogAction, AuditLogEntityType };

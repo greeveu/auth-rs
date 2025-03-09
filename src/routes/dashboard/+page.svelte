@@ -11,6 +11,7 @@
 	import type OAuthConnection from '$lib/models/OAuthConnection';
 	import Applications from './Applications.svelte';
 	import Logs from './Logs.svelte';
+	import type { AuditLog } from '$lib/models/AuditLog';
 
     const authStateManager = new AuthStateManager();
     let api = new AuthRsApi();
@@ -18,6 +19,7 @@
     let currentTabIndex = 0;
 
     let user: UserMinimal | null = null;
+    let users: UserMinimal[] = [];
     let roles: Role[] = [];
     let connections: OAuthConnection[] = [];
     let applications: OAuthApplication[] = [];
@@ -81,7 +83,7 @@
                 {:else if currentTabIndex == 3}
                     <Applications bind:api bind:applications />
                 {:else if currentTabIndex == 4}
-                    <Logs bind:api bind:user bind:auditLogs />
+                    <Logs bind:api bind:user bind:users bind:roles bind:applications bind:auditLogs />
                 {/if}
             {/if}
         </div>

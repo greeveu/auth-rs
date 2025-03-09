@@ -57,12 +57,12 @@ pub async fn update_oauth_application(db: Connection<AuthRsDatabase>, req_entity
     let mut old_values: HashMap<String, String> = HashMap::new();
     let mut new_values: HashMap<String, String> = HashMap::new();
 
-    if data.name.is_some() {
+    if data.name.is_some() && old_oauth_application.name != data.name.clone().unwrap() {
         new_oauth_application.name = data.name.unwrap();
         old_values.insert("name".to_string(), old_oauth_application.name.clone());
         new_values.insert("name".to_string(), new_oauth_application.name.clone());
     }
-    if data.description.is_some() {
+    if data.description.is_some() && old_oauth_application.description != data.description.clone() {
         new_oauth_application.description = match data.description.clone().unwrap().is_empty() {
             true => None,
             false => Some(data.description.unwrap())
@@ -70,7 +70,7 @@ pub async fn update_oauth_application(db: Connection<AuthRsDatabase>, req_entity
         old_values.insert("description".to_string(), old_oauth_application.description.clone().unwrap_or("None".to_string()));
         new_values.insert("description".to_string(), new_oauth_application.description.clone().unwrap_or("None".to_string()));
     }
-    if data.redirect_uris.is_some() {
+    if data.redirect_uris.is_some() && old_oauth_application.redirect_uris != data.redirect_uris.clone().unwrap() {
         new_oauth_application.redirect_uris = data.redirect_uris.unwrap();
         old_values.insert("redirect_uris".to_string(), old_oauth_application.redirect_uris.clone().join(", "));
         new_values.insert("redirect_uris".to_string(), new_oauth_application.redirect_uris.clone().join(", "));

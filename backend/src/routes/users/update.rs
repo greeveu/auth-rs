@@ -62,7 +62,7 @@ pub async fn update_user(db: Connection<AuthRsDatabase>, req_entity: AuthEntity,
     let mut new_values: HashMap<String, String> = HashMap::new();
 
     // TODO: Add password / 2fa validation
-    if data.email.is_some() {
+    if data.email.is_some() && old_user.email != data.email.clone().unwrap() {
         new_user.email = data.email.unwrap();
         old_values.insert("email".to_string(), old_user.email.clone());
         new_values.insert("email".to_string(), new_user.email.clone());
@@ -82,17 +82,17 @@ pub async fn update_user(db: Connection<AuthRsDatabase>, req_entity: AuthEntity,
         old_values.insert("password".to_string(), "HIDDEN".to_string());
         new_values.insert("password".to_string(), "HIDDEN".to_string());
     }
-    if data.first_name.is_some() {
+    if data.first_name.is_some() && old_user.first_name != data.first_name.clone().unwrap() {
         new_user.first_name = data.first_name.unwrap();
         old_values.insert("firstName".to_string(), old_user.first_name.clone());
         new_values.insert("firstName".to_string(), new_user.first_name.clone());
     }
-    if data.last_name.is_some() {
+    if data.last_name.is_some() && old_user.last_name != data.last_name.clone().unwrap() {
         new_user.last_name = data.last_name.unwrap();
         old_values.insert("lastName".to_string(), old_user.last_name.clone());
         new_values.insert("lastName".to_string(), new_user.last_name.clone());
     }
-    if data.roles.is_some() && req_entity.user.clone().unwrap().is_admin() {
+    if data.roles.is_some() && old_user.roles != data.roles.clone().unwrap() && req_entity.user.clone().unwrap().is_admin() {
         new_user.roles = data.roles.unwrap();
 
         let available_roles = match Role::get_all(&db, None).await {
@@ -120,7 +120,7 @@ pub async fn update_user(db: Connection<AuthRsDatabase>, req_entity: AuthEntity,
         old_values.insert("roles".to_string(), old_user.roles.iter().map(|r| r.to_string()).collect::<Vec<String>>().join(","));
         new_values.insert("roles".to_string(), new_user.roles.iter().map(|r| r.to_string()).collect::<Vec<String>>().join(","));
     }
-    if data.disabled.is_some() && req_entity.user.unwrap().is_admin() {
+    if data.disabled.is_some() && old_user.disabled != data.disabled.clone().unwrap() && req_entity.user.unwrap().is_admin() {
         new_user.disabled = data.disabled.unwrap();
         old_values.insert("disabled".to_string(), old_user.disabled.to_string());
         new_values.insert("disabled".to_string(), new_user.disabled.to_string());

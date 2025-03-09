@@ -13,7 +13,7 @@
     } from "lucide-svelte";
 	import { INVALID_SCOPES } from "$lib/models/OAuthScopes";
 	import type UserMinimal from "$lib/models/User";
-	import type OAuthApplication from "$lib/models/OAuthApplication";
+	import OAuthApplication from "$lib/models/OAuthApplication";
 
     let api: AuthRsApi | null = null;
     let user: UserMinimal | null = null;
@@ -94,8 +94,7 @@
         api.getOAuthApplication(clientId)
             .then((app) => {
                 oAuthApplication = app;
-                const createdAt = app.createdAt.split(' ')[0].split('-')
-                oAuthData.activeSince = `${createdAt[2]}.${createdAt[1]}.${createdAt[0]}`;
+                oAuthData.activeSince = `${OAuthApplication.getCreatedAt(app).getDate()}.${OAuthApplication.getCreatedAt(app).getMonth() + 1}.${OAuthApplication.getCreatedAt(app).getFullYear()}`;
             })
             .catch((err) => {
                 console.error('Failed to load OAuth application data!', err);

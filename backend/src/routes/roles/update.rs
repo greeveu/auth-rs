@@ -51,7 +51,7 @@ pub async fn update_role(db: Connection<AuthRsDatabase>, req_entity: AuthEntity,
     let mut old_values: HashMap<String, String> = HashMap::new();
     let mut new_values: HashMap<String, String> = HashMap::new();
 
-    if data.name.is_some() {
+    if data.name.is_some() && old_role.name != data.name.clone().unwrap() {
         new_role.name = data.name.unwrap();
         old_values.insert("name".to_string(), old_role.name.clone());
         new_values.insert("name".to_string(), new_role.name.clone());

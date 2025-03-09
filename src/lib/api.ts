@@ -1,4 +1,5 @@
 import AuthStateManager from "./auth";
+import type { AuditLog } from "./models/AuditLog";
 import type OAuthApplication from "./models/OAuthApplication";
 import type OAuthApplicationUpdates from "./models/OAuthApplicationUpdates";
 import type OAuthConnection from "./models/OAuthConnection";
@@ -6,7 +7,7 @@ import type UserMinimal from "./models/User";
 import type UserUpdates from "./models/UserUpdates";
 
 class AuthRsApi {
-    public static baseUrl = 'http://localhost:8000/api';//'https://oauth.timlohrer.de/api';
+    public static baseUrl = 'https://oauth.timlohrer.de/api';//'http://localhost:8000/api';
     private token: string | null = null;
     private currentMfaFlowId: string | null = null;
 
@@ -275,12 +276,12 @@ class AuthRsApi {
     }
 
 
-    async getOAuthApplication(application: OAuthApplication): Promise<OAuthApplication> {
+    async getOAuthApplication(clientId: string): Promise<OAuthApplication> {
         if (!this.token) {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/oauth-applications/${application._id}`, {
+        const response = await fetch(`${AuthRsApi.baseUrl}/oauth-applications/${clientId}`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${this.token}`,
@@ -402,6 +403,29 @@ class AuthRsApi {
         }
 
         const response = await fetch(`${AuthRsApi.baseUrl}/users/${user._id}/audit-logs`, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${this.token}`,
+            },
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.status != 200) {
+                throw new Error(data.message);
+            }
+            return data.data;
+        } else {
+            throw new Error(`(${response.status}): ${response.statusText}`);
+        }
+    }
+
+    async getUsers(): Promise<UserMinimal[]> {
+        if (!this.token) {
+            throw new Error('No token');
+        }
+
+        const response = await fetch(`${AuthRsApi.baseUrl}/users`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${this.token}`,
