@@ -12,6 +12,8 @@
 	import Applications from './Applications.svelte';
 	import Logs from './Logs.svelte';
 	import type { AuditLog } from '$lib/models/AuditLog';
+	import Roles from './Roles.svelte';
+	import type Role from '$lib/models/Role';
 
     const authStateManager = new AuthStateManager();
     let api = new AuthRsApi();
@@ -38,6 +40,7 @@
         { name: 'SPACER', icon: '', requiredRoleId: UserMinimal.ADMIN_ROLE_ID },
         { name: 'Users', icon: 'users', requiredRoleId: UserMinimal.ADMIN_ROLE_ID },
         { name: 'Roles', icon: 'crown', requiredRoleId: UserMinimal.ADMIN_ROLE_ID },
+        { name: 'All OAuth Apps', icon: 'code-xml', requiredRoleId: UserMinimal.ADMIN_ROLE_ID },
         { name: 'Global Logs', icon: 'scroll-text', requiredRoleId: UserMinimal.ADMIN_ROLE_ID },
     ];
     
@@ -81,9 +84,13 @@
                 {:else if currentTabIndex == 2}
                     <Connections bind:api bind:user bind:connections />
                 {:else if currentTabIndex == 3}
-                    <Applications bind:api bind:applications />
+                    <Applications bind:api bind:user bind:applications onlyShowOwned={true} />
                 {:else if currentTabIndex == 4}
                     <Logs bind:api bind:user bind:users bind:roles bind:applications bind:auditLogs />
+                {:else if currentTabIndex == 7}
+                    <Roles bind:api bind:roles />
+                {:else if currentTabIndex == 8}
+                    <Applications bind:api bind:user bind:applications onlyShowOwned={false} />
                 {/if}
             {/if}
         </div>

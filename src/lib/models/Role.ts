@@ -1,4 +1,4 @@
-class Role {
+export default class Role {
     _id: string;
     name: string;
     system: boolean;

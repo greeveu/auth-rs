@@ -7,9 +7,14 @@
 	import { BotOff, Pen, Trash } from "lucide-svelte";
 	import { onMount } from "svelte";
 	import OAuthApplicationUpdates from '$lib/models/OAuthApplicationUpdates';
+	import type UserMinimal from '$lib/models/User';
 
     export let api: AuthRsApi;
+    export let user: UserMinimal;
     export let applications: OAuthApplication[];
+    export let onlyShowOwned: boolean = true;
+
+    $: filteredApplications = applications.filter(app => !onlyShowOwned || app.owner == user._id);
 
     let showNewApplicationPopup: boolean = false;
     let newApplication: OAuthApplication | null = null;
@@ -219,7 +224,7 @@
     </Popup>
 {/if}
 
-{#if applications.length < 1}
+{#if filteredApplications.length < 1}
     <div class="flex flex-col items-center justify-center gap-[25px] h-full w-full">
         <BotOff size="75" class="opacity-40" />
         <p class="text-[20px] opacity-50">You don't have any OAuth apps.</p>
@@ -242,7 +247,7 @@
         >Create Application</p>
     </div>
     <div class="flex flex-wrap overflow-y-scroll gap-[25px]">
-        {#each applications as application}
+        {#each filteredApplications as application}
             <div class="flex flex-col items-start justify start gap-[10px] min-w-[350px] max-w-[400px] min-h-[200px] border-[2px] border-[#333] rounded-md" style="padding: 15px;">
                 <div class="flex flex-row justify-between w-full">
                     <p class="text-[20px] font-bold h-[20px]">{application.name}</p>

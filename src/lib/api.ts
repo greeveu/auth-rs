@@ -3,6 +3,8 @@ import type { AuditLog } from "./models/AuditLog";
 import type OAuthApplication from "./models/OAuthApplication";
 import type OAuthApplicationUpdates from "./models/OAuthApplicationUpdates";
 import type OAuthConnection from "./models/OAuthConnection";
+import type Role from "./models/Role";
+import type RoleUpdates from "./models/RoleUpdates";
 import type UserMinimal from "./models/User";
 import type UserUpdates from "./models/UserUpdates";
 
@@ -129,12 +131,60 @@ class AuthRsApi {
         }
     }
 
+    async createUser(email: string, password: string, firstName: string, lastName: string): Promise<UserMinimal> {
+        if (!this.token) {
+            throw new Error('No token');
+        }
+
+        const response = await fetch(`${AuthRsApi.baseUrl}/users`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${this.token}`,
+            },
+            body: JSON.stringify({ email, password, firstName, lastName }),
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.status != 201) {
+                throw new Error(data.message);
+            }
+            return data.data;
+        } else {
+            throw new Error(`(${response.status}): ${response.statusText}`);
+        }
+    }
+
     async getCurrentUser(): Promise<UserMinimal> {
         if (!this.token) {
             throw new Error('No token');
         }
 
         const response = await fetch(`${AuthRsApi.baseUrl}/users/@me`, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${this.token}`,
+            },
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.status != 200) {
+                throw new Error(data.message);
+            }
+            return data.data;
+        } else {
+            throw new Error(`(${response.status}): ${response.statusText}`);
+        }
+    }
+
+    async getAllUsers(): Promise<UserMinimal[]> {
+        if (!this.token) {
+            throw new Error('No token');
+        }
+
+        const response = await fetch(`${AuthRsApi.baseUrl}/users`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${this.token}`,
@@ -177,6 +227,54 @@ class AuthRsApi {
         }
     }
 
+    async deleteUser(user: UserMinimal): Promise<UserMinimal> {
+        if (!this.token) {
+            throw new Error('No token');
+        }
+
+        const response = await fetch(`${AuthRsApi.baseUrl}/users/${user._id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${this.token}`,
+            },
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.status != 200) {
+                throw new Error(data.message);
+            }
+            return data.data;
+        } else {
+            throw new Error(`(${response.status}): ${response.statusText}`);
+        }
+    }
+
+    async createRole(name: string): Promise<Role> {
+        if (!this.token) {
+            throw new Error('No token');
+        }
+
+        const response = await fetch(`${AuthRsApi.baseUrl}/roles`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${this.token}`,
+            },
+            body: JSON.stringify({ name }),
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.status != 201) {
+                throw new Error(data.message);
+            }
+            return data.data;
+        } else {
+            throw new Error(`(${response.status}): ${response.statusText}`);
+        }
+    }
+
     async getAllRoles(): Promise<Role[]> {
         if (!this.token) {
             throw new Error('No token');
@@ -184,6 +282,77 @@ class AuthRsApi {
 
         const response = await fetch(`${AuthRsApi.baseUrl}/roles`, {
             method: 'GET',
+            headers: {
+                Authorization: `Bearer ${this.token}`,
+            },
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.status != 200) {
+                throw new Error(data.message);
+            }
+            return data.data;
+        } else {
+            throw new Error(`(${response.status}): ${response.statusText}`);
+        }
+    }
+
+    async getRole(roleId: string): Promise<Role> {
+        if (!this.token) {
+            throw new Error('No token');
+        }
+
+        const response = await fetch(`${AuthRsApi.baseUrl}/roles/${roleId}`, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${this.token}`,
+            },
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.status != 200) {
+                throw new Error(data.message);
+            }
+            return data.data;
+        } else {
+            throw new Error(`(${response.status}): ${response.statusText}`);
+        }
+    }
+
+    async updateRole(role: Role, updates: RoleUpdates): Promise<Role> {
+        if (!this.token) {
+            throw new Error('No token');
+        }
+
+        const response = await fetch(`${AuthRsApi.baseUrl}/roles/${role._id}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${this.token}`,
+            },
+            body: JSON.stringify(updates),
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.status != 200) {
+                throw new Error(data.message);
+            }
+            return data.data;
+        } else {
+            throw new Error(`(${response.status}): ${response.statusText}`);
+        }
+    }
+
+    async deleteRole(role: Role): Promise<Role> {
+        if (!this.token) {
+            throw new Error('No token');
+        }
+
+        const response = await fetch(`${AuthRsApi.baseUrl}/roles/${role._id}`, {
+            method: 'DELETE',
             headers: {
                 Authorization: `Bearer ${this.token}`,
             },
