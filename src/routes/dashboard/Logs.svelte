@@ -64,7 +64,7 @@
             </tr>
         </thead>
         <tbody class="text-center">
-            {#each auditLogs as log}
+            {#each auditLogs.reverse() as log}
                 <tr>
                     <td>{getEntityName(log.entityType, log.entityId)}</td>
                     <td>{log.entityType}</td>
