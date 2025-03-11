@@ -60,13 +60,23 @@ impl OAuthToken {
 
     #[allow(unused)]
     pub async fn get_by_token(token: &str, mut db: &Database) -> Result<OAuthToken, HttpResponse<OAuthToken>> {
-        let db = db.collection(Self::COLLECTION_NAME);
+        let db: Collection<OAuthToken> = db.collection(Self::COLLECTION_NAME);
 
         let filter = doc! {
             "token": token
         };
         match db.find_one(filter, None).await.unwrap() {
-            Some(token) => Ok(token),
+            Some(token) => {
+                if (token.created_at.timestamp_millis() + token.expires_in as i64) < DateTime::now().timestamp_millis() {
+                    Err(HttpResponse {
+                        status: 401,
+                        message: "Token expired".to_string(),
+                        data: None
+                    })
+                } else {
+                    Ok(token)
+                }
+            },
             None => Err(HttpResponse {
                 status: 404,
                 message: "Token not found".to_string(),

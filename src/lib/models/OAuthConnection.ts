@@ -21,4 +21,8 @@ export default class OAuthConnection {
         // @ts-ignore
         return new Date(parseInt(connection.createdAt.$date.$numberLong) ?? 0);
     }
+
+    static getExpiresAt(connection: OAuthConnection): Date {
+        return new Date(parseInt(connection.createdAt.$date.$numberLong) + connection.expiresIn * 1000);
+    }
 }

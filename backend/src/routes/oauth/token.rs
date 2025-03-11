@@ -82,7 +82,7 @@ pub async fn get_oauth_token(db: Connection<AuthRsDatabase>, data: Form<TokenOAu
             existing_tokens[0].clone().reauthenticate(code_data.scope.clone().unwrap(), &db).await.unwrap()
         }
     } else {
-        match OAuthToken::new(code_data.client_id, code_data.user_id.unwrap(), code_data.scope.clone().unwrap(), 30 * 24 * 60 * 60).unwrap().insert(&db).await {
+        match OAuthToken::new(code_data.client_id, code_data.user_id.unwrap(), code_data.scope.clone().unwrap(), 30 * 24 * 60 * 60 * 1000).unwrap().insert(&db).await {
             Ok(token) => token,
             Err(_) => return None
         }

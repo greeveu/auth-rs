@@ -5,10 +5,14 @@
 	import type UserMinimal from "$lib/models/User";
 	import { Unlink } from "lucide-svelte";
 	import { onMount } from "svelte";
+	import Popup from '$lib/components/global/Popup.svelte';
 
     export let api: AuthRsApi;
     export let user: UserMinimal;
     export let connections: OAuthConnection[];
+
+    let unlinkConnectionPopup: boolean = false;
+    let unlinkConnection: OAuthConnection | null = null;
 
     onMount(() => {
         api.getConnections(user)
@@ -16,6 +20,26 @@
             .catch(e => console.error(e));
     });
 </script>
+
+{#if unlinkConnectionPopup}
+    <Popup title="Unlink Connection" onClose={() => {unlinkConnectionPopup = false; unlinkConnection = null;}}>
+        <div class="flex flex-col items-center justify-center max-w-[350px]" style="margin-top: 20px; margin-bottom: 20px;">
+            <p class="text-[14px] text-center opacity-50">Are you sure you want to unlink the application "{unlinkConnection!.application.name}"?</p>
+            <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <p
+                class="text-red-600 cursor-pointer rounded-md text-[18px] button red-button"
+                style="margin-top: 25px;"
+                on:click={() => {
+                    unlinkConnectionPopup = false;
+                    api.disconnectConnection(unlinkConnection!)
+                        .then(() => connections = connections.filter(c => c._id != unlinkConnection!._id))
+                        .catch(e => console.error(e));
+                }}
+            >Unlink</p>
+        </div>
+    </Popup>
+{/if}
 
 {#if connections.length < 1}
     <div class="flex flex-col items-center justify-center gap-[25px] h-full w-full">
@@ -26,22 +50,33 @@
     <div class="flex flex-wrap w-full overflow-y-scroll gap-[25px]">
         {#each connections as connection}
             <div class="flex flex-col items-start justify start gap-[10px] w-[350px] min-h-[200px] border-[2px] border-[#333] rounded-md" style="padding: 15px;">
-                <p class="text-[20px] font-bold h-[20px]">{connection.application.name}</p>
-                <p class="text-[12px] opacity-35 h-[20px]">Authorized at {OAuthConnection.getCreatedAt(connection).getDate()}.{OAuthConnection.getCreatedAt(connection).getMonth() + 1}.{OAuthConnection.getCreatedAt(connection).getFullYear()} {OAuthConnection.getCreatedAt(connection).getHours()}:{OAuthConnection.getCreatedAt(connection).getMinutes()}:{OAuthConnection.getCreatedAt(connection).getSeconds()}</p>
+                <div class="flex flex-row justify-between w-full">
+                    <p class="text-[20px] font-bold h-[20px]">{connection.application.name}</p>
+                    <div class="flex flex-row">
+                        <!-- svelte-ignore a11y_click_events_have_key_events -->
+                        <!-- svelte-ignore a11y_no_static_element_interactions -->
+                        <div class="flex self-end" on:click={() => {
+                            unlinkConnection = connection;
+                            unlinkConnectionPopup = true;
+                        }}>
+                            <Unlink
+                                class="cursor-pointer hover:text-red-600 transition-all"
+                                size=20
+                            />
+                        </div>
+                    </div>
+                </div>
+                <p class="text-[12px] opacity-35 h-[10px]">Authorized at {OAuthConnection.getCreatedAt(connection).getDate()}.{OAuthConnection.getCreatedAt(connection).getMonth() + 1}.{OAuthConnection.getCreatedAt(connection).getFullYear()} {OAuthConnection.getCreatedAt(connection).getHours()}:{OAuthConnection.getCreatedAt(connection).getMinutes()}:{OAuthConnection.getCreatedAt(connection).getSeconds()}</p>
+                {#if OAuthConnection.getExpiresAt(connection).getTime() > Date.now()}
+                    <p class="text-[12px] opacity-75 h-[20px] text-green-600">Expires at {OAuthConnection.getExpiresAt(connection).getDate()}.{OAuthConnection.getExpiresAt(connection).getMonth() + 1}.{OAuthConnection.getExpiresAt(connection).getFullYear()} {OAuthConnection.getExpiresAt(connection).getHours()}:{OAuthConnection.getExpiresAt(connection).getMinutes()}:{OAuthConnection.getExpiresAt(connection).getSeconds()}</p>
+                {:else}
+                    <p class="text-[12px] opacity-75 h-[20px] text-red-600">Expired!</p>
+                {/if}
                 <p class="text-[12px] opacity-50">{@html (connection.application.description?.length ?? 0) > 1 ? connection.application.description?.substring(0, 200) + ((connection.application.description?.length ?? 0) > 200 ? '...' : '') : '<i>This app does not have a description.</i>'}</p>
                 <p class="text-[12px] h-[10px]">Permissions:</p>
                 <div class="flex flex-col w-full">
-                    <ScopeList scopes={connection.scope} iconSize={17.5} textSize="12px" gap="10px" />
-                </div>
-                <div class="flex flex-col items-end justify-end min-h-[30px] h-full w-full">
-                    <button
-                        class="flex items-center justify-center w-[100px] h-[30px] bg-red-800 cursor-pointer hover:bg-transparent hover:text-red-800 border-red-800 border-[2px] transition-all rounded-md"
-                        style="padding: 5px;"
-                        on:click={() => api.disconnectConnection(connection).then(() => connections = connections.filter(c => c._id != connection._id))}
-                    >
-                        <p class="text-[13px]">Disconnect</p>
-                    </button>
-                </div>
+                    <ScopeList scopes={connection.scope} iconSize={17.5} textSize="14px" gap="10px" />
+                </div> 
             </div>
         {/each}
     </div>
