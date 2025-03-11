@@ -14,6 +14,7 @@
 	import type { AuditLog } from '$lib/models/AuditLog';
 	import Roles from './Roles.svelte';
 	import type Role from '$lib/models/Role';
+	import Users from './Users.svelte';
 
     const authStateManager = new AuthStateManager();
     let api = new AuthRsApi();
@@ -75,7 +76,7 @@
         <div class="flex flex-col h-[90%] w-full">
             {#if user && roles}
                 <div class="flex items-center min-h-[75px]">
-                    <p class="text-[14px]">> {TABS[currentTabIndex].requiredRoleId == UserMinimal.ADMIN_ROLE_ID ? 'Admin' : ''} Dashboard > {TABS[currentTabIndex].name}</p>
+                    <p class="text-[14px]">>{TABS[currentTabIndex].requiredRoleId == UserMinimal.ADMIN_ROLE_ID ? 'Admin' : ''} Dashboard > {TABS[currentTabIndex].name}</p>
                 </div>
                 {#if currentTabIndex == 0}
                     <Profile bind:api bind:user bind:roles />
@@ -87,6 +88,8 @@
                     <Applications bind:api bind:user bind:applications onlyShowOwned={true} />
                 {:else if currentTabIndex == 4}
                     <Logs bind:api bind:user bind:users bind:roles bind:applications bind:auditLogs />
+                {:else if currentTabIndex == 6}
+                    <Users bind:api bind:users bind:roles />
                 {:else if currentTabIndex == 7}
                     <Roles bind:api bind:roles />
                 {:else if currentTabIndex == 8}
