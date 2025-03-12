@@ -1,4 +1,3 @@
-use mongodb::bson::Uuid;
 use rocket::{get, serde::json::Json};
 use rocket_db_pools::Connection;
 
@@ -10,6 +9,7 @@ use crate::{
         oauth_scope::{OAuthScope, ScopeActions},
         user::{User, UserMinimal},
     },
+    utils::parse_uuid,
 };
 
 #[allow(unused)]
@@ -22,12 +22,12 @@ pub async fn get_user_by_id(
     if req_entity.is_token()
         && (!req_entity
             .token
-            .clone()
+            .as_ref()
             .unwrap()
             .check_scope(OAuthScope::Users(ScopeActions::Read))
             || req_entity
                 .token
-                .clone()
+                .as_ref()
                 .unwrap()
                 .check_scope(OAuthScope::Users(ScopeActions::All)))
     {
@@ -38,20 +38,14 @@ pub async fn get_user_by_id(
         });
     }
 
-    let uuid = match Uuid::parse_str(id) {
+    let uuid = match parse_uuid(id) {
         Ok(uuid) => uuid,
-        Err(err) => {
-            return Json(HttpResponse {
-                status: 400,
-                message: format!("Invalid UUID: {:?}", err),
-                data: None,
-            })
-        }
+        Err(err) => return Json(HttpResponse::from(err)),
     };
 
     if (req_entity.is_user()
         && req_entity.user_id != uuid
-        && !req_entity.user.clone().unwrap().is_admin())
+        && !req_entity.user.as_ref().unwrap().is_admin())
         || req_entity.is_token() && req_entity.user_id != uuid
     {
         return Json(HttpResponse {

@@ -62,11 +62,13 @@ pub async fn get_oauth_token(
 ) -> Option<Json<TokenOAuthResponse>> {
     let form_data = data.into_inner();
 
+    let client_id = match Uuid::parse_str(&form_data.client_id) {
+        Ok(client_id) => client_id,
+        Err(_) => return None,
+    };
+
     let data = TokenOAuthData {
-        client_id: match Uuid::parse_str(&form_data.client_id) {
-            Ok(client_id) => client_id,
-            Err(_) => return None,
-        },
+        client_id,
         client_secret: form_data.client_secret,
         grant_type: form_data.grant_type,
         user_id: None,
@@ -89,7 +91,7 @@ pub async fn get_oauth_token(
         return None;
     }
 
-    let existing_tokens = match OAuthToken::get_by_user_and_application_id(
+    let mut existing_tokens = match OAuthToken::get_by_user_and_application_id(
         code_data.user_id.unwrap(),
         code_data.client_id,
         &db,
@@ -102,12 +104,11 @@ pub async fn get_oauth_token(
 
     let token = if !existing_tokens.is_empty() {
         // TODO: implement a proper scope check here
-        if existing_tokens[0].clone().scope.len() > code_data.scope.clone().unwrap().len() {
+        if existing_tokens[0].scope.len() > code_data.scope.as_ref().unwrap().len() {
             existing_tokens[0].clone()
         } else {
             existing_tokens[0]
-                .clone()
-                .reauthenticate(code_data.scope.clone().unwrap(), &db)
+                .reauthenticate(code_data.scope.as_ref().unwrap().clone(), &db)
                 .await
                 .unwrap()
         }
@@ -132,7 +133,7 @@ pub async fn get_oauth_token(
     drop(codes);
 
     Some(Json(TokenOAuthResponse {
-        access_token: token.token.clone(),
+        access_token: token.token.to_string(),
         token_type: "Bearer".to_string(),
         expires_in: token.expires_in,
         scope: token

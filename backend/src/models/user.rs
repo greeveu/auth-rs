@@ -55,7 +55,7 @@ impl UserMinimal {
         &self,
         connection: &Connection<AuthRsDatabase>,
     ) -> Result<User, HttpResponse<UserMinimal>> {
-        User::get_full_by_id(self.id.clone(), connection).await
+        User::get_full_by_id(self.id, connection).await
     }
 }
 
@@ -146,9 +146,9 @@ impl User {
     pub fn to_minimal(&self) -> UserMinimal {
         UserMinimal {
             id: self.id,
-            email: self.email.clone(),
-            first_name: self.first_name.clone(),
-            last_name: self.last_name.clone(),
+            email: String::from(&self.email),
+            first_name: String::from(&self.first_name),
+            last_name: String::from(&self.last_name),
             roles: self.roles.clone(),
             mfa: self.totp_secret.is_some(),
             disabled: self.disabled,
@@ -281,7 +281,7 @@ impl User {
         let db = Self::get_collection(connection);
 
         match db.insert_one(self.clone(), None).await {
-            Ok(_) => Ok(self.clone().to_minimal()),
+            Ok(_) => Ok(self.to_minimal()),
             Err(err) => Err(HttpResponse {
                 status: 500,
                 message: format!("Error inserting user: {:?}", err),
@@ -301,7 +301,7 @@ impl User {
             "_id": self.id
         };
         match db.replace_one(filter, self.clone(), None).await {
-            Ok(_) => Ok(self.clone().to_minimal()),
+            Ok(_) => Ok(self.to_minimal()),
             Err(err) => Err(HttpResponse {
                 status: 500,
                 message: format!("Error updating user: {:?}", err),
@@ -371,7 +371,7 @@ impl User {
             "_id": self.id
         };
         match db.delete_one(filter, None).await {
-            Ok(_) => Ok(self.clone().to_minimal()),
+            Ok(_) => Ok(self.to_minimal()),
             Err(err) => Err(HttpResponse {
                 status: 500,
                 message: format!("Error deleting user: {:?}", err),

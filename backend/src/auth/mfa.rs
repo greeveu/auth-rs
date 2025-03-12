@@ -57,7 +57,7 @@ impl MfaHandler {
                     30,
                     Secret::generate_secret().to_bytes().unwrap(),
                     Some("auth-rs".to_string()), /* CHANGE ME */
-                    user.email.clone(),
+                    user.email.to_string(),
                 )
                 .unwrap(),
             ),
@@ -98,11 +98,11 @@ impl MfaHandler {
                 6,
                 1,
                 30,
-                Secret::Encoded(user.totp_secret.clone().unwrap())
+                Secret::Encoded(user.totp_secret.as_ref().unwrap().to_string())
                     .to_bytes()
                     .unwrap(),
                 Some("auth-rs".to_string()), /* CHANGE ME */
-                user.email.clone(),
+                user.email.to_string(),
             )
             .unwrap(),
         );
@@ -128,7 +128,7 @@ impl MfaHandler {
             return false;
         }
 
-        if self.totp.clone().unwrap().generate_current().unwrap() == code {
+        if self.totp.as_ref().unwrap().generate_current().unwrap() == code {
             let mut mfa_sessions = MFA_SESSIONS.lock().await;
             mfa_sessions.remove(&self.flow_id);
             drop(mfa_sessions);
@@ -147,7 +147,7 @@ impl MfaHandler {
             30,
             Secret::Encoded(secret).to_bytes().unwrap(),
             Some("auth-rs".to_string()), /* CHANGE ME */
-            user.email.clone(),
+            user.email.to_string(),
         )
         .unwrap();
 
@@ -164,14 +164,14 @@ impl MfaHandler {
         let mut new_values = HashMap::from([("totpSecret".to_string(), "".to_string())]);
         let mut old_values = HashMap::from([(
             "totpSecret".to_string(),
-            user.totp_secret.clone().unwrap_or("".to_string()),
+            user.totp_secret.as_ref().unwrap_or(&"".to_string()).to_string(),
         )]);
 
         user.totp_secret = None;
 
         let new_token = User::generate_token();
         new_values.insert("token".to_string(), new_token.clone());
-        old_values.insert("token".to_string(), user.token.clone());
+        old_values.insert("token".to_string(), user.token.to_string());
 
         user.token = new_token;
 
@@ -199,7 +199,7 @@ impl MfaHandler {
                     Ok(_) => (),
                     Err(err) => eprintln!("{:?}", err),
                 };
-                Ok(user.clone())
+                Ok(user.to_owned())
             }
             Err(err) => Err(format!("Failed to disable TOTP: {:?}", err)),
         }

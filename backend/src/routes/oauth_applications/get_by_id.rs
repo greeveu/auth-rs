@@ -1,4 +1,3 @@
-use mongodb::bson::Uuid;
 use rocket::{get, serde::json::Json};
 use rocket_db_pools::Connection;
 
@@ -9,6 +8,7 @@ use crate::{
         http_response::HttpResponse,
         oauth_application::{OAuthApplication, OAuthApplicationMinimal},
     },
+    utils::parse_uuid,
 };
 
 #[allow(unused)]
@@ -26,15 +26,9 @@ pub async fn get_oauth_application_by_id(
         });
     }
 
-    let uuid = match Uuid::parse_str(id) {
+    let uuid = match parse_uuid(id) {
         Ok(uuid) => uuid,
-        Err(err) => {
-            return Json(HttpResponse {
-                status: 400,
-                message: format!("Invalid UUID: {:?}", err),
-                data: None,
-            })
-        }
+        Err(err) => return Json(HttpResponse::from(err)),
     };
 
     match OAuthApplication::get_by_id(uuid, &db).await {

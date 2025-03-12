@@ -206,3 +206,42 @@ impl<T> From<AppError> for HttpResponse<T> {
 
 // Result type alias for application
 pub type AppResult<T> = Result<T, AppError>;
+
+// Add this new error type for API-specific errors
+#[derive(Debug, Error)]
+pub enum ApiError {
+    #[error("Not found: {0}")]
+    NotFound(String),
+
+    #[error("Bad request: {0}")]
+    BadRequest(String),
+
+    #[error("Unauthorized: {0}")]
+    Unauthorized(String),
+
+    #[error("Forbidden: {0}")]
+    Forbidden(String),
+
+    #[error("Internal server error: {0}")]
+    InternalError(String),
+
+    #[error("App error: {0}")]
+    AppError(#[from] AppError),
+}
+
+// Implement conversion from ApiError to HttpResponse
+impl<T> From<ApiError> for HttpResponse<T> {
+    fn from(error: ApiError) -> Self {
+        match error {
+            ApiError::NotFound(msg) => HttpResponse::not_found(&msg),
+            ApiError::BadRequest(msg) => HttpResponse::bad_request(&msg),
+            ApiError::Unauthorized(msg) => HttpResponse::unauthorized(&msg),
+            ApiError::Forbidden(msg) => HttpResponse::forbidden(&msg),
+            ApiError::InternalError(msg) => HttpResponse::internal_error(&msg),
+            ApiError::AppError(err) => HttpResponse::from(err),
+        }
+    }
+}
+
+// Add a type alias for API results
+pub type ApiResult<T> = Result<T, ApiError>;

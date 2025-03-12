@@ -1,4 +1,3 @@
-use mongodb::bson::Uuid;
 use rocket::{delete, error, serde::json::Json};
 use rocket_db_pools::Connection;
 
@@ -10,6 +9,7 @@ use crate::{
         http_response::HttpResponse,
         user::User,
     },
+    utils::parse_uuid,
 };
 
 #[allow(unused)]
@@ -27,15 +27,9 @@ pub async fn delete_user(
         });
     }
 
-    let uuid = match Uuid::parse_str(id) {
+    let uuid = match parse_uuid(id) {
         Ok(uuid) => uuid,
-        Err(err) => {
-            return Json(HttpResponse {
-                status: 400,
-                message: format!("Invalid UUID: {:?}", err),
-                data: None,
-            })
-        }
+        Err(err) => return Json(HttpResponse::from(err)),
     };
 
     if req_entity.user_id != uuid && !req_entity.user.unwrap().is_system_admin() {

@@ -7,6 +7,7 @@ use crate::{
         oauth_scope::{OAuthScope, ScopeActions},
         oauth_token::OAuthToken,
     },
+    utils::parse_uuid,
 };
 use mongodb::bson::{doc, DateTime, Uuid};
 use rocket::{
@@ -54,15 +55,9 @@ pub async fn get_by_user_id(
         });
     }
 
-    let uuid = match Uuid::parse_str(id) {
+    let uuid = match parse_uuid(id) {
         Ok(uuid) => uuid,
-        Err(err) => {
-            return Json(HttpResponse {
-                status: 400,
-                message: format!("Invalid UUID: {:?}", err),
-                data: None,
-            })
-        }
+        Err(err) => return Json(HttpResponse::from(err)),
     };
 
     if (req_entity.is_user()

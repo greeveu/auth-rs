@@ -43,7 +43,7 @@ pub async fn authorize_oauth_application(
     let data = data.into_inner();
 
     if !req_entity.is_user()
-        || req_entity.user.clone().unwrap().disabled
+        || req_entity.user.as_ref().unwrap().disabled
         || req_entity.user.unwrap().is_system_admin()
     {
         eprintln!("User is not allowed to authorize applications");
@@ -53,7 +53,7 @@ pub async fn authorize_oauth_application(
     let code = rand::random::<u32>();
 
     let oauth_application =
-        match OAuthApplication::get_full_by_id(data.client_id.clone(), &db).await {
+        match OAuthApplication::get_full_by_id(data.client_id, &db).await {
             Ok(app) => app,
             Err(err) => {
                 eprintln!("Error getting oauth application: {:?}", err);
@@ -67,6 +67,7 @@ pub async fn authorize_oauth_application(
     }
 
     let mut codes = OAUTH_CODES.lock().await;
+    let redirect_uri = data.redirect_uri.clone();
     codes.insert(
         code,
         TokenOAuthData {
@@ -74,9 +75,9 @@ pub async fn authorize_oauth_application(
             client_secret: oauth_application.secret,
             user_id: Some(req_entity.user_id),
             code,
-            scope: Some(data.scope.clone()),
+            scope: Some(data.scope),
             grant_type: "authorization_code".to_string(),
-            redirect_uri: data.redirect_uri.clone(),
+            redirect_uri: data.redirect_uri,
         },
     );
     drop(codes);
@@ -91,7 +92,7 @@ pub async fn authorize_oauth_application(
 
     Some(Json(AuthorizeOAuthResponse {
         client_id: data.client_id,
-        redirect_uri: data.redirect_uri,
+        redirect_uri,
         code,
     }))
 }

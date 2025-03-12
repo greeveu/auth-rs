@@ -3,6 +3,7 @@ mod db;
 mod errors;
 mod models;
 mod routes;
+mod utils;
 
 use std::{collections::HashMap, env};
 
@@ -37,7 +38,7 @@ lazy_static::lazy_static! {
 
 /// Initialize the database with default roles and system user
 async fn initialize_database(db: &AuthRsDatabase) -> AppResult<()> {
-    let data_db = db.database(&db::get_main_db_name());
+    let data_db = db.database(db::get_main_db_name());
 
     let roles_collection: Collection<Role> = data_db.collection(Role::COLLECTION_NAME);
     let users_collection: Collection<User> = data_db.collection(User::COLLECTION_NAME);
@@ -46,7 +47,7 @@ async fn initialize_database(db: &AuthRsDatabase) -> AppResult<()> {
     let roles_count = roles_collection
         .count_documents(None, None)
         .await
-        .map_err(|e| AppError::RocketMongoError(e))?;
+        .map_err(AppError::RocketMongoError)?;
 
     if roles_count == 0 {
         let admin_role = Role::new_system(*ADMIN_ROLE_ID, "Admin".to_string())
@@ -60,7 +61,7 @@ async fn initialize_database(db: &AuthRsDatabase) -> AppResult<()> {
         roles_collection
             .insert_many(roles, None)
             .await
-            .map_err(|e| AppError::RocketMongoError(e))?;
+            .map_err(AppError::RocketMongoError)?;
 
         println!("Inserted default roles into the database");
     }
@@ -69,7 +70,7 @@ async fn initialize_database(db: &AuthRsDatabase) -> AppResult<()> {
     let users_count = users_collection
         .count_documents(None, None)
         .await
-        .map_err(|e| AppError::RocketMongoError(e))?;
+        .map_err(AppError::RocketMongoError)?;
 
     if users_count == 0 {
         let system_email = env::var("SYSTEM_EMAIL")?;
@@ -88,7 +89,7 @@ async fn initialize_database(db: &AuthRsDatabase) -> AppResult<()> {
         users_collection
             .insert_one(system_user, None)
             .await
-            .map_err(|e| AppError::RocketMongoError(e))?;
+            .map_err(AppError::RocketMongoError)?;
 
         println!("Inserted system user into the database");
     }
@@ -122,7 +123,7 @@ fn rocket() -> _ {
                 }
             };
 
-            match initialize_database(&db).await {
+            match initialize_database(db).await {
                 Ok(_) => Ok(rocket),
                 Err(err) => {
                     eprintln!("Failed to initialize database: {}", err);

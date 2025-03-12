@@ -16,9 +16,9 @@ pub fn get_logs_db_name() -> &'static str {
 }
 
 pub fn get_main_db(connection: &Connection<AuthRsDatabase>) -> Database {
-    connection.database(&get_main_db_name())
+    connection.database(get_main_db_name())
 }
 
 pub fn get_logs_db(connection: &Connection<AuthRsDatabase>) -> Database {
-    connection.database(&get_logs_db_name())
+    connection.database(get_logs_db_name())
 }

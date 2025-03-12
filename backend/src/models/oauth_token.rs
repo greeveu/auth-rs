@@ -206,7 +206,7 @@ impl OAuthToken {
                 let tokens = cursor
                     .map(|doc| {
                         let token: OAuthToken = doc.unwrap();
-                        return token;
+                        token
                     })
                     .collect::<Vec<OAuthToken>>()
                     .await;
