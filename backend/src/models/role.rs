@@ -1,14 +1,17 @@
+use crate::db::{get_main_db, AuthRsDatabase};
 use anyhow::Result;
 use mongodb::bson::{doc, DateTime, Document, Uuid};
+use rocket::{
+    futures::StreamExt,
+    serde::{Deserialize, Serialize},
+};
 use rocket_db_pools::{mongodb::Collection, Connection};
-use rocket::{futures::StreamExt, serde::{Deserialize, Serialize}};
-use crate::db::{get_main_db, AuthRsDatabase};
 
 use super::http_response::HttpResponse;
 
-#[derive(Debug, Clone, Serialize, Deserialize)] 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
-#[serde(rename_all = "camelCase")] 
+#[serde(rename_all = "camelCase")]
 pub struct Role {
     #[serde(rename = "_id")]
     pub id: Uuid,
@@ -39,7 +42,10 @@ impl Role {
     }
 
     #[allow(unused)]
-    pub async fn get_by_id(id: Uuid, connection: &Connection<AuthRsDatabase>) -> Result<Role, HttpResponse<Role>> {
+    pub async fn get_by_id(
+        id: Uuid,
+        connection: &Connection<AuthRsDatabase>,
+    ) -> Result<Role, HttpResponse<Role>> {
         let db = Self::get_collection(connection);
 
         let filter = doc! {
@@ -50,13 +56,16 @@ impl Role {
             None => Err(HttpResponse {
                 status: 404,
                 message: "Role not found".to_string(),
-                data: None
-            })
+                data: None,
+            }),
         }
     }
 
     #[allow(unused)]
-    pub async fn get_by_name(name: &str, connection: &Connection<AuthRsDatabase>) -> Result<Role, HttpResponse<Role>> {
+    pub async fn get_by_name(
+        name: &str,
+        connection: &Connection<AuthRsDatabase>,
+    ) -> Result<Role, HttpResponse<Role>> {
         let db = Self::get_collection(connection);
 
         let filter = doc! {
@@ -67,33 +76,42 @@ impl Role {
             None => Err(HttpResponse {
                 status: 404,
                 message: "Role not found".to_string(),
-                data: None
-            })
+                data: None,
+            }),
         }
     }
 
     #[allow(unused)]
-    pub async fn get_all(connection: &Connection<AuthRsDatabase>, filter: Option<Document>) -> Result<Vec<Role>, HttpResponse<Vec<Role>>> {
+    pub async fn get_all(
+        connection: &Connection<AuthRsDatabase>,
+        filter: Option<Document>,
+    ) -> Result<Vec<Role>, HttpResponse<Vec<Role>>> {
         let db = Self::get_collection(connection);
 
         match db.find(filter, None).await {
             Ok(cursor) => {
-                let roles = cursor.map(|doc| {
-                    let role: Role = doc.unwrap();
-                    return role;
-                }).collect::<Vec<Role>>().await;
+                let roles = cursor
+                    .map(|doc| {
+                        let role: Role = doc.unwrap();
+                        role
+                    })
+                    .collect::<Vec<Role>>()
+                    .await;
                 Ok(roles)
-            },
+            }
             Err(err) => Err(HttpResponse {
                 status: 500,
                 message: format!("Error fetching roles: {:?}", err),
-                data: None
-            })
+                data: None,
+            }),
         }
     }
 
     #[allow(unused)]
-    pub async fn insert(&self, connection: &Connection<AuthRsDatabase>) -> Result<Role, HttpResponse<Role>> {
+    pub async fn insert(
+        &self,
+        connection: &Connection<AuthRsDatabase>,
+    ) -> Result<Role, HttpResponse<Role>> {
         let db = Self::get_collection(connection);
 
         match db.insert_one(self.clone(), None).await {
@@ -101,13 +119,16 @@ impl Role {
             Err(err) => Err(HttpResponse {
                 status: 500,
                 message: format!("Error inserting role: {:?}", err),
-                data: None
-            })
+                data: None,
+            }),
         }
     }
 
     #[allow(unused)]
-    pub async fn update(&self, connection: &Connection<AuthRsDatabase>) -> Result<Role, HttpResponse<Role>> {
+    pub async fn update(
+        &self,
+        connection: &Connection<AuthRsDatabase>,
+    ) -> Result<Role, HttpResponse<Role>> {
         let db = Self::get_collection(connection);
 
         let filter = doc! {
@@ -118,13 +139,16 @@ impl Role {
             Err(err) => Err(HttpResponse {
                 status: 500,
                 message: format!("Error updating role: {:?}", err),
-                data: None
-            })
+                data: None,
+            }),
         }
     }
 
     #[allow(unused)]
-    pub async fn delete(&self, connection: &Connection<AuthRsDatabase>) -> Result<Role, HttpResponse<()>> {
+    pub async fn delete(
+        &self,
+        connection: &Connection<AuthRsDatabase>,
+    ) -> Result<Role, HttpResponse<()>> {
         let db = Self::get_collection(connection);
 
         let filter = doc! {
@@ -135,8 +159,8 @@ impl Role {
             Err(err) => Err(HttpResponse {
                 status: 500,
                 message: format!("Error deleting role: {:?}", err),
-                data: None
-            })
+                data: None,
+            }),
         }
     }
 

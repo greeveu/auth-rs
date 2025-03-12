@@ -1,7 +1,10 @@
-use rocket_db_pools::{mongodb::{Client, Database}, Connection, Database as RocketDB}; 
+use rocket_db_pools::{
+    mongodb::{Client, Database},
+    Connection, Database as RocketDB,
+};
 
-#[derive(RocketDB)] 
-#[database("auth-rs-db")] 
+#[derive(RocketDB)]
+#[database("auth-rs-db")]
 pub struct AuthRsDatabase(Client);
 
 pub fn get_main_db_name() -> &'static str {

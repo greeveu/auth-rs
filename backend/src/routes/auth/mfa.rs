@@ -1,11 +1,22 @@
 use std::collections::HashMap;
 
 use mongodb::bson::Uuid;
-use rocket::{post, serde::{json::Json, Serialize, Deserialize}};
+use rocket::{
+    post,
+    serde::{json::Json, Deserialize, Serialize},
+};
 use rocket_db_pools::Connection;
 use totp_rs::TOTP;
 
-use crate::{auth::mfa::{MfaState, MfaType}, db::AuthRsDatabase, models::{audit_log::{AuditLog, AuditLogAction, AuditLogEntityType}, http_response::HttpResponse}, MFA_SESSIONS};
+use crate::{
+    auth::mfa::{MfaState, MfaType},
+    db::AuthRsDatabase,
+    models::{
+        audit_log::{AuditLog, AuditLogAction, AuditLogEntityType},
+        http_response::HttpResponse,
+    },
+    MFA_SESSIONS,
+};
 
 use super::login::LoginResponse;
 
@@ -14,12 +25,15 @@ use super::login::LoginResponse;
 #[serde(rename_all = "camelCase")]
 pub struct MfaData {
     pub flow_id: Uuid,
-    pub code: String
+    pub code: String,
 }
 
 #[allow(unused)]
-#[post("/auth/mfa", format = "json", data = "<data>")] 
-pub async fn mfa(db: Connection<AuthRsDatabase>, data: Json<MfaData>) -> Json<HttpResponse<LoginResponse>> {
+#[post("/auth/mfa", format = "json", data = "<data>")]
+pub async fn mfa(
+    db: Connection<AuthRsDatabase>,
+    data: Json<MfaData>,
+) -> Json<HttpResponse<LoginResponse>> {
     let mfa_data = data.into_inner();
 
     let mfa_sessions = MFA_SESSIONS.lock().await;
@@ -27,11 +41,13 @@ pub async fn mfa(db: Connection<AuthRsDatabase>, data: Json<MfaData>) -> Json<Ht
     let cloned_sessions = mfa_sessions.clone();
     let flow = match cloned_sessions.get(&mfa_data.flow_id) {
         Some(flow) => flow,
-        None => return Json(HttpResponse {
-            status: 404,
-            message: "Invalid or expired MFA flow".to_string(),
-            data: None
-        })
+        None => {
+            return Json(HttpResponse {
+                status: 404,
+                message: "Invalid or expired MFA flow".to_string(),
+                data: None,
+            })
+        }
     };
 
     drop(mfa_sessions);
@@ -40,7 +56,7 @@ pub async fn mfa(db: Connection<AuthRsDatabase>, data: Json<MfaData>) -> Json<Ht
         return Json(HttpResponse {
             status: 400,
             message: "MFA flow already complete".to_string(),
-            data: None
+            data: None,
         });
     }
 
@@ -49,21 +65,38 @@ pub async fn mfa(db: Connection<AuthRsDatabase>, data: Json<MfaData>) -> Json<Ht
             return Json(HttpResponse {
                 status: 401,
                 message: "Invalid TOTP code".to_string(),
-                data: None
-            })
+                data: None,
+            });
         }
 
-        if flow.r#type == MfaType::EnableTOTP && flow.totp.is_some() && flow.user.totp_secret.is_none() {
+        if flow.r#type == MfaType::EnableTOTP
+            && flow.totp.is_some()
+            && flow.user.totp_secret.is_none()
+        {
             let mut user = flow.user.clone();
             user.totp_secret = Some(flow.totp.clone().unwrap().get_secret_base32());
             match user.update(&db).await {
                 Ok(_) => {
-                    let new_values = HashMap::from([("totpSecret".to_string(), user.totp_secret.clone().unwrap_or("".to_string()))]);
+                    let new_values = HashMap::from([(
+                        "totpSecret".to_string(),
+                        user.totp_secret.clone().unwrap_or("".to_string()),
+                    )]);
                     let old_values = HashMap::from([("totpSecret".to_string(), "".to_string())]);
 
-                    match AuditLog::new(user.id, AuditLogEntityType::User, AuditLogAction::Update, "Enable TOTP.".to_string(), user.id, Some(old_values), Some(new_values)).insert(&db).await {
+                    match AuditLog::new(
+                        user.id,
+                        AuditLogEntityType::User,
+                        AuditLogAction::Update,
+                        "Enable TOTP.".to_string(),
+                        user.id,
+                        Some(old_values),
+                        Some(new_values),
+                    )
+                    .insert(&db)
+                    .await
+                    {
                         Ok(_) => (),
-                        Err(err) => eprintln!("{:?}", err)
+                        Err(err) => eprintln!("{:?}", err),
                     };
 
                     Json(HttpResponse {
@@ -73,15 +106,15 @@ pub async fn mfa(db: Connection<AuthRsDatabase>, data: Json<MfaData>) -> Json<Ht
                             user: Some(user.to_minimal()),
                             token: Some(TOTP::get_qr_base64(&flow.totp.clone().unwrap()).unwrap()),
                             mfa_required: false,
-                            mfa_flow_id: None
-                        })
+                            mfa_flow_id: None,
+                        }),
                     })
-                },
+                }
                 Err(err) => Json(HttpResponse {
                     status: 500,
                     message: format!("Failed to enable TOTP: {:?}", err),
-                    data: None
-                })
+                    data: None,
+                }),
             }
         } else {
             Json(HttpResponse {
@@ -91,15 +124,15 @@ pub async fn mfa(db: Connection<AuthRsDatabase>, data: Json<MfaData>) -> Json<Ht
                     user: Some(flow.user.clone().to_minimal()),
                     token: Some(flow.user.token.clone()),
                     mfa_required: false,
-                    mfa_flow_id: None
-                })
+                    mfa_flow_id: None,
+                }),
             })
         }
     } else {
         Json(HttpResponse {
             status: 400,
             message: "Invalid MFA type".to_string(),
-            data: None
+            data: None,
         })
     }
 }

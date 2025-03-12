@@ -83,7 +83,7 @@ pub async fn disconnect(
         }
     };
 
-    if tokens.len() == 0 {
+    if tokens.is_empty() {
         return Json(HttpResponse {
             status: 404,
             message: "You are not connected to that application".to_string(),

@@ -1,15 +1,25 @@
 use mongodb::bson::Uuid;
-use rocket::{post, serde::{json::Json, Deserialize, Serialize}};
+use rocket::{
+    post,
+    serde::{json::Json, Deserialize, Serialize},
+};
 use rocket_db_pools::Connection;
 
-use crate::{auth::mfa::MfaHandler, db::AuthRsDatabase, models::{http_response::HttpResponse, user::{User, UserMinimal}}};
+use crate::{
+    auth::mfa::MfaHandler,
+    db::AuthRsDatabase,
+    models::{
+        http_response::HttpResponse,
+        user::{User, UserMinimal},
+    },
+};
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
 #[serde(rename_all = "camelCase")]
 pub struct LoginData {
     pub email: String,
-    pub password: String
+    pub password: String,
 }
 
 #[derive(Serialize)]
@@ -23,42 +33,49 @@ pub struct LoginResponse {
 }
 
 #[allow(unused)]
-#[post("/auth/login", format = "json", data = "<data>")] 
-pub async fn login(db: Connection<AuthRsDatabase>, data: Json<LoginData>) -> Json<HttpResponse<LoginResponse>> {
+#[post("/auth/login", format = "json", data = "<data>")]
+pub async fn login(
+    db: Connection<AuthRsDatabase>,
+    data: Json<LoginData>,
+) -> Json<HttpResponse<LoginResponse>> {
     let login_data = data.into_inner();
 
     let user = match User::get_by_email(&login_data.email, &db).await {
         Ok(user) => user,
-        Err(err) => return Json(HttpResponse {
-            status: 500,
-            message: err.message,
-            data: None
-        })
+        Err(err) => {
+            return Json(HttpResponse {
+                status: 500,
+                message: err.message,
+                data: None,
+            })
+        }
     };
 
     if user.disabled {
         return Json(HttpResponse {
             status: 403,
             message: "User is disabled".to_string(),
-            data: None
+            data: None,
         });
     }
 
     let user_full = match user.to_full(&db).await {
         Ok(user) => user,
-        Err(err) => return Json(HttpResponse {
-            status: 500,
-            message: format!("Failed to get full user: {:?}", err),
-            data: None
-        })
+        Err(err) => {
+            return Json(HttpResponse {
+                status: 500,
+                message: format!("Failed to get full user: {:?}", err),
+                data: None,
+            })
+        }
     };
 
     if !user_full.verify_password(&login_data.password) {
         return Json(HttpResponse {
             status: 401,
             message: "Invalid email or password".to_string(),
-            data: None
-        })
+            data: None,
+        });
     }
 
     if MfaHandler::is_mfa_required(&user_full) {
@@ -71,8 +88,8 @@ pub async fn login(db: Connection<AuthRsDatabase>, data: Json<LoginData>) -> Jso
                 user: None,
                 token: None,
                 mfa_required: true,
-                mfa_flow_id: Some(mfa_flow.flow_id)
-            })
+                mfa_flow_id: Some(mfa_flow.flow_id),
+            }),
         });
     }
 
@@ -83,7 +100,7 @@ pub async fn login(db: Connection<AuthRsDatabase>, data: Json<LoginData>) -> Jso
             user: Some(user),
             token: Some(user_full.token),
             mfa_required: false,
-            mfa_flow_id: None
-        })
+            mfa_flow_id: None,
+        }),
     })
 }
