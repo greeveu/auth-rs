@@ -52,14 +52,13 @@ pub async fn authorize_oauth_application(
 
     let code = rand::random::<u32>();
 
-    let oauth_application =
-        match OAuthApplication::get_full_by_id(data.client_id, &db).await {
-            Ok(app) => app,
-            Err(err) => {
-                eprintln!("Error getting oauth application: {:?}", err);
-                return None;
-            }
-        };
+    let oauth_application = match OAuthApplication::get_full_by_id(data.client_id, &db).await {
+        Ok(app) => app,
+        Err(err) => {
+            eprintln!("Error getting oauth application: {:?}", err);
+            return None;
+        }
+    };
 
     if !oauth_application.redirect_uris.contains(&data.redirect_uri) {
         eprintln!("Redirect uri is not allowed for this application");

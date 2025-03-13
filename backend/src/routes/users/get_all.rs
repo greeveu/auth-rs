@@ -17,27 +17,16 @@ pub async fn get_all_users(
     req_entity: AuthEntity,
 ) -> Json<HttpResponse<Vec<UserMinimal>>> {
     if !req_entity.is_user() {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Forbidden".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Forbidden"));
     }
 
     if !req_entity.user.unwrap().is_admin() {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Missing permissions!".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Missing permissions!"));
     }
 
+    //TODO: Add pagination
     match User::get_all(&db).await {
-        Ok(users) => Json(HttpResponse {
-            status: 200,
-            message: "Successfully retrieved all users".to_string(),
-            data: Some(users),
-        }),
+        Ok(users) => Json(HttpResponse::success("Successfully retrieved all users", users)),
         Err(err) => Json(err),
     }
 }

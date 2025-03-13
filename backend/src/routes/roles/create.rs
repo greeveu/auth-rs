@@ -30,27 +30,17 @@ pub async fn create_role(
     let data = data.into_inner();
 
     if !req_entity.is_user() {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Forbidden".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Forbidden"));
     }
 
     if !req_entity.user.unwrap().is_admin() {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Missing permissions!".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Missing permissions!"));
     }
 
     if Role::get_by_name(&data.name, &db).await.is_ok() {
-        return Json(HttpResponse {
-            status: 400,
-            message: "Role with that name already exists".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::bad_request(
+            "Role with that name already exists",
+        ));
     }
 
     let role = match Role::new(data.name) {

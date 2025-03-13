@@ -114,20 +114,12 @@ impl OAuthToken {
                 if (token.created_at.timestamp_millis() + token.expires_in as i64)
                     < DateTime::now().timestamp_millis()
                 {
-                    Err(HttpResponse {
-                        status: 401,
-                        message: "Token expired".to_string(),
-                        data: None,
-                    })
+                    Err(HttpResponse::unauthorized("Token expired"))
                 } else {
                     Ok(token)
                 }
             }
-            None => Err(HttpResponse {
-                status: 404,
-                message: "Token not found".to_string(),
-                data: None,
-            }),
+            None => Err(HttpResponse::not_found("Token not found")),
         }
     }
 
@@ -152,11 +144,7 @@ impl OAuthToken {
                     .await;
                 Ok(tokens)
             }
-            Err(err) => Err(HttpResponse {
-                status: 500,
-                message: format!("Error fetching tokens: {:?}", err),
-                data: None,
-            }),
+            Err(err) => Err(HttpResponse::internal_error(&format!("Error fetching tokens: {:?}", err))),
         }
     }
 
@@ -181,11 +169,7 @@ impl OAuthToken {
                     .await;
                 Ok(tokens)
             }
-            Err(err) => Err(HttpResponse {
-                status: 500,
-                message: format!("Error fetching tokens: {:?}", err),
-                data: None,
-            }),
+            Err(err) => Err(HttpResponse::internal_error(&format!("Error fetching tokens: {:?}", err))),
         }
     }
 
@@ -212,11 +196,7 @@ impl OAuthToken {
                     .await;
                 Ok(tokens)
             }
-            Err(err) => Err(HttpResponse {
-                status: 500,
-                message: format!("Error fetching tokens: {:?}", err),
-                data: None,
-            }),
+            Err(err) => Err(HttpResponse::internal_error(&format!("Error fetching tokens: {:?}", err))),
         }
     }
 
@@ -237,11 +217,7 @@ impl OAuthToken {
 
         match db.replace_one(filter, self.clone(), None).await {
             Ok(_) => Ok(self.clone()),
-            Err(err) => Err(HttpResponse {
-                status: 500,
-                message: format!("Error reauthenticating token: {:?}", err),
-                data: None,
-            }),
+            Err(err) => Err(HttpResponse::internal_error(&format!("Error reauthenticating token: {:?}", err))),
         }
     }
 
@@ -257,11 +233,7 @@ impl OAuthToken {
         };
         match db.delete_one(filter, None).await {
             Ok(_) => Ok(self.clone()),
-            Err(err) => Err(HttpResponse {
-                status: 500,
-                message: format!("Error deleting oauth token: {:?}", err),
-                data: None,
-            }),
+            Err(err) => Err(HttpResponse::internal_error(&format!("Error deleting oauth token: {:?}", err))),
         }
     }
 

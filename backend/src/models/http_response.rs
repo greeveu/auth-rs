@@ -5,6 +5,7 @@ use rocket::serde::{Deserialize, Serialize};
 pub struct HttpResponse<T> {
     pub status: u16,
     pub message: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<T>,
 }
 

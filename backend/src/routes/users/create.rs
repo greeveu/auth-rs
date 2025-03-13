@@ -32,11 +32,7 @@ pub async fn create_user(
     let data = data.into_inner();
 
     if User::get_by_email(&data.email, &db).await.is_ok() {
-        return Json(HttpResponse {
-            status: 400,
-            message: "User with that email already exists".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::bad_request("User with that email already exists"));
     }
 
     let user = match User::new(data.email, data.password, data.first_name, data.last_name) {

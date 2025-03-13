@@ -43,11 +43,7 @@ pub async fn update_user(
     let result = update_user_internal(db, req_entity, id, data.into_inner()).await;
 
     match result {
-        Ok(user) => Json(HttpResponse {
-            status: 200,
-            message: "User updated".to_string(),
-            data: Some(user),
-        }),
+        Ok(user) => Json(HttpResponse::success("User updated", user)),
         Err(err) => Json(err.into()),
     }
 }
@@ -158,8 +154,8 @@ async fn update_user_internal(
                 old_user
                     .roles
                     .iter()
-                    .map(|r| r.to_string())
-                    .collect::<Vec<String>>()
+                    .map(ToString::to_string)
+                    .collect::<Vec<_>>()
                     .join(","),
             );
             new_values.insert(
@@ -167,8 +163,8 @@ async fn update_user_internal(
                 new_user
                     .roles
                     .iter()
-                    .map(|r| r.to_string())
-                    .collect::<Vec<String>>()
+                    .map(ToString::to_string)
+                    .collect::<Vec<_>>()
                     .join(","),
             );
         }

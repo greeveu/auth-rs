@@ -85,7 +85,7 @@ pub async fn login(
     data: Json<LoginData>,
 ) -> Json<HttpResponse<LoginResponse>> {
     let login_data = data.into_inner();
-    
+
     match process_login(&db, login_data).await {
         Ok(response) => {
             let message = if response.mfa_required {

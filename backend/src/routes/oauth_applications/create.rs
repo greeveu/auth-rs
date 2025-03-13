@@ -33,11 +33,7 @@ pub async fn create_oauth_application(
     let data = data.into_inner();
 
     if !req_entity.is_user() {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Forbidden".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Forbidden"));
     }
 
     let oauth_application = match OAuthApplication::new(

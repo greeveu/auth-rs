@@ -6,6 +6,7 @@ use rocket::{
 use rocket_db_pools::Connection;
 use std::collections::HashMap;
 
+use crate::utils::parse_uuid;
 use crate::{
     auth::auth::AuthEntity,
     db::AuthRsDatabase,
@@ -33,29 +34,17 @@ pub async fn update_role(
     let data = data.into_inner();
 
     if !req_entity.is_user() {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Forbidden".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Forbidden"));
     }
 
     if !req_entity.user.unwrap().is_admin() {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Missing permissions!".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Missing permissions!"));
     }
 
-    let uuid = match Uuid::parse_str(id) {
+    let uuid = match parse_uuid(id) {
         Ok(uuid) => uuid,
         Err(err) => {
-            return Json(HttpResponse {
-                status: 400,
-                message: format!("Invalid UUID: {:?}", err),
-                data: None,
-            })
+            return Json(HttpResponse::from(err));
         }
     };
 
@@ -66,11 +55,7 @@ pub async fn update_role(
 
     // Prevent modification of system roles
     if old_role.system {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Cannot modify system role".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Cannot modify system role"));
     }
 
     let mut new_role = old_role.clone();
@@ -85,11 +70,7 @@ pub async fn update_role(
     }
 
     if new_values.is_empty() {
-        return Json(HttpResponse {
-            status: 200,
-            message: "No updates applied.".to_string(),
-            data: Some(new_role),
-        });
+        return Json(HttpResponse::success("No updates applied.", new_role));
     }
 
     match new_role.update(&db).await {
@@ -110,11 +91,7 @@ pub async fn update_role(
                 Err(err) => error!("{}", err),
             }
 
-            Json(HttpResponse {
-                status: 200,
-                message: "Role updated".to_string(),
-                data: Some(role),
-            })
+            Json(HttpResponse::success("Role updated", role))
         }
         Err(err) => Json(err),
     }

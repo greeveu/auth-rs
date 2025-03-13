@@ -19,11 +19,7 @@ pub async fn get_oauth_application_by_id(
     id: &str,
 ) -> Json<HttpResponse<OAuthApplicationMinimal>> {
     if !req_entity.is_user() {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Forbidden".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Forbidden"));
     }
 
     let uuid = match parse_uuid(id) {
@@ -32,11 +28,7 @@ pub async fn get_oauth_application_by_id(
     };
 
     match OAuthApplication::get_by_id(uuid, &db).await {
-        Ok(oauth_application) => Json(HttpResponse {
-            status: 200,
-            message: "Found oauth_application by id".to_string(),
-            data: Some(oauth_application),
-        }),
+        Ok(oauth_application) => Json(HttpResponse::success("Found oauth_application by id", oauth_application)),
         Err(err) => Json(err),
     }
 }

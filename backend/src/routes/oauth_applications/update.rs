@@ -6,6 +6,7 @@ use rocket::{
 use rocket_db_pools::Connection;
 use std::collections::HashMap;
 
+use crate::utils::parse_uuid;
 use crate::{
     auth::auth::AuthEntity,
     db::AuthRsDatabase,
@@ -36,22 +37,12 @@ pub async fn update_oauth_application(
     let data = data.into_inner();
 
     if !req_entity.is_user() {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Forbidden".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Forbidden"));
     }
 
-    let uuid = match Uuid::parse_str(id) {
+    let uuid = match parse_uuid(id) {
         Ok(uuid) => uuid,
-        Err(err) => {
-            return Json(HttpResponse {
-                status: 400,
-                message: format!("Invalid UUID: {:?}", err),
-                data: None,
-            })
-        }
+        Err(err) => { return Json(HttpResponse::from(err)); }
     };
 
     let old_oauth_application = match OAuthApplication::get_by_id(uuid, &db).await {
@@ -60,11 +51,7 @@ pub async fn update_oauth_application(
     };
 
     if req_entity.user_id != old_oauth_application.owner && !req_entity.user.unwrap().is_admin() {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Missing permissions!".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Missing permissions!"));
     }
 
     let mut new_oauth_application = match old_oauth_application.clone().to_full(&db).await {
@@ -75,13 +62,14 @@ pub async fn update_oauth_application(
     let mut old_values: HashMap<String, String> = HashMap::new();
     let mut new_values: HashMap<String, String> = HashMap::new();
 
-    if data.name.is_some() && old_oauth_application.name != data.name.clone().unwrap() {
+    if data.name.is_some() && &old_oauth_application.name != data.name.as_ref().unwrap() {
         new_oauth_application.name = data.name.unwrap();
         old_values.insert("name".to_string(), old_oauth_application.name.clone());
         new_values.insert("name".to_string(), new_oauth_application.name.clone());
     }
+    //TODO: Wtf happens here with the description check
     if data.description.is_some() && old_oauth_application.description != data.description.clone() {
-        new_oauth_application.description = match data.description.clone().unwrap().is_empty() {
+        new_oauth_application.description = match data.description.as_ref().unwrap().is_empty() {
             true => None,
             false => Some(data.description.unwrap()),
         };
@@ -115,11 +103,7 @@ pub async fn update_oauth_application(
     }
 
     if new_values.is_empty() {
-        return Json(HttpResponse {
-            status: 200,
-            message: "No updates applied.".to_string(),
-            data: Some(new_oauth_application.to_minimal()),
-        });
+        return Json(HttpResponse::success("No updates applied.", new_oauth_application.to_minimal()));
     }
 
     match new_oauth_application.update(&db).await {
@@ -140,11 +124,10 @@ pub async fn update_oauth_application(
                 Err(err) => error!("{}", err),
             }
 
-            Json(HttpResponse {
-                status: 200,
-                message: "OAuth Application updated".to_string(),
-                data: Some(oauth_application),
-            })
+            Json(HttpResponse::success(
+                "OAuth Application updated",
+                oauth_application,
+            ))
         }
         Err(err) => Json(err),
     }

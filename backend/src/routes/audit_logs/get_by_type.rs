@@ -18,11 +18,7 @@ pub async fn get_audit_logs_by_type(
     r#type: &str,
 ) -> Json<HttpResponse<Vec<AuditLog>>> {
     if !req_entity.is_user() || !req_entity.user.unwrap().is_admin() {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Missing permissions!".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Missing permissions!"));
     }
 
     let entity_type = match AuditLogEntityType::from_string(r#type) {
@@ -31,11 +27,7 @@ pub async fn get_audit_logs_by_type(
     };
 
     match AuditLog::get_all_from_type(entity_type.unwrap(), &db).await {
-        Ok(audit_logs) => Json(HttpResponse {
-            status: 200,
-            message: "Successfully retrieved all audit logs by type".to_string(),
-            data: Some(audit_logs),
-        }),
+        Ok(audit_logs) => Json(HttpResponse::success("Successfully retrieved all audit logs by type", audit_logs)),
         Err(err) => Json(err),
     }
 }

@@ -32,19 +32,11 @@ pub async fn get_audit_logs_by_user_id(
         || (req_entity.user.clone().unwrap().id != user_uuid
             && !req_entity.user.unwrap().is_admin())
     {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Missing permissions!".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Missing permissions!"));
     }
 
     match AuditLog::get_by_user_id(user_uuid, &db).await {
-        Ok(audit_logs) => Json(HttpResponse {
-            status: 200,
-            message: "Audit Logs found by user id".to_string(),
-            data: Some(audit_logs),
-        }),
+        Ok(audit_logs) => Json(HttpResponse::success("Audit Logs found by user id", audit_logs)),
         Err(err) => Json(err),
     }
 }

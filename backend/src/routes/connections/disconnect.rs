@@ -32,11 +32,7 @@ pub async fn disconnect(
                 .unwrap()
                 .check_scope(OAuthScope::Connections(ScopeActions::All)))
     {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Forbidden".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Forbidden"));
     }
 
     let uuid = match parse_uuid(id) {
@@ -48,11 +44,7 @@ pub async fn disconnect(
         && req_entity.user_id != uuid
         && !req_entity.user.clone().unwrap().is_admin())
     {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Missing permissions!".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Missing permissions!"));
     }
 
     let oauth_application = match OAuthApplication::get_by_id(uuid, &db).await {
@@ -78,11 +70,7 @@ pub async fn disconnect(
     };
 
     if tokens.is_empty() {
-        return Json(HttpResponse {
-            status: 404,
-            message: "You are not connected to that application".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::not_found("You are not connected to that application"));
     }
 
     for token in tokens {
@@ -98,9 +86,5 @@ pub async fn disconnect(
         }
     }
 
-    Json(HttpResponse {
-        status: 200,
-        message: "Successfully disconnected from application".to_string(),
-        data: None,
-    })
+    Json(HttpResponse::success_no_data("Successfully disconnected from application"))
 }

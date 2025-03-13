@@ -20,49 +20,35 @@ pub async fn delete_role(
     id: &str,
 ) -> Json<HttpResponse<()>> {
     if !req_entity.is_user() {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Forbidden".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Forbidden"));
     }
 
     if !req_entity.user.unwrap().is_admin() {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Missing permissions!".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Missing permissions!"));
     }
 
     let uuid = match Uuid::parse_str(id) {
         Ok(uuid) => uuid,
         Err(err) => {
-            return Json(HttpResponse {
-                status: 400,
-                message: format!("Invalid UUID: {:?}", err),
-                data: None,
-            })
+            return Json(HttpResponse::bad_request(&format!(
+                "Invalid UUID: {:?}",
+                err
+            )))
         }
     };
 
     let role = match Role::get_by_id(uuid, &db).await {
         Ok(role) => role,
         Err(err) => {
-            return Json(HttpResponse {
-                status: 404,
-                message: format!("Role does not exist: {:?}", err),
-                data: None,
-            })
+            return Json(HttpResponse::not_found(&format!(
+                "Role does not exist: {:?}",
+                err
+            )))
         }
     };
 
     if role.system {
-        return Json(HttpResponse {
-            status: 400,
-            message: "Cannot delete system role".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::bad_request("Cannot delete system role"));
     }
 
     match role.delete(&db).await {
@@ -83,11 +69,7 @@ pub async fn delete_role(
                 Err(err) => error!("{}", err),
             }
 
-            Json(HttpResponse {
-                status: 200,
-                message: "Role deleted".to_string(),
-                data: None,
-            })
+            Json(HttpResponse::success_no_data("Role deleted"))
         }
         Err(err) => Json(err),
     }

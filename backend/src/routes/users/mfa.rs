@@ -84,7 +84,7 @@ pub async fn enable_totp_mfa(
     data: Json<EnableMfaData>,
 ) -> Json<HttpResponse<LoginResponse>> {
     let mfa_data = data.into_inner();
-    
+
     match process_enable_totp_mfa(&db, req_entity, id, mfa_data).await {
         Ok((message, response)) => Json(HttpResponse::success(&message, response)),
         Err(err) => Json(HttpResponse::from(err)),
@@ -137,13 +137,10 @@ async fn process_disable_totp_mfa(
     }
 
     if let Some(code) = mfa_data.code {
-        let is_valid = MfaHandler::verify_totp(
-            &user,
-            user.totp_secret.as_ref().unwrap().to_string(),
-            &code,
-        )
-        .await;
-        
+        let is_valid =
+            MfaHandler::verify_totp(&user, user.totp_secret.as_ref().unwrap().to_string(), &code)
+                .await;
+
         if !is_valid {
             return Err(ApiError::Unauthorized("Invalid TOTP code!".to_string()));
         }
@@ -169,7 +166,7 @@ pub async fn disable_totp_mfa(
     data: Json<DisableMfaData>,
 ) -> Json<HttpResponse<UserMinimal>> {
     let mfa_data = data.into_inner();
-    
+
     match process_disable_totp_mfa(&db, req_entity, id, mfa_data).await {
         Ok(user) => Json(HttpResponse::success("TOTP MFA disabled.", user)),
         Err(err) => Json(HttpResponse::from(err)),

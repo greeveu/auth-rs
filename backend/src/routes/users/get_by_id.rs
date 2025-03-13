@@ -31,11 +31,7 @@ pub async fn get_user_by_id(
                 .unwrap()
                 .check_scope(OAuthScope::Users(ScopeActions::All)))
     {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Forbidden".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Forbidden"));
     }
 
     let uuid = match parse_uuid(id) {
@@ -48,19 +44,11 @@ pub async fn get_user_by_id(
         && !req_entity.user.as_ref().unwrap().is_admin())
         || req_entity.is_token() && req_entity.user_id != uuid
     {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Missing permissions!".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Missing permissions!"));
     }
 
     match User::get_by_id(uuid, &db).await {
-        Ok(user) => Json(HttpResponse {
-            status: 200,
-            message: "Found user by id".to_string(),
-            data: Some(user),
-        }),
+        Ok(user) => Json(HttpResponse::success("Found user by id", user)),
         Err(err) => Json(err),
     }
 }

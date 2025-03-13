@@ -29,11 +29,7 @@ pub async fn get_all_oauth_applications(
                 .unwrap()
                 .check_scope(OAuthScope::OAuthApplications(ScopeActions::All)))
     {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Forbidden".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Forbidden"));
     }
 
     let filter = match req_entity.user.unwrap().is_admin() {
@@ -48,9 +44,5 @@ pub async fn get_all_oauth_applications(
         Err(err) => return Json(err),
     };
 
-    Json(HttpResponse {
-        status: 200,
-        message: "Successfully retrieved your oauth applications".to_string(),
-        data: Some(applications),
-    })
+    Json(HttpResponse::success("Successfully retrieved your oauth applications", applications))
 }

@@ -85,11 +85,7 @@ impl User {
         let password_hash = match bcrypt::hash(password) {
             Ok(hash) => hash,
             Err(err) => {
-                return Err(HttpResponse {
-                    status: 500,
-                    message: format!("Failed to hash password: {:?}", err),
-                    data: None,
-                })
+                return Err(HttpResponse::internal_error(&format!("Failed to hash password: {:?}", err)))
             }
         };
 
@@ -265,11 +261,7 @@ impl User {
                     .await;
                 Ok(users)
             }
-            Err(err) => Err(HttpResponse {
-                status: 500,
-                message: format!("Error fetching users: {:?}", err),
-                data: None,
-            }),
+            Err(err) => Err(HttpResponse::internal_error(&format!("Error fetching users: {:?}", err))),
         }
     }
 

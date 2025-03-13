@@ -14,11 +14,7 @@ pub async fn get_all_roles(
     req_entity: AuthEntity,
 ) -> Json<HttpResponse<Vec<Role>>> {
     if !req_entity.is_user() {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Forbidden".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Forbidden"));
     }
 
     match Role::get_all(&db, None).await {

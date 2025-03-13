@@ -48,11 +48,7 @@ pub async fn get_by_user_id(
                 .unwrap()
                 .check_scope(OAuthScope::Connections(ScopeActions::All)))
     {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Forbidden".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Forbidden"));
     }
 
     let uuid = match parse_uuid(id) {
@@ -65,21 +61,13 @@ pub async fn get_by_user_id(
         && !req_entity.user.clone().unwrap().is_admin())
         || req_entity.is_token() && req_entity.user_id != uuid
     {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Missing permissions!".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Missing permissions!"));
     }
 
     let connected_applications = match OAuthToken::get_by_user_id(uuid, &db).await {
         Ok(tokens) => tokens,
         Err(err) => {
-            return Json(HttpResponse {
-                status: 500,
-                message: err.message,
-                data: None,
-            });
+            return Json(HttpResponse::internal_error(&err.message));
         }
     };
 
@@ -92,11 +80,7 @@ pub async fn get_by_user_id(
     let applications = match OAuthApplication::get_all(&db, Some(filter)).await {
         Ok(applications) => applications,
         Err(err) => {
-            return Json(HttpResponse {
-                status: 500,
-                message: err.message,
-                data: None,
-            });
+            return Json(HttpResponse::internal_error(&err.message));
         }
     };
 

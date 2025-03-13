@@ -98,11 +98,7 @@ impl OAuthApplication {
         };
         match db.find_one(filter, None).await.unwrap() {
             Some(oauth_application) => Ok(oauth_application),
-            None => Err(HttpResponse {
-                status: 404,
-                message: "OAuth Application not found".to_string(),
-                data: None,
-            }),
+            None => Err(HttpResponse::not_found("OAuth Application not found")),
         }
     }
 
@@ -118,11 +114,7 @@ impl OAuthApplication {
         };
         match db.find_one(filter, None).await.unwrap() {
             Some(oauth_application) => Ok(oauth_application.to_minimal()),
-            None => Err(HttpResponse {
-                status: 404,
-                message: "OAuth Application not found".to_string(),
-                data: None,
-            }),
+            None => Err(HttpResponse::not_found("OAuth Application not found")),
         }
     }
 
@@ -144,11 +136,7 @@ impl OAuthApplication {
                     .await;
                 Ok(oauth_applications)
             }
-            Err(err) => Err(HttpResponse {
-                status: 500,
-                message: format!("Error fetching OAuth Applications: {:?}", err),
-                data: None,
-            }),
+            Err(err) => Err(HttpResponse::internal_error(&format!("Error fetching OAuth Applications: {:?}", err))),
         }
     }
 
@@ -161,11 +149,7 @@ impl OAuthApplication {
 
         match db.insert_one(self.clone(), None).await {
             Ok(_) => Ok(self.clone()),
-            Err(err) => Err(HttpResponse {
-                status: 500,
-                message: format!("Error inserting OAuth Application: {:?}", err),
-                data: None,
-            }),
+            Err(err) => Err(HttpResponse::internal_error(&format!("Error inserting OAuth Application: {:?}", err))),
         }
     }
 
@@ -181,11 +165,7 @@ impl OAuthApplication {
         };
         match db.replace_one(filter, self.clone(), None).await {
             Ok(_) => Ok(self.clone().to_minimal()),
-            Err(err) => Err(HttpResponse {
-                status: 500,
-                message: format!("Error updating OAuth Application: {:?}", err),
-                data: None,
-            }),
+            Err(err) => Err(HttpResponse::internal_error(&format!("Error updating OAuth Application: {:?}", err))),
         }
     }
 
@@ -201,11 +181,7 @@ impl OAuthApplication {
         };
         match db.delete_one(filter, None).await {
             Ok(_) => Ok(self.clone().to_minimal()),
-            Err(err) => Err(HttpResponse {
-                status: 500,
-                message: format!("Error deleting OAuth Application: {:?}", err),
-                data: None,
-            }),
+            Err(err) => Err(HttpResponse::internal_error(&format!("Error deleting OAuth Application: {:?}", err))),
         }
     }
 

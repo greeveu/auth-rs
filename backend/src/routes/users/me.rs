@@ -29,19 +29,11 @@ pub async fn get_current_user(
                 .unwrap()
                 .check_scope(OAuthScope::Users(ScopeActions::All)))
     {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Forbidden".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Forbidden"));
     }
 
     match User::get_by_id(req_entity.user_id, &db).await {
-        Ok(user) => Json(HttpResponse {
-            status: 200,
-            message: "Found user by id".to_string(),
-            data: Some(user),
-        }),
+        Ok(user) => Json(HttpResponse::success("Found user by id", user)),
         Err(err) => Json(err),
     }
 }

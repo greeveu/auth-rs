@@ -20,11 +20,7 @@ pub async fn delete_user(
     id: &str,
 ) -> Json<HttpResponse<()>> {
     if !req_entity.is_user() {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Forbidden".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Forbidden"));
     }
 
     let uuid = match parse_uuid(id) {
@@ -33,21 +29,13 @@ pub async fn delete_user(
     };
 
     if req_entity.user_id != uuid && !req_entity.user.unwrap().is_system_admin() {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Missing permissions!".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Missing permissions!"));
     }
 
     let user = match User::get_full_by_id(uuid, &db).await {
         Ok(user) => user,
         Err(err) => {
-            return Json(HttpResponse {
-                status: 404,
-                message: format!("User does not exist: {:?}", err),
-                data: None,
-            })
+            return Json(HttpResponse::not_found(&format!("User does not exist: {:?}", err)))
         }
     };
 
@@ -69,11 +57,7 @@ pub async fn delete_user(
                 Err(err) => error!("{}", err),
             }
 
-            Json(HttpResponse {
-                status: 200,
-                message: "User deleted".to_string(),
-                data: None,
-            })
+            Json(HttpResponse::success_no_data("User deleted"))
         }
         Err(err) => Json(err),
     }

@@ -20,11 +20,7 @@ pub async fn get_audit_log_by_id(
     id: &str,
 ) -> Json<HttpResponse<AuditLog>> {
     if !req_entity.is_user() {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Forbidden!".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Forbidden"));
     }
 
     let uuid = match parse_uuid(id) {
@@ -33,11 +29,7 @@ pub async fn get_audit_log_by_id(
     };
 
     if req_entity.user_id != uuid && !req_entity.user.unwrap().is_admin() {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Missing permissions!".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Missing permissions!"));
     }
 
     let entity_type = match AuditLogEntityType::from_string(&r#type) {
@@ -46,11 +38,7 @@ pub async fn get_audit_log_by_id(
     };
 
     match AuditLog::get_by_id(uuid, entity_type, &db).await {
-        Ok(audit_log) => Json(HttpResponse {
-            status: 200,
-            message: "Audit Log found by id".to_string(),
-            data: Some(audit_log),
-        }),
+        Ok(audit_log) => Json(HttpResponse::success("Audit Log found by id", audit_log)),
         Err(err) => Json(err),
     }
 }

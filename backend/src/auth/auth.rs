@@ -102,7 +102,7 @@ impl<'r> FromRequest<'r> for AuthEntity {
                                 return Outcome::Error((Status::Forbidden, AuthError::Forbidden));
                             }
 
-                            return Outcome::Success(AuthEntity::from_user(user));
+                            Outcome::Success(AuthEntity::from_user(user))
                         }
                         Err(_) => match OAuthToken::get_by_token(token_value, &db).await {
                             Ok(token) => {

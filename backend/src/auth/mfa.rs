@@ -164,7 +164,10 @@ impl MfaHandler {
         let mut new_values = HashMap::from([("totpSecret".to_string(), "".to_string())]);
         let mut old_values = HashMap::from([(
             "totpSecret".to_string(),
-            user.totp_secret.as_ref().unwrap_or(&"".to_string()).to_string(),
+            user.totp_secret
+                .as_ref()
+                .unwrap_or(&"".to_string())
+                .to_string(),
         )]);
 
         user.totp_secret = None;

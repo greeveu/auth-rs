@@ -20,11 +20,7 @@ pub async fn delete_oauth_application(
     id: &str,
 ) -> Json<HttpResponse<()>> {
     if !req_entity.is_user() {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Forbidden".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Forbidden"));
     }
 
     let uuid = match parse_uuid(id) {
@@ -44,11 +40,7 @@ pub async fn delete_oauth_application(
     };
 
     if req_entity.user_id != oauth_application.owner && !req_entity.user.unwrap().is_admin() {
-        return Json(HttpResponse {
-            status: 403,
-            message: "Missing permissions!".to_string(),
-            data: None,
-        });
+        return Json(HttpResponse::forbidden("Missing permissions!"));
     }
 
     match oauth_application.delete(&db).await {
@@ -69,11 +61,7 @@ pub async fn delete_oauth_application(
                 Err(err) => error!("{}", err),
             }
 
-            Json(HttpResponse {
-                status: 200,
-                message: "OAuth Application deleted".to_string(),
-                data: None,
-            })
+            Json(HttpResponse::success_no_data("OAuthApplication deleted."))
         }
         Err(err) => Json(err),
     }

@@ -36,15 +36,17 @@ async fn process_mfa(
 ) -> ApiResult<(String, LoginResponse)> {
     let mfa_sessions = MFA_SESSIONS.lock().await;
     let cloned_sessions = mfa_sessions.clone();
-    
+
     let flow = cloned_sessions
         .get(&mfa_data.flow_id)
         .ok_or_else(|| ApiError::NotFound("Invalid or expired MFA flow".to_string()))?;
-    
+
     drop(mfa_sessions);
 
     if flow.state == MfaState::Complete {
-        return Err(ApiError::BadRequest("MFA flow already complete".to_string()));
+        return Err(ApiError::BadRequest(
+            "MFA flow already complete".to_string(),
+        ));
     }
 
     if flow.r#type != MfaType::TOTP && flow.r#type != MfaType::EnableTOTP {
@@ -55,20 +57,21 @@ async fn process_mfa(
         return Err(ApiError::Unauthorized("Invalid TOTP code".to_string()));
     }
 
-    if flow.r#type == MfaType::EnableTOTP
-        && flow.totp.is_some()
-        && flow.user.totp_secret.is_none()
+    if flow.r#type == MfaType::EnableTOTP && flow.totp.is_some() && flow.user.totp_secret.is_none()
     {
         let mut user = flow.user.clone();
         user.totp_secret = Some(flow.totp.as_ref().unwrap().get_secret_base32());
-        
+
         user.update(db)
             .await
             .map_err(|err| ApiError::InternalError(format!("Failed to enable TOTP: {:?}", err)))?;
-        
+
         let new_values = HashMap::from([(
             "totpSecret".to_string(),
-            user.totp_secret.as_ref().unwrap_or(&"".to_string()).to_string(),
+            user.totp_secret
+                .as_ref()
+                .unwrap_or(&"".to_string())
+                .to_string(),
         )]);
         let old_values = HashMap::from([("totpSecret".to_string(), "".to_string())]);
 
@@ -116,7 +119,7 @@ pub async fn mfa(
     data: Json<MfaData>,
 ) -> Json<HttpResponse<LoginResponse>> {
     let mfa_data = data.into_inner();
-    
+
     match process_mfa(&db, mfa_data).await {
         Ok((message, response)) => Json(HttpResponse::success(&message, response)),
         Err(err) => Json(HttpResponse::from(err)),

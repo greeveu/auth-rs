@@ -50,11 +50,7 @@ impl AuditLogEntityType {
             "USER" => Ok(AuditLogEntityType::User),
             "ROLE" => Ok(AuditLogEntityType::Role),
             "OAUTH_APPLICATION" => Ok(AuditLogEntityType::OAuthApplication),
-            _ => Err(HttpResponse {
-                status: 400,
-                message: format!(""),
-                data: None,
-            }),
+            _ => Err(HttpResponse::bad_request("")),
         }
     }
 
@@ -105,11 +101,7 @@ impl AuditLog {
         let db = match Self::get_collection(&entity_type, connection) {
             Some(db) => db,
             None => {
-                return Err(HttpResponse {
-                    status: 400,
-                    message: "Invalid audit log entity type provided".to_string(),
-                    data: None,
-                })
+                return Err(HttpResponse::forbidden("Invalid audit log entity type provided"))
             }
         };
 
@@ -118,11 +110,7 @@ impl AuditLog {
         };
         match db.find_one(filter, None).await.unwrap() {
             Some(audit_log) => Ok(audit_log),
-            None => Err(HttpResponse {
-                status: 404,
-                message: "Audit log not found".to_string(),
-                data: None,
-            }),
+            None => Err(HttpResponse::not_found("Audit log not found")),
         }
     }
 
@@ -135,11 +123,7 @@ impl AuditLog {
         let db = match Self::get_collection(&entity_type, connection) {
             Some(db) => db,
             None => {
-                return Err(HttpResponse {
-                    status: 400,
-                    message: "Invalid audit log entity type provided".to_string(),
-                    data: None,
-                })
+                return Err(HttpResponse::bad_request("Invalid audit log entity type provided"))
             }
         };
 
@@ -151,11 +135,7 @@ impl AuditLog {
                 let audit_logs = cursor.map(|doc| doc.unwrap()).collect::<Vec<Self>>().await;
                 Ok(audit_logs)
             }
-            Err(err) => Err(HttpResponse {
-                status: 500,
-                message: format!("Error fetching audit logs: {:?}", err),
-                data: None,
-            }),
+            Err(err) => Err(HttpResponse::internal_error(&format!("Error fetching audit logs: {:?}", err))),
         }
     }
 
@@ -182,11 +162,7 @@ impl AuditLog {
                 audit_logs
             }
             Err(err) => {
-                return Err(HttpResponse {
-                    status: 500,
-                    message: format!("Error fetching user audit logs: {:?}", err),
-                    data: None,
-                })
+                return Err(HttpResponse::internal_error(&format!("Error fetching user audit logs: {:?}", err)))
             }
         };
 
@@ -196,11 +172,7 @@ impl AuditLog {
                 audit_logs
             }
             Err(err) => {
-                return Err(HttpResponse {
-                    status: 500,
-                    message: format!("Error fetching role audit logs: {:?}", err),
-                    data: None,
-                })
+                return Err(HttpResponse::internal_error(&format!("Error fetching role audit logs: {:?}", err)))
             }
         };
 
@@ -213,11 +185,7 @@ impl AuditLog {
                 audit_logs
             }
             Err(err) => {
-                return Err(HttpResponse {
-                    status: 500,
-                    message: format!("Error fetching oauth application audit logs: {:?}", err),
-                    data: None,
-                })
+                return Err(HttpResponse::internal_error(&format!("Error fetching oauth application audit logs: {:?}", err)))
             }
         };
 
@@ -238,11 +206,7 @@ impl AuditLog {
         let db = match Self::get_collection(&entity_type, connection) {
             Some(db) => db,
             None => {
-                return Err(HttpResponse {
-                    status: 400,
-                    message: "Invalid audit log entity type provided".to_string(),
-                    data: None,
-                })
+                return Err(HttpResponse::bad_request("Invalid audit log entity type provided"))
             }
         };
 
@@ -251,11 +215,7 @@ impl AuditLog {
                 let audit_logs = cursor.map(|doc| doc.unwrap()).collect::<Vec<Self>>().await;
                 Ok(audit_logs)
             }
-            Err(err) => Err(HttpResponse {
-                status: 500,
-                message: format!("Error fetching audit logs: {:?}", err),
-                data: None,
-            }),
+            Err(err) => Err(HttpResponse::internal_error(&format!("Error fetching audit logs: {:?}", err))),
         }
     }
 
