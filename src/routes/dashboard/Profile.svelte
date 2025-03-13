@@ -5,11 +5,12 @@
 	import type AuthRsApi from '$lib/api';
 	import UserMinimal from '$lib/models/User';
 	import UserUpdates from '$lib/models/UserUpdates';
+	import type Role from '$lib/models/Role';
 
     export let api: AuthRsApi;
     export let user: UserMinimal;
     export let roles: Role[];
-
+    
     function addRole() {
         // FIXME: This is a temporary solution. The user should be able to select a role from a dropdown.
         const id = prompt('Enter the role ID:');
