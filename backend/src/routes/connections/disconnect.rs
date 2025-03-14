@@ -49,13 +49,7 @@ pub async fn disconnect(
 
     let oauth_application = match OAuthApplication::get_by_id(uuid, &db).await {
         Ok(application) => application,
-        Err(err) => {
-            return Json(HttpResponse {
-                status: err.status,
-                message: err.message,
-                data: None,
-            })
-        }
+        Err(err) => return Json(err.into()),
     };
 
     let tokens = match OAuthToken::get_by_application_id(oauth_application.id, &db).await {

@@ -3,7 +3,7 @@ use crate::{
     db::AuthRsDatabase,
     models::{
         http_response::HttpResponse,
-        oauth_application::{OAuthApplication, OAuthApplicationMinimal},
+        oauth_application::{OAuthApplication, OAuthApplicationDTO},
         oauth_scope::{OAuthScope, ScopeActions},
         oauth_token::OAuthToken,
     },
@@ -22,7 +22,7 @@ use rocket_db_pools::Connection;
 pub struct OAuthConnection {
     #[serde(rename = "_id")]
     pub id: Uuid,
-    pub application: OAuthApplicationMinimal,
+    pub application: OAuthApplicationDTO,
     pub user_id: Uuid,
     pub scope: Vec<OAuthScope>,
     pub expires_in: u64,
@@ -79,9 +79,7 @@ pub async fn get_by_user_id(
 
     let applications = match OAuthApplication::get_all(&db, Some(filter)).await {
         Ok(applications) => applications,
-        Err(err) => {
-            return Json(HttpResponse::internal_error(&err.message));
-        }
+        Err(err) => return Json(err.into()),
     };
 
     Json(HttpResponse {
@@ -97,7 +95,7 @@ pub async fn get_by_user_id(
                         .unwrap();
                     OAuthConnection {
                         id: token.id,
-                        application: application.clone(),
+                        application: application.to_dto(),
                         user_id: token.user_id,
                         scope: token.scope.clone(),
                         expires_in: token.expires_in,

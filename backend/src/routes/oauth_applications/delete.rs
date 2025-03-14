@@ -30,13 +30,7 @@ pub async fn delete_oauth_application(
 
     let oauth_application = match OAuthApplication::get_full_by_id(uuid, &db).await {
         Ok(oauth_application) => oauth_application,
-        Err(err) => {
-            return Json(HttpResponse {
-                status: 404,
-                message: format!("OAuth Application does not exist: {:?}", err),
-                data: None,
-            })
-        }
+        Err(err) => return Json(err.into()),
     };
 
     if req_entity.user_id != oauth_application.owner && !req_entity.user.unwrap().is_admin() {
@@ -63,6 +57,6 @@ pub async fn delete_oauth_application(
 
             Json(HttpResponse::success_no_data("OAuthApplication deleted."))
         }
-        Err(err) => Json(err),
+        Err(err) => Json(err.into()),
     }
 }

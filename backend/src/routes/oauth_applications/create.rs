@@ -43,7 +43,7 @@ pub async fn create_oauth_application(
         req_entity.user_id,
     ) {
         Ok(oauth_application) => oauth_application,
-        Err(err) => return Json(err),
+        Err(err) => return Json(err.into()),
     };
 
     match oauth_application.insert(&db).await {
@@ -70,6 +70,6 @@ pub async fn create_oauth_application(
                 data: Some(oauth_application),
             })
         }
-        Err(err) => Json(err),
+        Err(err) => Json(err.into()),
     }
 }

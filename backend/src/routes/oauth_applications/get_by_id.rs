@@ -6,7 +6,7 @@ use crate::{
     db::AuthRsDatabase,
     models::{
         http_response::HttpResponse,
-        oauth_application::{OAuthApplication, OAuthApplicationMinimal},
+        oauth_application::{OAuthApplication, OAuthApplicationDTO},
     },
     utils::parse_uuid,
 };
@@ -17,7 +17,7 @@ pub async fn get_oauth_application_by_id(
     db: Connection<AuthRsDatabase>,
     req_entity: AuthEntity,
     id: &str,
-) -> Json<HttpResponse<OAuthApplicationMinimal>> {
+) -> Json<HttpResponse<OAuthApplicationDTO>> {
     if !req_entity.is_user() {
         return Json(HttpResponse::forbidden("Forbidden"));
     }
@@ -28,7 +28,7 @@ pub async fn get_oauth_application_by_id(
     };
 
     match OAuthApplication::get_by_id(uuid, &db).await {
-        Ok(oauth_application) => Json(HttpResponse::success("Found oauth_application by id", oauth_application)),
-        Err(err) => Json(err),
+        Ok(oauth_application) => Json(HttpResponse::success("Found oauth_application by id", oauth_application.to_dto())),
+        Err(err) => Json(err.into()),
     }
 }

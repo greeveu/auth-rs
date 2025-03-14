@@ -5,6 +5,7 @@ use thiserror::Error;
 
 use crate::models::http_response::HttpResponse;
 use crate::models::user_error::UserError;
+use crate::models::oauth_application::OAuthApplicationError;
 
 #[derive(Error, Debug)]
 pub enum AppError {
@@ -263,6 +264,17 @@ impl From<UserError> for AppError {
             UserError::NoUpdatesApplied => AppError::NoUpdatesApplied,
             UserError::DatabaseError(msg) => AppError::DatabaseError(msg),
             UserError::InternalServerError(msg) => AppError::InternalServerError(msg),
+        }
+    }
+}
+
+impl From<OAuthApplicationError> for AppError {
+    fn from(error: OAuthApplicationError) -> Self {
+        match error {
+            OAuthApplicationError::NotFound(id) => AppError::InternalServerError(format!("OAuth Application not found: {}", id)),
+            OAuthApplicationError::InvalidData(msg) => AppError::ValidationError(msg),
+            OAuthApplicationError::DatabaseError(msg) => AppError::DatabaseError(msg),
+            OAuthApplicationError::InternalServerError(msg) => AppError::InternalServerError(msg),
         }
     }
 }

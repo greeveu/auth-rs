@@ -7,7 +7,7 @@ use crate::{
     db::AuthRsDatabase,
     models::{
         http_response::HttpResponse,
-        oauth_application::{OAuthApplication, OAuthApplicationMinimal},
+        oauth_application::{OAuthApplication, OAuthApplicationDTO},
         oauth_scope::{OAuthScope, ScopeActions},
     },
 };
@@ -17,7 +17,7 @@ use crate::{
 pub async fn get_all_oauth_applications(
     db: Connection<AuthRsDatabase>,
     req_entity: AuthEntity,
-) -> Json<HttpResponse<Vec<OAuthApplicationMinimal>>> {
+) -> Json<HttpResponse<Vec<OAuthApplicationDTO>>> {
     if req_entity.is_token()
         && (!req_entity
             .token
@@ -41,8 +41,8 @@ pub async fn get_all_oauth_applications(
 
     let applications = match OAuthApplication::get_all(&db, filter).await {
         Ok(oauth_applications) => oauth_applications,
-        Err(err) => return Json(err),
+        Err(err) => return Json(err.into()),
     };
 
-    Json(HttpResponse::success("Successfully retrieved your oauth applications", applications))
+    Json(HttpResponse::success("Successfully retrieved your oauth applications", applications.into_iter().map(|app| app.to_dto()).collect()))
 }

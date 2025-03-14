@@ -13,7 +13,7 @@ use crate::{
     models::{
         audit_log::{AuditLog, AuditLogAction, AuditLogEntityType},
         http_response::HttpResponse,
-        oauth_application::{OAuthApplication, OAuthApplicationMinimal},
+        oauth_application::{OAuthApplication, OAuthApplicationDTO},
     },
 };
 
@@ -33,7 +33,7 @@ pub async fn update_oauth_application(
     req_entity: AuthEntity,
     id: &str,
     data: Json<UpdateOAuthApplicationData>,
-) -> Json<HttpResponse<OAuthApplicationMinimal>> {
+) -> Json<HttpResponse<OAuthApplicationDTO>> {
     let data = data.into_inner();
 
     if !req_entity.is_user() {
@@ -47,17 +47,14 @@ pub async fn update_oauth_application(
 
     let old_oauth_application = match OAuthApplication::get_by_id(uuid, &db).await {
         Ok(oauth_application) => oauth_application,
-        Err(err) => return Json(err),
+        Err(err) => return Json(err.into()),
     };
 
     if req_entity.user_id != old_oauth_application.owner && !req_entity.user.unwrap().is_admin() {
         return Json(HttpResponse::forbidden("Missing permissions!"));
     }
 
-    let mut new_oauth_application = match old_oauth_application.clone().to_full(&db).await {
-        Ok(oauth_application) => oauth_application,
-        Err(err) => return Json(err),
-    };
+    let mut new_oauth_application = old_oauth_application.clone();
 
     let mut old_values: HashMap<String, String> = HashMap::new();
     let mut new_values: HashMap<String, String> = HashMap::new();
@@ -103,7 +100,7 @@ pub async fn update_oauth_application(
     }
 
     if new_values.is_empty() {
-        return Json(HttpResponse::success("No updates applied.", new_oauth_application.to_minimal()));
+        return Json(HttpResponse::success("No updates applied.", new_oauth_application.to_dto()));
     }
 
     match new_oauth_application.update(&db).await {
@@ -126,9 +123,9 @@ pub async fn update_oauth_application(
 
             Json(HttpResponse::success(
                 "OAuth Application updated",
-                oauth_application,
+                oauth_application.to_dto(),
             ))
         }
-        Err(err) => Json(err),
+        Err(err) => Json(err.into()),
     }
 }
