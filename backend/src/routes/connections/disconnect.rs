@@ -54,13 +54,7 @@ pub async fn disconnect(
 
     let tokens = match OAuthToken::get_by_application_id(oauth_application.id, &db).await {
         Ok(tokens) => tokens,
-        Err(err) => {
-            return Json(HttpResponse {
-                status: 500,
-                message: err.message,
-                data: None,
-            })
-        }
+        Err(err) => { return Json(HttpResponse::from(err)); } 
     };
 
     if tokens.is_empty() {
@@ -70,13 +64,7 @@ pub async fn disconnect(
     for token in tokens {
         match token.delete(&db).await {
             Ok(_) => (),
-            Err(err) => {
-                return Json(HttpResponse {
-                    status: 500,
-                    message: err.message,
-                    data: None,
-                })
-            }
+            Err(err) => { return Json(HttpResponse::from(err)); }
         }
     }
 

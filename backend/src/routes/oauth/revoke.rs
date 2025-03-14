@@ -31,6 +31,6 @@ pub async fn revoke_oauth_token(
 
     match oauth_token.delete(&db).await {
         Ok(_) => Json(HttpResponse::success_no_data("Token revoked")),
-        Err(err) => Json(err),
+        Err(err) => Json(HttpResponse::from(err)),
     }
 }

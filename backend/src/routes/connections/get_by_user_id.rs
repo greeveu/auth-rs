@@ -67,7 +67,7 @@ pub async fn get_by_user_id(
     let connected_applications = match OAuthToken::get_by_user_id(uuid, &db).await {
         Ok(tokens) => tokens,
         Err(err) => {
-            return Json(HttpResponse::internal_error(&err.message));
+            return Json(HttpResponse::from(err));
         }
     };
 

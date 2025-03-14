@@ -1,5 +1,6 @@
 use super::{http_response::HttpResponse, oauth_scope::OAuthScope};
 use crate::db::{get_main_db, AuthRsDatabase};
+use crate::errors::{AppError, AppResult};
 use anyhow::Result;
 use mongodb::bson::{doc, DateTime, Uuid};
 use rand::Rng;
@@ -13,6 +14,49 @@ use rocket_db_pools::{
 };
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use rocket::form::validate::Contains;
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub enum OAuthTokenError {
+    #[error("Token not found")]
+    NotFound,
+    
+    #[error("Token expired")]
+    Expired,
+    
+    #[error("Database error: {0}")]
+    DatabaseError(String),
+    
+    #[error("Internal server error: {0}")]
+    InternalError(String),
+    
+    #[error("Unauthorized: {0}")]
+    Unauthorized(String),
+}
+
+impl From<OAuthTokenError> for AppError {
+    fn from(error: OAuthTokenError) -> Self {
+        match error {
+            OAuthTokenError::NotFound => AppError::InvalidToken,
+            OAuthTokenError::Expired => AppError::TokenExpired,
+            OAuthTokenError::DatabaseError(msg) => AppError::DatabaseError(msg),
+            OAuthTokenError::InternalError(msg) => AppError::InternalServerError(msg),
+            OAuthTokenError::Unauthorized(msg) => AppError::AuthenticationError(msg),
+        }
+    }
+}
+
+impl<T> From<OAuthTokenError> for HttpResponse<T> {
+    fn from(error: OAuthTokenError) -> Self {
+        match error {
+            OAuthTokenError::NotFound => HttpResponse::not_found("Token not found"),
+            OAuthTokenError::Expired => HttpResponse::unauthorized("Token expired"),
+            OAuthTokenError::DatabaseError(msg) => HttpResponse::internal_error(&format!("Database error: {}", msg)),
+            OAuthTokenError::InternalError(msg) => HttpResponse::internal_error(&msg),
+            OAuthTokenError::Unauthorized(msg) => HttpResponse::unauthorized(&msg),
+        }
+    }
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -32,10 +76,10 @@ impl OAuthToken {
     pub const COLLECTION_NAME: &'static str = "oauth-tokens";
 
     fn generate_token() -> String {
-        let mut rng = rand::rng();
+        let mut rng = rand::thread_rng();
         let token: String = (0..128)
             .map(|_| {
-                let idx = rng.random_range(0..62);
+                let idx = rng.gen_range(0..62);
                 match idx {
                     0..=9 => (b'0' + idx as u8) as char,
                     10..=35 => (b'a' + (idx - 10) as u8) as char,
@@ -66,7 +110,7 @@ impl OAuthToken {
         user_id: Uuid,
         scope: Vec<OAuthScope>,
         expires_in: u64,
-    ) -> Result<Self, HttpResponse<OAuthToken>> {
+    ) -> Result<Self, OAuthTokenError> {
         Ok(Self {
             id: Uuid::new(),
             application_id,
@@ -82,16 +126,12 @@ impl OAuthToken {
     pub async fn insert(
         &self,
         connection: &Connection<AuthRsDatabase>,
-    ) -> Result<OAuthToken, HttpResponse<OAuthToken>> {
+    ) -> Result<OAuthToken, OAuthTokenError> {
         let db = Self::get_collection(connection);
 
         match db.insert_one(self.clone(), None).await {
             Ok(_) => Ok(self.clone()),
-            Err(err) => Err(HttpResponse {
-                status: 500,
-                message: format!("Error inserting oauth token: {:?}", err),
-                data: None,
-            }),
+            Err(err) => Err(OAuthTokenError::DatabaseError(format!("Error inserting oauth token: {:?}", err))),
         }
     }
 
@@ -104,23 +144,22 @@ impl OAuthToken {
     pub async fn get_by_token(
         token: &str,
         mut db: &Database,
-    ) -> Result<OAuthToken, HttpResponse<OAuthToken>> {
+    ) -> Result<OAuthToken, OAuthTokenError> {
         let db: Collection<OAuthToken> = db.collection(Self::COLLECTION_NAME);
 
         let filter = doc! {
             "token": token
         };
-        match db.find_one(filter, None).await.unwrap() {
-            Some(token) => {
-                if (token.created_at.timestamp_millis() + token.expires_in as i64)
-                    < DateTime::now().timestamp_millis()
-                {
-                    Err(HttpResponse::unauthorized("Token expired"))
+        match db.find_one(filter, None).await {
+            Ok(Some(token)) => {
+                if token.is_expired() {
+                    Err(OAuthTokenError::Expired)
                 } else {
                     Ok(token)
                 }
             }
-            None => Err(HttpResponse::not_found("Token not found")),
+            Ok(None) => Err(OAuthTokenError::NotFound),
+            Err(err) => Err(OAuthTokenError::DatabaseError(format!("Error finding token: {:?}", err))),
         }
     }
 
@@ -128,7 +167,7 @@ impl OAuthToken {
     pub async fn get_by_application_id(
         application_id: Uuid,
         connection: &Connection<AuthRsDatabase>,
-    ) -> Result<Vec<OAuthToken>, HttpResponse<Vec<OAuthToken>>> {
+    ) -> Result<Vec<OAuthToken>, OAuthTokenError> {
         let db = Self::get_collection(connection);
 
         let filter = doc! {
@@ -145,7 +184,7 @@ impl OAuthToken {
                     .await;
                 Ok(tokens)
             }
-            Err(err) => Err(HttpResponse::internal_error(&format!("Error fetching tokens: {:?}", err))),
+            Err(err) => Err(OAuthTokenError::DatabaseError(format!("Error fetching tokens: {:?}", err))),
         }
     }
 
@@ -153,7 +192,7 @@ impl OAuthToken {
     pub async fn get_by_user_id(
         user_id: Uuid,
         connection: &Connection<AuthRsDatabase>,
-    ) -> Result<Vec<OAuthToken>, HttpResponse<Vec<OAuthToken>>> {
+    ) -> Result<Vec<OAuthToken>, OAuthTokenError> {
         let db = Self::get_collection(connection);
 
         let filter = doc! {
@@ -170,7 +209,7 @@ impl OAuthToken {
                     .await;
                 Ok(tokens)
             }
-            Err(err) => Err(HttpResponse::internal_error(&format!("Error fetching tokens: {:?}", err))),
+            Err(err) => Err(OAuthTokenError::DatabaseError(format!("Error fetching tokens: {:?}", err))),
         }
     }
 
@@ -179,7 +218,7 @@ impl OAuthToken {
         user_id: Uuid,
         application_id: Uuid,
         connection: &Connection<AuthRsDatabase>,
-    ) -> Result<Vec<OAuthToken>, HttpResponse<Vec<OAuthToken>>> {
+    ) -> Result<Vec<OAuthToken>, OAuthTokenError> {
         let db = Self::get_collection(connection);
 
         let filter = doc! {
@@ -197,7 +236,7 @@ impl OAuthToken {
                     .await;
                 Ok(tokens)
             }
-            Err(err) => Err(HttpResponse::internal_error(&format!("Error fetching tokens: {:?}", err))),
+            Err(err) => Err(OAuthTokenError::DatabaseError(format!("Error fetching tokens: {:?}", err))),
         }
     }
 
@@ -206,7 +245,7 @@ impl OAuthToken {
         &mut self,
         scope: Vec<OAuthScope>,
         connection: &Connection<AuthRsDatabase>,
-    ) -> Result<OAuthToken, HttpResponse<OAuthToken>> {
+    ) -> Result<OAuthToken, OAuthTokenError> {
         let db = Self::get_collection(connection);
 
         let filter = doc! {
@@ -218,7 +257,7 @@ impl OAuthToken {
 
         match db.replace_one(filter, self.clone(), None).await {
             Ok(_) => Ok(self.clone()),
-            Err(err) => Err(HttpResponse::internal_error(&format!("Error reauthenticating token: {:?}", err))),
+            Err(err) => Err(OAuthTokenError::DatabaseError(format!("Error reauthenticating token: {:?}", err))),
         }
     }
 
@@ -226,7 +265,7 @@ impl OAuthToken {
     pub async fn delete(
         &self,
         connection: &Connection<AuthRsDatabase>,
-    ) -> Result<OAuthToken, HttpResponse<()>> {
+    ) -> Result<OAuthToken, OAuthTokenError> {
         let db = Self::get_collection(connection);
 
         let filter = doc! {
@@ -234,7 +273,7 @@ impl OAuthToken {
         };
         match db.delete_one(filter, None).await {
             Ok(_) => Ok(self.clone()),
-            Err(err) => Err(HttpResponse::internal_error(&format!("Error deleting oauth token: {:?}", err))),
+            Err(err) => Err(OAuthTokenError::DatabaseError(format!("Error deleting oauth token: {:?}", err))),
         }
     }
 
