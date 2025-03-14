@@ -23,6 +23,6 @@ pub async fn get_all_roles(
             message: "Successfully retrieved all roles".to_string(),
             data: Some(roles),
         }),
-        Err(err) => Json(err),
+        Err(err) => Json(err.into()),
     }
 }

@@ -6,6 +6,7 @@ use thiserror::Error;
 use crate::models::http_response::HttpResponse;
 use crate::models::user_error::UserError;
 use crate::models::oauth_application::OAuthApplicationError;
+use crate::models::role::RoleError;
 
 #[derive(Error, Debug)]
 pub enum AppError {
@@ -271,10 +272,23 @@ impl From<UserError> for AppError {
 impl From<OAuthApplicationError> for AppError {
     fn from(error: OAuthApplicationError) -> Self {
         match error {
-            OAuthApplicationError::NotFound(id) => AppError::InternalServerError(format!("OAuth Application not found: {}", id)),
-            OAuthApplicationError::InvalidData(msg) => AppError::ValidationError(msg),
+            OAuthApplicationError::NotFound(id) => AppError::InternalServerError(format!("OAuth Application with ID {} not found", id)),
+            OAuthApplicationError::InvalidData(msg) => AppError::ValidationError(format!("Invalid OAuth Application data: {}", msg)),
             OAuthApplicationError::DatabaseError(msg) => AppError::DatabaseError(msg),
             OAuthApplicationError::InternalServerError(msg) => AppError::InternalServerError(msg),
+        }
+    }
+}
+
+impl From<RoleError> for AppError {
+    fn from(error: RoleError) -> Self {
+        match error {
+            RoleError::NotFound(id) => AppError::RoleNotFound(id),
+            RoleError::NameNotFound(name) => AppError::ValidationError(format!("Role with name {} not found", name)),
+            RoleError::NameAlreadyExists(name) => AppError::ValidationError(format!("Role with name {} already exists", name)),
+            RoleError::SystemRoleModification => AppError::SystemUserModification,
+            RoleError::DatabaseError(msg) => AppError::DatabaseError(msg),
+            RoleError::InternalServerError(msg) => AppError::InternalServerError(msg),
         }
     }
 }

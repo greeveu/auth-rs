@@ -51,10 +51,10 @@ async fn initialize_database(db: &AuthRsDatabase) -> AppResult<()> {
 
     if roles_count == 0 {
         let admin_role = Role::new_system(*ADMIN_ROLE_ID, "Admin".to_string())
-            .map_err(|e| AppError::HttpResponseError(e.message))?;
+            .map_err(|e| AppError::HttpResponseError(e.message()))?;
 
         let default_role = Role::new_system(*DEFAULT_ROLE_ID, "Default".to_string())
-            .map_err(|e| AppError::HttpResponseError(e.message))?;
+            .map_err(|e| AppError::HttpResponseError(e.message()))?;
 
         let roles = vec![admin_role, default_role];
 

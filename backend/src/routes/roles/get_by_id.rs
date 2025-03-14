@@ -44,6 +44,6 @@ pub async fn get_role_by_id(
 
     match Role::get_by_id(uuid, &db).await {
         Ok(role) => Json(HttpResponse::success("Found role by id", role)),
-        Err(err) => Json(err),
+        Err(err) => Json(err.into()),
     }
 }

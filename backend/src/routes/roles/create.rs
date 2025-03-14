@@ -45,7 +45,7 @@ pub async fn create_role(
 
     let role = match Role::new(data.name) {
         Ok(role) => role,
-        Err(err) => return Json(err),
+        Err(err) => return Json(err.into()),
     };
 
     match role.insert(&db).await {
@@ -72,6 +72,6 @@ pub async fn create_role(
                 data: Some(role),
             })
         }
-        Err(err) => Json(err),
+        Err(err) => Json(err.into()),
     }
 }

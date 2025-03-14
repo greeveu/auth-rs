@@ -49,7 +49,7 @@ pub async fn update_role(
 
     let old_role = match Role::get_by_id(uuid, &db).await {
         Ok(role) => role,
-        Err(err) => return Json(err),
+        Err(err) => return Json(err.into()),
     };
 
     // Prevent modification of system roles
@@ -92,6 +92,6 @@ pub async fn update_role(
 
             Json(HttpResponse::success("Role updated", role))
         }
-        Err(err) => Json(err),
+        Err(err) => Json(err.into()),
     }
 }

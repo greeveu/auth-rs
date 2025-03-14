@@ -1,5 +1,6 @@
 use mongodb::bson::Uuid;
 use rocket::{delete, error, serde::json::Json};
+use rocket::yansi::Paint;
 use rocket_db_pools::Connection;
 
 use crate::{
@@ -67,6 +68,6 @@ pub async fn delete_role(
 
             Json(HttpResponse::success_no_data("Role deleted"))
         }
-        Err(err) => Json(err),
+        Err(err) => Json(err.into()),
     }
 }

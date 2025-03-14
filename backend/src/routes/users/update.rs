@@ -127,7 +127,7 @@ async fn update_user_internal(
             // Get available roles
             let available_roles = Role::get_all(&db, None)
                 .await
-                .map_err(|e| UserError::InternalServerError(e.message))?;
+                .map_err(|e| UserError::InternalServerError(e.message()))?;
 
             // Validate each role exists
             for role_id in &new_roles {
