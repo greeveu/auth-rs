@@ -30,11 +30,11 @@ pub async fn get_audit_log_by_entity_id(
 
     let entity_type = match AuditLogEntityType::from_string(r#type) {
         Ok(entity_type) => entity_type,
-        Err(err) => return Json(err),
+        Err(err) => return Json(HttpResponse::from(err)),
     };
 
     match AuditLog::get_by_entity_id(entity_uuid, entity_type, &db).await {
         Ok(audit_log) => Json(HttpResponse::success("Audit Logs found by entity id", audit_log)),
-        Err(err) => Json(err),
+        Err(err) => Json(HttpResponse::from(err)),
     }
 }

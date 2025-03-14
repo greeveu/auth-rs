@@ -37,6 +37,6 @@ pub async fn get_audit_logs_by_user_id(
 
     match AuditLog::get_by_user_id(user_uuid, &db).await {
         Ok(audit_logs) => Json(HttpResponse::success("Audit Logs found by user id", audit_logs)),
-        Err(err) => Json(err),
+        Err(err) => Json(HttpResponse::from(err)),
     }
 }

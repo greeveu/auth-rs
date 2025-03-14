@@ -23,11 +23,11 @@ pub async fn get_audit_logs_by_type(
 
     let entity_type = match AuditLogEntityType::from_string(r#type) {
         Ok(entity_type) => Some(entity_type),
-        Err(err) => return Json(err),
+        Err(err) => return Json(HttpResponse::from(err)),
     };
 
     match AuditLog::get_all_from_type(entity_type.unwrap(), &db).await {
         Ok(audit_logs) => Json(HttpResponse::success("Successfully retrieved all audit logs by type", audit_logs)),
-        Err(err) => Json(err),
+        Err(err) => Json(HttpResponse::from(err)),
     }
 }
