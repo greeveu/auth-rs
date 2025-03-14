@@ -11,9 +11,10 @@ use crate::{
     errors::{ApiError, ApiResult},
     models::{
         http_response::HttpResponse,
-        user::{User, UserMinimal},
+        user::{User},
     },
 };
+use crate::models::user::UserDTO;
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -27,7 +28,7 @@ pub struct LoginData {
 #[serde(crate = "rocket::serde")]
 #[serde(rename_all = "camelCase")]
 pub struct LoginResponse {
-    pub user: Option<UserMinimal>,
+    pub user: Option<UserDTO>,
     pub token: Option<String>,
     pub mfa_required: bool,
     pub mfa_flow_id: Option<Uuid>,
@@ -40,25 +41,20 @@ async fn process_login(
 ) -> ApiResult<LoginResponse> {
     let user = User::get_by_email(&login_data.email, db)
         .await
-        .map_err(|err| ApiError::InternalError(err.message))?;
+        .map_err(|err| ApiError::InternalError(err.to_string()))?;
 
     if user.disabled {
         return Err(ApiError::Forbidden("User is disabled".to_string()));
     }
 
-    let user_full = user
-        .to_full(db)
-        .await
-        .map_err(|err| ApiError::InternalError(format!("Failed to get full user: {:?}", err)))?;
-
-    if !user_full.verify_password(&login_data.password) {
+    if !user.verify_password(&login_data.password) {
         return Err(ApiError::Unauthorized(
             "Invalid email or password".to_string(),
         ));
     }
 
-    if MfaHandler::is_mfa_required(&user_full) {
-        let mfa_flow = MfaHandler::start_login_flow(&user_full)
+    if MfaHandler::is_mfa_required(&user) {
+        let mfa_flow = MfaHandler::start_login_flow(&user)
             .await
             .map_err(|err| ApiError::InternalError(format!("Failed to start MFA flow: {}", err)))?;
 
@@ -71,8 +67,8 @@ async fn process_login(
     }
 
     Ok(LoginResponse {
-        user: Some(user),
-        token: Some(user_full.token),
+        user: Some(user.to_dto()),
+        token: Some(user.token),
         mfa_required: false,
         mfa_flow_id: None,
     })

@@ -1,4 +1,3 @@
-use mongodb::bson::Uuid;
 use rocket::{
     error, patch,
     serde::{json::Json, Deserialize},

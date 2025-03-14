@@ -23,12 +23,12 @@ pub async fn disconnect(
     if req_entity.is_token()
         && (!req_entity
             .token
-            .clone()
+            .as_ref()
             .unwrap()
             .check_scope(OAuthScope::Connections(ScopeActions::Delete))
             || req_entity
                 .token
-                .clone()
+                .as_ref()
                 .unwrap()
                 .check_scope(OAuthScope::Connections(ScopeActions::All)))
     {

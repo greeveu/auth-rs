@@ -17,6 +17,7 @@ use rocket_db_pools::{
 };
 
 use super::http_response::HttpResponse;
+use super::user_error::{UserError, UserResult};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -38,7 +39,7 @@ pub struct User {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
 #[serde(rename_all = "camelCase")]
-pub struct UserMinimal {
+pub struct UserDTO {
     #[serde(rename = "_id")]
     pub id: Uuid,
     pub email: String,
@@ -48,15 +49,6 @@ pub struct UserMinimal {
     pub mfa: bool,
     pub disabled: bool,
     pub created_at: DateTime,
-}
-
-impl UserMinimal {
-    pub async fn to_full(
-        &self,
-        connection: &Connection<AuthRsDatabase>,
-    ) -> Result<User, HttpResponse<UserMinimal>> {
-        User::get_full_by_id(self.id, connection).await
-    }
 }
 
 impl User {
@@ -75,19 +67,28 @@ impl User {
     pub fn verify_password(&self, password: &str) -> bool {
         bcrypt::verify(password, &self.password_hash)
     }
+    
+    pub fn to_dto(&self) -> UserDTO {
+        UserDTO {
+            id: self.id,
+            email: self.email.clone(),
+            first_name: self.first_name.clone(),
+            last_name: self.last_name.clone(),
+            roles: self.roles.clone(),
+            mfa: self.totp_secret.is_some(),
+            disabled: self.disabled,
+            created_at: self.created_at,
+        }
+    }
 
     pub fn new(
         email: String,
         password: String,
         first_name: String,
         last_name: String,
-    ) -> Result<Self, HttpResponse<UserMinimal>> {
-        let password_hash = match bcrypt::hash(password) {
-            Ok(hash) => hash,
-            Err(err) => {
-                return Err(HttpResponse::internal_error(&format!("Failed to hash password: {:?}", err)))
-            }
-        };
+    ) -> UserResult<Self> {
+        let password_hash = bcrypt::hash(password)
+            .map_err(|err| UserError::PasswordHashingError(err.to_string()))?;
 
         Ok(Self {
             id: Uuid::new(),
@@ -110,17 +111,9 @@ impl User {
         first_name: String,
         last_name: String,
         roles: Vec<String>,
-    ) -> Result<Self, HttpResponse<UserMinimal>> {
-        let password_hash = match bcrypt::hash(password) {
-            Ok(hash) => hash,
-            Err(err) => {
-                return Err(HttpResponse {
-                    status: 500,
-                    message: format!("Failed to hash password: {:?}", err),
-                    data: None,
-                })
-            }
-        };
+    ) -> UserResult<Self> {
+        let password_hash = bcrypt::hash(password)
+            .map_err(|err| UserError::PasswordHashingError(err.to_string()))?;
 
         Ok(Self {
             id,
@@ -139,19 +132,6 @@ impl User {
         })
     }
 
-    pub fn to_minimal(&self) -> UserMinimal {
-        UserMinimal {
-            id: self.id,
-            email: String::from(&self.email),
-            first_name: String::from(&self.first_name),
-            last_name: String::from(&self.last_name),
-            roles: self.roles.clone(),
-            mfa: self.totp_secret.is_some(),
-            disabled: self.disabled,
-            created_at: self.created_at,
-        }
-    }
-
     #[allow(unused)]
     pub fn is_admin(&self) -> bool {
         self.id == *SYSTEM_USER_ID || self.roles.contains(&*ADMIN_ROLE_ID)
@@ -162,45 +142,37 @@ impl User {
         self.id == *SYSTEM_USER_ID
     }
 
-    // ONLY USE THIS INTERNALLY!
     #[allow(unused)]
     pub async fn get_full_by_id(
         id: Uuid,
         connection: &Connection<AuthRsDatabase>,
-    ) -> Result<User, HttpResponse<UserMinimal>> {
+    ) -> UserResult<User> {
         let db = Self::get_collection(connection);
 
         let filter = doc! {
             "_id": id
         };
-        match db.find_one(filter, None).await.unwrap() {
-            Some(user) => Ok(user),
-            None => Err(HttpResponse {
-                status: 404,
-                message: "User not found".to_string(),
-                data: None,
-            }),
+        match db.find_one(filter, None).await {
+            Ok(Some(user)) => Ok(user),
+            Ok(None) => Err(UserError::NotFound(id)),
+            Err(err) => Err(UserError::DatabaseError(err.to_string())),
         }
     }
 
-    // ONLY USE THIS INTERNALLY!
     #[allow(unused)]
     pub async fn get_full_by_token(
         token: String,
         mut db: &Database,
-    ) -> Result<User, HttpResponse<UserMinimal>> {
+    ) -> UserResult<User> {
         let db = db.collection(Self::COLLECTION_NAME);
 
         let filter = doc! {
             "token": token
         };
-        match db.find_one(filter, None).await.unwrap() {
-            Some(user) => Ok(user),
-            None => Err(HttpResponse {
-                status: 404,
-                message: "User not found".to_string(),
-                data: None,
-            }),
+        match db.find_one(filter, None).await {
+            Ok(Some(user)) => Ok(user),
+            Ok(None) => Err(UserError::NotFound(Uuid::new())), // Using a placeholder UUID
+            Err(err) => Err(UserError::DatabaseError(err.to_string())),
         }
     }
 
@@ -208,19 +180,16 @@ impl User {
     pub async fn get_by_id(
         id: Uuid,
         connection: &Connection<AuthRsDatabase>,
-    ) -> Result<UserMinimal, HttpResponse<UserMinimal>> {
+    ) -> UserResult<User> {
         let db = Self::get_collection(connection);
 
         let filter = doc! {
             "_id": id
         };
-        match db.find_one(filter, None).await.unwrap() {
-            Some(user) => Ok(user.to_minimal()),
-            None => Err(HttpResponse {
-                status: 404,
-                message: "User not found".to_string(),
-                data: None,
-            }),
+        match db.find_one(filter, None).await {
+            Ok(Some(user)) => Ok(user),
+            Ok(None) => Err(UserError::NotFound(id)),
+            Err(err) => Err(UserError::DatabaseError(err.to_string())),
         }
     }
 
@@ -228,26 +197,23 @@ impl User {
     pub async fn get_by_email(
         email: &str,
         connection: &Connection<AuthRsDatabase>,
-    ) -> Result<UserMinimal, HttpResponse<UserMinimal>> {
+    ) -> UserResult<User> {
         let db = Self::get_collection(connection);
 
         let filter = doc! {
             "email": email
         };
-        match db.find_one(filter, None).await.unwrap() {
-            Some(user) => Ok(user.to_minimal()),
-            None => Err(HttpResponse {
-                status: 404,
-                message: "User not found".to_string(),
-                data: None,
-            }),
+        match db.find_one(filter, None).await {
+            Ok(Some(user)) => Ok(user),
+            Ok(None) => Err(UserError::EmailAlreadyExists(email.to_string())),
+            Err(err) => Err(UserError::DatabaseError(err.to_string())),
         }
     }
 
     #[allow(unused)]
     pub async fn get_all(
         connection: &Connection<AuthRsDatabase>,
-    ) -> Result<Vec<UserMinimal>, HttpResponse<Vec<UserMinimal>>> {
+    ) -> UserResult<Vec<User>> {
         let db = Self::get_collection(connection);
 
         match db.find(None, None).await {
@@ -255,13 +221,13 @@ impl User {
                 let users = cursor
                     .map(|doc| {
                         let user: User = doc.unwrap();
-                        user.to_minimal()
+                        user
                     })
-                    .collect::<Vec<UserMinimal>>()
+                    .collect::<Vec<User>>()
                     .await;
                 Ok(users)
             }
-            Err(err) => Err(HttpResponse::internal_error(&format!("Error fetching users: {:?}", err))),
+            Err(err) => Err(UserError::DatabaseError(err.to_string())),
         }
     }
 
@@ -269,16 +235,12 @@ impl User {
     pub async fn insert(
         &self,
         connection: &Connection<AuthRsDatabase>,
-    ) -> Result<UserMinimal, HttpResponse<UserMinimal>> {
+    ) -> UserResult<User> {
         let db = Self::get_collection(connection);
 
         match db.insert_one(self.clone(), None).await {
-            Ok(_) => Ok(self.to_minimal()),
-            Err(err) => Err(HttpResponse {
-                status: 500,
-                message: format!("Error inserting user: {:?}", err),
-                data: None,
-            }),
+            Ok(_) => Ok(self.clone()),
+            Err(err) => Err(UserError::DatabaseError(format!("Error inserting user: {}", err))),
         }
     }
 
@@ -286,19 +248,15 @@ impl User {
     pub async fn update(
         &self,
         connection: &Connection<AuthRsDatabase>,
-    ) -> Result<UserMinimal, HttpResponse<UserMinimal>> {
+    ) -> UserResult<User> {
         let db = Self::get_collection(connection);
 
         let filter = doc! {
             "_id": self.id
         };
         match db.replace_one(filter, self.clone(), None).await {
-            Ok(_) => Ok(self.to_minimal()),
-            Err(err) => Err(HttpResponse {
-                status: 500,
-                message: format!("Error updating user: {:?}", err),
-                data: None,
-            }),
+            Ok(_) => Ok(self.clone()),
+            Err(err) => Err(UserError::DatabaseError(format!("Error updating user: {}", err))),
         }
     }
 
@@ -356,14 +314,14 @@ impl User {
     pub async fn delete(
         &self,
         connection: &Connection<AuthRsDatabase>,
-    ) -> Result<UserMinimal, HttpResponse<()>> {
+    ) -> Result<User, HttpResponse<()>> {
         let db = Self::get_collection(connection);
 
         let filter = doc! {
             "_id": self.id
         };
         match db.delete_one(filter, None).await {
-            Ok(_) => Ok(self.to_minimal()),
+            Ok(_) => Ok(self.clone()),
             Err(err) => Err(HttpResponse {
                 status: 500,
                 message: format!("Error deleting user: {:?}", err),

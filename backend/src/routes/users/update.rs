@@ -10,15 +10,17 @@ use std::collections::HashMap;
 use crate::{
     auth::auth::AuthEntity,
     db::AuthRsDatabase,
-    errors::{AppError, AppResult},
+    errors::AppError,
     models::{
         audit_log::{AuditLog, AuditLogAction, AuditLogEntityType},
         http_response::HttpResponse,
         role::Role,
-        user::{User, UserMinimal},
+        user::User,
+        user_error::{UserError, UserResult},
     },
     ADMIN_ROLE_ID, DEFAULT_ROLE_ID, SYSTEM_USER_ID,
 };
+use crate::models::user::UserDTO;
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -39,11 +41,11 @@ pub async fn update_user(
     req_entity: AuthEntity,
     id: &str,
     data: Json<UpdateUserData>,
-) -> Json<HttpResponse<UserMinimal>> {
+) -> Json<HttpResponse<UserDTO>> {
     let result = update_user_internal(db, req_entity, id, data.into_inner()).await;
 
     match result {
-        Ok(user) => Json(HttpResponse::success("User updated", user)),
+        Ok(user) => Json(HttpResponse::success("User updated", user.to_dto())),
         Err(err) => Json(err.into()),
     }
 }
@@ -53,30 +55,26 @@ async fn update_user_internal(
     req_entity: AuthEntity,
     id: &str,
     data: UpdateUserData,
-) -> AppResult<UserMinimal> {
+) -> UserResult<User> {
     // Check if the request is from a user (not a token)
     if !req_entity.is_user() {
-        return Err(AppError::MissingPermissions);
+        return Err(UserError::MissingPermissions);
     }
 
     // Parse UUID
-    let uuid = Uuid::parse_str(id).map_err(|e| AppError::InvalidUuid(e.to_string()))?;
+    let uuid = Uuid::parse_str(id).map_err(|e| UserError::InvalidUuid(e.to_string()))?;
 
     // Check permissions
-    let req_user = req_entity.user()?;
+    let req_user = req_entity.user().map_err(|_| UserError::MissingPermissions)?;
     if req_entity.user_id != uuid && !req_user.is_admin() {
-        return Err(AppError::MissingPermissions);
+        return Err(UserError::MissingPermissions);
     }
 
     // Get the user to update
     let old_user = User::get_by_id(uuid, &db)
         .await
-        .map_err(|_| AppError::UserNotFound(uuid))?;
-    let mut new_user = old_user
-        .clone()
-        .to_full(&db)
-        .await
-        .map_err(|_| AppError::UserNotFound(uuid))?;
+        .map_err(|_| UserError::NotFound(uuid))?;
+    let mut new_user = old_user.clone();
 
     let mut old_values: HashMap<String, String> = HashMap::new();
     let mut new_values: HashMap<String, String> = HashMap::new();
@@ -93,7 +91,7 @@ async fn update_user_internal(
     // Update password if provided
     if let Some(password) = data.password {
         let password_hash =
-            bcrypt::hash(password).map_err(|e| AppError::PasswordHashingError(e.to_string()))?;
+            bcrypt::hash(password).map_err(|e| UserError::PasswordHashingError(e.to_string()))?;
 
         new_user.password_hash = password_hash;
         old_values.insert("password".to_string(), "HIDDEN".to_string());
@@ -123,18 +121,18 @@ async fn update_user_internal(
         if old_user.roles != new_roles && req_user.is_admin() {
             // Ensure the target user is not the system user
             if new_user.id == *SYSTEM_USER_ID {
-                return Err(AppError::SystemUserModification);
+                return Err(UserError::SystemUserModification);
             }
 
             // Get available roles
             let available_roles = Role::get_all(&db, None)
                 .await
-                .map_err(|e| AppError::InternalServerError(e.message))?;
+                .map_err(|e| UserError::InternalServerError(e.message))?;
 
             // Validate each role exists
             for role_id in &new_roles {
                 if !available_roles.iter().any(|r| r.id == *role_id) {
-                    return Err(AppError::RoleNotFound(*role_id));
+                    return Err(UserError::RoleNotFound(*role_id));
                 }
             }
 
@@ -145,7 +143,7 @@ async fn update_user_internal(
 
             // Only system admin can assign admin role
             if new_roles.contains(&ADMIN_ROLE_ID) && !req_user.is_system_admin() {
-                return Err(AppError::AdminRoleAssignment);
+                return Err(UserError::AdminRoleAssignment);
             }
 
             new_user.roles = new_roles;
@@ -175,7 +173,7 @@ async fn update_user_internal(
         if old_user.disabled != disabled && req_user.is_admin() {
             // Prevent disabling system user
             if new_user.id == *SYSTEM_USER_ID {
-                return Err(AppError::SystemUserModification);
+                return Err(UserError::SystemUserModification);
             }
 
             new_user.disabled = disabled;
@@ -186,14 +184,14 @@ async fn update_user_internal(
 
     // If no changes were made, return early
     if new_values.is_empty() {
-        return Ok(new_user.to_minimal());
+        return Ok(new_user);
     }
 
     // Update the user
     let updated_user = new_user
         .update(&db)
         .await
-        .map_err(|e| AppError::InternalServerError(e.message))?;
+        .map_err(|e| UserError::DatabaseError(format!("Failed to update user: {}", e)))?;
 
     // Log the audit
     if let Err(err) = AuditLog::new(

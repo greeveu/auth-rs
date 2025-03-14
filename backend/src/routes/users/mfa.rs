@@ -10,11 +10,12 @@ use crate::{
     errors::{ApiError, ApiResult},
     models::{
         http_response::HttpResponse,
-        user::{User, UserMinimal},
+        user::User,
     },
     routes::auth::login::LoginResponse,
     utils::parse_uuid,
 };
+use crate::models::user::UserDTO;
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -45,10 +46,7 @@ async fn process_enable_totp_mfa(
 
     let user = User::get_by_id(uuid, db)
         .await
-        .map_err(|err| ApiError::InternalError(format!("Failed to get user: {:?}", err)))?
-        .to_full(db)
-        .await
-        .map_err(|err| ApiError::InternalError(format!("Failed to get full user: {:?}", err)))?;
+        .map_err(|err| ApiError::InternalError(format!("Failed to get user: {:?}", err)))?;
 
     if !user.verify_password(&mfa_data.password) {
         return Err(ApiError::Unauthorized("Incorrect password!".to_string()));
@@ -67,7 +65,7 @@ async fn process_enable_totp_mfa(
     Ok((
         "TOTP MFA enable flow started.".to_string(),
         LoginResponse {
-            user: Some(user.to_minimal()),
+            user: Some(user.to_dto()),
             token: Some(flow.totp.unwrap().get_qr_base64().unwrap()),
             mfa_required: true,
             mfa_flow_id: Some(flow.flow_id),
@@ -105,7 +103,7 @@ async fn process_disable_totp_mfa(
     req_entity: AuthEntity,
     id: &str,
     mfa_data: DisableMfaData,
-) -> ApiResult<UserMinimal> {
+) -> ApiResult<User> {
     if req_entity.is_token() {
         return Err(ApiError::Forbidden("Forbidden!".to_string()));
     }
@@ -121,10 +119,7 @@ async fn process_disable_totp_mfa(
 
     let mut user = User::get_by_id(uuid, db)
         .await
-        .map_err(|err| ApiError::InternalError(format!("Failed to get user: {:?}", err)))?
-        .to_full(db)
-        .await
-        .map_err(|err| ApiError::InternalError(format!("Failed to get full user: {:?}", err)))?;
+        .map_err(|err| ApiError::InternalError(format!("Failed to get user: {:?}", err)))?;
 
     if user.totp_secret.is_none() {
         return Err(ApiError::BadRequest("TOTP MFA is not enabled!".to_string()));
@@ -154,7 +149,7 @@ async fn process_disable_totp_mfa(
         .await
         .map_err(|err| ApiError::InternalError(format!("Failed to disable TOTP: {:?}", err)))?;
 
-    Ok(updated_user.to_minimal())
+    Ok(updated_user)
 }
 
 #[allow(unused)]
@@ -164,11 +159,11 @@ pub async fn disable_totp_mfa(
     req_entity: AuthEntity,
     id: &str,
     data: Json<DisableMfaData>,
-) -> Json<HttpResponse<UserMinimal>> {
+) -> Json<HttpResponse<UserDTO>> {
     let mfa_data = data.into_inner();
 
     match process_disable_totp_mfa(&db, req_entity, id, mfa_data).await {
-        Ok(user) => Json(HttpResponse::success("TOTP MFA disabled.", user)),
+        Ok(user) => Json(HttpResponse::success("TOTP MFA disabled.", user.to_dto())),
         Err(err) => Json(HttpResponse::from(err)),
     }
 }

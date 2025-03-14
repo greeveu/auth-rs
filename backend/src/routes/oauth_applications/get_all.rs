@@ -21,7 +21,7 @@ pub async fn get_all_oauth_applications(
     if req_entity.is_token()
         && (!req_entity
             .token
-            .clone()
+            .as_ref()
             .unwrap()
             .check_scope(OAuthScope::OAuthApplications(ScopeActions::Read))
             && !req_entity

@@ -11,6 +11,7 @@ use crate::{
         role::Role,
     },
 };
+use crate::utils::parse_uuid;
 
 #[allow(unused)]
 #[delete("/roles/<id>", format = "json")]
@@ -27,14 +28,9 @@ pub async fn delete_role(
         return Json(HttpResponse::forbidden("Missing permissions!"));
     }
 
-    let uuid = match Uuid::parse_str(id) {
+    let uuid = match parse_uuid(id) {
         Ok(uuid) => uuid,
-        Err(err) => {
-            return Json(HttpResponse::bad_request(&format!(
-                "Invalid UUID: {:?}",
-                err
-            )))
-        }
+        Err(err) => { return Json(HttpResponse::from(err)); }
     };
 
     let role = match Role::get_by_id(uuid, &db).await {

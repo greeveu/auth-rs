@@ -7,10 +7,11 @@ use crate::{
     models::{
         http_response::HttpResponse,
         oauth_scope::{OAuthScope, ScopeActions},
-        user::{User, UserMinimal},
+        user::{User},
     },
     utils::parse_uuid,
 };
+use crate::models::user::UserDTO;
 
 #[allow(unused)]
 #[get("/users/<id>", format = "json")]
@@ -18,7 +19,7 @@ pub async fn get_user_by_id(
     db: Connection<AuthRsDatabase>,
     req_entity: AuthEntity,
     id: &str,
-) -> Json<HttpResponse<UserMinimal>> {
+) -> Json<HttpResponse<UserDTO>> {
     if req_entity.is_token()
         && (!req_entity
             .token
@@ -48,7 +49,7 @@ pub async fn get_user_by_id(
     }
 
     match User::get_by_id(uuid, &db).await {
-        Ok(user) => Json(HttpResponse::success("Found user by id", user)),
-        Err(err) => Json(err),
+        Ok(user) => Json(HttpResponse::success("Found user by id", user.to_dto())),
+        Err(err) => Json(err.into()),
     }
 }

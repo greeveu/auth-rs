@@ -11,7 +11,7 @@ use auth::mfa::MfaHandler;
 use db::AuthRsDatabase;
 use dotenv::dotenv;
 use errors::{AppError, AppResult};
-use models::{role::Role, user::User};
+use models::{role::Role, user::User, user_error::UserError};
 use mongodb::bson::Uuid;
 use rocket::{
     fairing::AdHoc,
@@ -84,7 +84,7 @@ async fn initialize_database(db: &AuthRsDatabase) -> AppResult<()> {
             "".to_string(),
             Vec::from([(*ADMIN_ROLE_ID).to_string(), (*DEFAULT_ROLE_ID).to_string()]),
         )
-        .map_err(|e| AppError::HttpResponseError(e.message))?;
+        .map_err(|e| AppError::from(e))?;
 
         users_collection
             .insert_one(system_user, None)

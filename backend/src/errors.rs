@@ -4,6 +4,7 @@ use std::env::VarError;
 use thiserror::Error;
 
 use crate::models::http_response::HttpResponse;
+use crate::models::user_error::UserError;
 
 #[derive(Error, Debug)]
 pub enum AppError {
@@ -245,3 +246,23 @@ impl<T> From<ApiError> for HttpResponse<T> {
 
 // Add a type alias for API results
 pub type ApiResult<T> = Result<T, ApiError>;
+
+// Implement conversion from UserError to AppError
+impl From<UserError> for AppError {
+    fn from(error: UserError) -> Self {
+        match error {
+            UserError::NotFound(id) => AppError::UserNotFound(id),
+            UserError::EmailAlreadyExists(email) => AppError::ValidationError(format!("User with email {} already exists", email)),
+            UserError::InvalidUuid(msg) => AppError::InvalidUuid(msg),
+            UserError::MissingPermissions => AppError::MissingPermissions,
+            UserError::SystemUserModification => AppError::SystemUserModification,
+            UserError::PasswordHashingError(msg) => AppError::PasswordHashingError(msg),
+            UserError::AdminRoleAssignment => AppError::AdminRoleAssignment,
+            UserError::RoleNotFound(id) => AppError::RoleNotFound(id),
+            UserError::UserDisabled => AppError::UserDisabled,
+            UserError::NoUpdatesApplied => AppError::NoUpdatesApplied,
+            UserError::DatabaseError(msg) => AppError::DatabaseError(msg),
+            UserError::InternalServerError(msg) => AppError::InternalServerError(msg),
+        }
+    }
+}

@@ -7,20 +7,21 @@ use crate::{
     models::{
         http_response::HttpResponse,
         oauth_scope::{OAuthScope, ScopeActions},
-        user::{User, UserMinimal},
+        user::User,
     },
 };
+use crate::models::user::UserDTO;
 
 #[allow(unused)]
 #[get("/users/@me", format = "json")]
 pub async fn get_current_user(
     db: Connection<AuthRsDatabase>,
     req_entity: AuthEntity,
-) -> Json<HttpResponse<UserMinimal>> {
+) -> Json<HttpResponse<UserDTO>> {
     if req_entity.is_token()
         && (!req_entity
             .token
-            .clone()
+            .as_ref()
             .unwrap()
             .check_scope(OAuthScope::Users(ScopeActions::Read))
             || req_entity
@@ -33,8 +34,8 @@ pub async fn get_current_user(
     }
 
     match User::get_by_id(req_entity.user_id, &db).await {
-        Ok(user) => Json(HttpResponse::success("Found user by id", user)),
-        Err(err) => Json(err),
+        Ok(user) => Json(HttpResponse::success("Found user by id", user.to_dto())),
+        Err(err) => Json(err.into()),
     }
 }
 
@@ -43,7 +44,7 @@ pub async fn get_current_user(
 pub async fn get_current_user_plain(
     db: Connection<AuthRsDatabase>,
     req_entity: AuthEntity,
-) -> Option<Json<UserMinimal>> {
+) -> Option<Json<UserDTO>> {
     if req_entity.is_token()
         && (!req_entity
             .token
@@ -60,7 +61,7 @@ pub async fn get_current_user_plain(
     }
 
     match User::get_by_id(req_entity.user_id, &db).await {
-        Ok(user) => Some(Json(user)),
+        Ok(user) => Some(Json(user.to_dto())),
         Err(err) => None,
     }
 }

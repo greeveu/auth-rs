@@ -93,7 +93,7 @@ async fn process_mfa(
         Ok((
             "TOTP enabled".to_string(),
             LoginResponse {
-                user: Some(user.to_minimal()),
+                user: Some(user.to_dto()),
                 token: Some(TOTP::get_qr_base64(flow.totp.as_ref().unwrap()).unwrap()),
                 mfa_required: false,
                 mfa_flow_id: None,
@@ -103,7 +103,7 @@ async fn process_mfa(
         Ok((
             "MFA complete".to_string(),
             LoginResponse {
-                user: Some(flow.user.to_minimal()),
+                user: Some(flow.user.to_dto()),
                 token: Some(flow.user.token.to_string()),
                 mfa_required: false,
                 mfa_flow_id: None,
