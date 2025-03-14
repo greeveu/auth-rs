@@ -37,7 +37,7 @@ pub async fn disconnect(
 
     let uuid = match parse_uuid(id) {
         Ok(uuid) => uuid,
-        Err(err) => return Json(HttpResponse::from(err)),
+        Err(err) => return Json(err.into()),
     };
 
     if (req_entity.is_user()
@@ -54,19 +54,27 @@ pub async fn disconnect(
 
     let tokens = match OAuthToken::get_by_application_id(oauth_application.id, &db).await {
         Ok(tokens) => tokens,
-        Err(err) => { return Json(HttpResponse::from(err)); } 
+        Err(err) => {
+            return Json(err.into());
+        }
     };
 
     if tokens.is_empty() {
-        return Json(HttpResponse::not_found("You are not connected to that application"));
+        return Json(HttpResponse::not_found(
+            "You are not connected to that application",
+        ));
     }
 
     for token in tokens {
         match token.delete(&db).await {
             Ok(_) => (),
-            Err(err) => { return Json(HttpResponse::from(err)); }
+            Err(err) => {
+                return Json(err.into());
+            }
         }
     }
 
-    Json(HttpResponse::success_no_data("Successfully disconnected from application"))
+    Json(HttpResponse::success_no_data(
+        "Successfully disconnected from application",
+    ))
 }

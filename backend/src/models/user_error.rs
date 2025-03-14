@@ -1,6 +1,6 @@
+use crate::models::http_response::HttpResponse;
 use mongodb::bson::Uuid;
 use thiserror::Error;
-use crate::models::http_response::HttpResponse;
 
 #[derive(Error, Debug)]
 pub enum UserError {
@@ -132,4 +132,4 @@ impl From<AppError> for UserError {
 }
 
 // Define a Result type alias for user operations
-pub type UserResult<T> = Result<T, UserError>; 
+pub type UserResult<T> = Result<T, UserError>;

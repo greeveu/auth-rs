@@ -53,7 +53,7 @@ pub async fn get_by_user_id(
 
     let uuid = match parse_uuid(id) {
         Ok(uuid) => uuid,
-        Err(err) => return Json(HttpResponse::from(err)),
+        Err(err) => return Json(err.into()),
     };
 
     if (req_entity.is_user()
@@ -67,7 +67,7 @@ pub async fn get_by_user_id(
     let connected_applications = match OAuthToken::get_by_user_id(uuid, &db).await {
         Ok(tokens) => tokens,
         Err(err) => {
-            return Json(HttpResponse::from(err));
+            return Json(err.into());
         }
     };
 

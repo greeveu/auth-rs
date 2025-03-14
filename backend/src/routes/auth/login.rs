@@ -5,16 +5,13 @@ use rocket::{
 };
 use rocket_db_pools::Connection;
 
+use crate::models::user::UserDTO;
 use crate::{
     auth::mfa::MfaHandler,
     db::AuthRsDatabase,
     errors::{ApiError, ApiResult},
-    models::{
-        http_response::HttpResponse,
-        user::{User},
-    },
+    models::{http_response::HttpResponse, user::User},
 };
-use crate::models::user::UserDTO;
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -91,6 +88,6 @@ pub async fn login(
             };
             Json(HttpResponse::success(message, response))
         }
-        Err(err) => Json(HttpResponse::from(err)),
+        Err(err) => Json(err.into()),
     }
 }

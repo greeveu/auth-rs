@@ -1,15 +1,12 @@
 use rocket::{get, serde::json::Json};
 use rocket_db_pools::Connection;
 
+use crate::models::user::UserDTO;
 use crate::{
     auth::auth::AuthEntity,
     db::AuthRsDatabase,
-    models::{
-        http_response::HttpResponse,
-        user::User,
-    },
+    models::{http_response::HttpResponse, user::User},
 };
-use crate::models::user::UserDTO;
 
 #[allow(unused)]
 #[get("/users", format = "json")]
@@ -27,7 +24,10 @@ pub async fn get_all_users(
 
     //TODO: Add pagination
     match User::get_all(&db).await {
-        Ok(users) => Json(HttpResponse::success("Successfully retrieved all users", users.into_iter().map(|user| user.to_dto()).collect())),
+        Ok(users) => Json(HttpResponse::success(
+            "Successfully retrieved all users",
+            users.into_iter().map(|user| user.to_dto()).collect(),
+        )),
         Err(err) => Json(err.into()),
     }
 }

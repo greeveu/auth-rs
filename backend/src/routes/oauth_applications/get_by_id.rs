@@ -24,11 +24,14 @@ pub async fn get_oauth_application_by_id(
 
     let uuid = match parse_uuid(id) {
         Ok(uuid) => uuid,
-        Err(err) => return Json(HttpResponse::from(err)),
+        Err(err) => return Json(err.into()),
     };
 
     match OAuthApplication::get_by_id(uuid, &db).await {
-        Ok(oauth_application) => Json(HttpResponse::success("Found oauth_application by id", oauth_application.to_dto())),
+        Ok(oauth_application) => Json(HttpResponse::success(
+            "Found oauth_application by id",
+            oauth_application.to_dto(),
+        )),
         Err(err) => Json(err.into()),
     }
 }

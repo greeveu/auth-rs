@@ -25,20 +25,20 @@ pub async fn get_audit_log_by_id(
 
     let uuid = match parse_uuid(id) {
         Ok(uuid) => uuid,
-        Err(err) => return Json(HttpResponse::from(err)),
+        Err(err) => return Json(err.into()),
     };
 
     if req_entity.user_id != uuid && !req_entity.user.unwrap().is_admin() {
         return Json(HttpResponse::forbidden("Missing permissions!"));
     }
 
-    let entity_type = match AuditLogEntityType::from_string(&r#type) {
+    let entity_type = match AuditLogEntityType::from_string(r#type) {
         Ok(entity_type) => entity_type,
-        Err(err) => return Json(HttpResponse::from(err)),
+        Err(err) => return Json(err.into()),
     };
 
     match AuditLog::get_by_id(uuid, entity_type, &db).await {
         Ok(audit_log) => Json(HttpResponse::success("Audit Log found by id", audit_log)),
-        Err(err) => Json(HttpResponse::from(err)),
+        Err(err) => Json(err.into()),
     }
 }

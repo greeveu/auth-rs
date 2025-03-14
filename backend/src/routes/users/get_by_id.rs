@@ -1,17 +1,17 @@
 use rocket::{get, serde::json::Json};
 use rocket_db_pools::Connection;
 
+use crate::models::user::UserDTO;
 use crate::{
     auth::auth::AuthEntity,
     db::AuthRsDatabase,
     models::{
         http_response::HttpResponse,
         oauth_scope::{OAuthScope, ScopeActions},
-        user::{User},
+        user::User,
     },
     utils::parse_uuid,
 };
-use crate::models::user::UserDTO;
 
 #[allow(unused)]
 #[get("/users/<id>", format = "json")]
@@ -37,7 +37,7 @@ pub async fn get_user_by_id(
 
     let uuid = match parse_uuid(id) {
         Ok(uuid) => uuid,
-        Err(err) => return Json(HttpResponse::from(err)),
+        Err(err) => return Json(err.into()),
     };
 
     if (req_entity.is_user()

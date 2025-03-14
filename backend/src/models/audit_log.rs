@@ -16,13 +16,13 @@ use super::http_response::HttpResponse;
 pub enum AuditLogError {
     #[error("Invalid entity type: {0}")]
     InvalidEntityType(String),
-    
+
     #[error("Audit log not found")]
     NotFound,
-    
+
     #[error("Database error: {0}")]
     DatabaseError(String),
-    
+
     #[error("Invalid input: {0}")]
     InvalidInput(String),
 }
@@ -79,7 +79,10 @@ impl AuditLogEntityType {
             "USER" => Ok(AuditLogEntityType::User),
             "ROLE" => Ok(AuditLogEntityType::Role),
             "OAUTH_APPLICATION" => Ok(AuditLogEntityType::OAuthApplication),
-            _ => Err(AuditLogError::InvalidInput(format!("Unknown entity type: {}", entity_type))),
+            _ => Err(AuditLogError::InvalidInput(format!(
+                "Unknown entity type: {}",
+                entity_type
+            ))),
         }
     }
 
@@ -130,7 +133,10 @@ impl AuditLog {
         let db = match Self::get_collection(&entity_type, connection) {
             Some(db) => db,
             None => {
-                return Err(AuditLogError::InvalidEntityType(format!("Invalid entity type: {:?}", entity_type)))
+                return Err(AuditLogError::InvalidEntityType(format!(
+                    "Invalid entity type: {:?}",
+                    entity_type
+                )))
             }
         };
 
@@ -153,7 +159,10 @@ impl AuditLog {
         let db = match Self::get_collection(&entity_type, connection) {
             Some(db) => db,
             None => {
-                return Err(AuditLogError::InvalidEntityType(format!("Invalid entity type: {:?}", entity_type)))
+                return Err(AuditLogError::InvalidEntityType(format!(
+                    "Invalid entity type: {:?}",
+                    entity_type
+                )))
             }
         };
 
@@ -164,17 +173,20 @@ impl AuditLog {
             Ok(cursor) => {
                 let mut audit_logs = Vec::new();
                 let mut stream = cursor;
-                
+
                 while let Some(result) = stream.next().await {
                     match result {
                         Ok(doc) => audit_logs.push(doc),
                         Err(err) => return Err(AuditLogError::DatabaseError(err.to_string())),
                     }
                 }
-                
+
                 Ok(audit_logs)
             }
-            Err(err) => Err(AuditLogError::DatabaseError(format!("Error fetching audit logs: {}", err))),
+            Err(err) => Err(AuditLogError::DatabaseError(format!(
+                "Error fetching audit logs: {}",
+                err
+            ))),
         }
     }
 
@@ -184,22 +196,37 @@ impl AuditLog {
         connection: &Connection<AuthRsDatabase>,
     ) -> Result<Vec<Self>, AuditLogError> {
         let mut all_logs = vec![];
-        
+
         // Get collections for each entity type
-        let user_logs_collection = match Self::get_collection(&AuditLogEntityType::User, connection) {
+        let user_logs_collection = match Self::get_collection(&AuditLogEntityType::User, connection)
+        {
             Some(coll) => coll,
-            None => return Err(AuditLogError::InvalidEntityType("User entity type invalid".to_string())),
+            None => {
+                return Err(AuditLogError::InvalidEntityType(
+                    "User entity type invalid".to_string(),
+                ))
+            }
         };
-        
-        let role_logs_collection = match Self::get_collection(&AuditLogEntityType::Role, connection) {
+
+        let role_logs_collection = match Self::get_collection(&AuditLogEntityType::Role, connection)
+        {
             Some(coll) => coll,
-            None => return Err(AuditLogError::InvalidEntityType("Role entity type invalid".to_string())),
+            None => {
+                return Err(AuditLogError::InvalidEntityType(
+                    "Role entity type invalid".to_string(),
+                ))
+            }
         };
-        
-        let oauth_application_logs_collection = match Self::get_collection(&AuditLogEntityType::OAuthApplication, connection) {
-            Some(coll) => coll,
-            None => return Err(AuditLogError::InvalidEntityType("OAuth Application entity type invalid".to_string())),
-        };
+
+        let oauth_application_logs_collection =
+            match Self::get_collection(&AuditLogEntityType::OAuthApplication, connection) {
+                Some(coll) => coll,
+                None => {
+                    return Err(AuditLogError::InvalidEntityType(
+                        "OAuth Application entity type invalid".to_string(),
+                    ))
+                }
+            };
 
         let filter = doc! {
             "authorId": author_id
@@ -210,18 +237,21 @@ impl AuditLog {
             Ok(cursor) => {
                 let mut logs = Vec::new();
                 let mut stream = cursor;
-                
+
                 while let Some(result) = stream.next().await {
                     match result {
                         Ok(doc) => logs.push(doc),
                         Err(err) => return Err(AuditLogError::DatabaseError(err.to_string())),
                     }
                 }
-                
+
                 logs
             }
             Err(err) => {
-                return Err(AuditLogError::DatabaseError(format!("Error fetching user audit logs: {}", err)))
+                return Err(AuditLogError::DatabaseError(format!(
+                    "Error fetching user audit logs: {}",
+                    err
+                )))
             }
         };
 
@@ -230,18 +260,21 @@ impl AuditLog {
             Ok(cursor) => {
                 let mut logs = Vec::new();
                 let mut stream = cursor;
-                
+
                 while let Some(result) = stream.next().await {
                     match result {
                         Ok(doc) => logs.push(doc),
                         Err(err) => return Err(AuditLogError::DatabaseError(err.to_string())),
                     }
                 }
-                
+
                 logs
             }
             Err(err) => {
-                return Err(AuditLogError::DatabaseError(format!("Error fetching role audit logs: {}", err)))
+                return Err(AuditLogError::DatabaseError(format!(
+                    "Error fetching role audit logs: {}",
+                    err
+                )))
             }
         };
 
@@ -253,18 +286,21 @@ impl AuditLog {
             Ok(cursor) => {
                 let mut logs = Vec::new();
                 let mut stream = cursor;
-                
+
                 while let Some(result) = stream.next().await {
                     match result {
                         Ok(doc) => logs.push(doc),
                         Err(err) => return Err(AuditLogError::DatabaseError(err.to_string())),
                     }
                 }
-                
+
                 logs
             }
             Err(err) => {
-                return Err(AuditLogError::DatabaseError(format!("Error fetching oauth application audit logs: {}", err)))
+                return Err(AuditLogError::DatabaseError(format!(
+                    "Error fetching oauth application audit logs: {}",
+                    err
+                )))
             }
         };
 
@@ -285,7 +321,10 @@ impl AuditLog {
         let db = match Self::get_collection(&entity_type, connection) {
             Some(db) => db,
             None => {
-                return Err(AuditLogError::InvalidEntityType(format!("Invalid entity type: {:?}", entity_type)))
+                return Err(AuditLogError::InvalidEntityType(format!(
+                    "Invalid entity type: {:?}",
+                    entity_type
+                )))
             }
         };
 
@@ -293,30 +332,44 @@ impl AuditLog {
             Ok(cursor) => {
                 let mut audit_logs = Vec::new();
                 let mut stream = cursor;
-                
+
                 while let Some(result) = stream.next().await {
                     match result {
                         Ok(doc) => audit_logs.push(doc),
                         Err(err) => return Err(AuditLogError::DatabaseError(err.to_string())),
                     }
                 }
-                
+
                 Ok(audit_logs)
             }
-            Err(err) => Err(AuditLogError::DatabaseError(format!("Error fetching audit logs: {}", err))),
+            Err(err) => Err(AuditLogError::DatabaseError(format!(
+                "Error fetching audit logs: {}",
+                err
+            ))),
         }
     }
 
     #[allow(unused)]
-    pub async fn insert(&self, connection: &Connection<AuthRsDatabase>) -> Result<(), AuditLogError> {
+    pub async fn insert(
+        &self,
+        connection: &Connection<AuthRsDatabase>,
+    ) -> Result<(), AuditLogError> {
         let db = match Self::get_collection(&self.entity_type, connection) {
             Some(db) => db,
-            None => return Err(AuditLogError::InvalidEntityType(format!("Invalid entity type: {:?}", self.entity_type))),
+            None => {
+                return Err(AuditLogError::InvalidEntityType(format!(
+                    "Invalid entity type: {:?}",
+                    self.entity_type
+                )))
+            }
         };
 
         match db.insert_one(self.clone(), None).await {
             Ok(_) => Ok(()),
-            Err(err) => Err(AuditLogError::DatabaseError(format!("Error inserting audit log: {}", err))),
+            Err(err) => Err(AuditLogError::DatabaseError(format!(
+                "Error inserting audit log: {}",
+                err
+            ))),
         }
     }
 

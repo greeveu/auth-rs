@@ -4,6 +4,7 @@ use rocket::{
 };
 use rocket_db_pools::Connection;
 
+use crate::models::user::UserDTO;
 use crate::{
     db::AuthRsDatabase,
     models::{
@@ -13,7 +14,6 @@ use crate::{
         user_error::{UserError, UserResult},
     },
 };
-use crate::models::user::UserDTO;
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]

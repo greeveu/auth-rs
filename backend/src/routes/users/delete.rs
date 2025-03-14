@@ -25,7 +25,7 @@ pub async fn delete_user(
 
     let uuid = match parse_uuid(id) {
         Ok(uuid) => uuid,
-        Err(err) => return Json(HttpResponse::from(err)),
+        Err(err) => return Json(err.into()),
     };
 
     if req_entity.user_id != uuid && !req_entity.user.unwrap().is_system_admin() {
@@ -35,7 +35,10 @@ pub async fn delete_user(
     let user = match User::get_full_by_id(uuid, &db).await {
         Ok(user) => user,
         Err(err) => {
-            return Json(HttpResponse::not_found(&format!("User does not exist: {:?}", err)))
+            return Json(HttpResponse::not_found(&format!(
+                "User does not exist: {:?}",
+                err
+            )))
         }
     };
 

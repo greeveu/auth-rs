@@ -1,6 +1,7 @@
 use rocket::{get, serde::json::Json};
 use rocket_db_pools::Connection;
 
+use crate::models::user::UserDTO;
 use crate::{
     auth::auth::AuthEntity,
     db::AuthRsDatabase,
@@ -10,7 +11,6 @@ use crate::{
         user::User,
     },
 };
-use crate::models::user::UserDTO;
 
 #[allow(unused)]
 #[get("/users/@me", format = "json")]

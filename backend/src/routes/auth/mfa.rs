@@ -122,6 +122,6 @@ pub async fn mfa(
 
     match process_mfa(&db, mfa_data).await {
         Ok((message, response)) => Json(HttpResponse::success(&message, response)),
-        Err(err) => Json(HttpResponse::from(err)),
+        Err(err) => Json(err.into()),
     }
 }

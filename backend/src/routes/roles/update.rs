@@ -43,7 +43,7 @@ pub async fn update_role(
     let uuid = match parse_uuid(id) {
         Ok(uuid) => uuid,
         Err(err) => {
-            return Json(HttpResponse::from(err));
+            return Json(err.into());
         }
     };
 

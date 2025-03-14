@@ -67,7 +67,7 @@ impl User {
     pub fn verify_password(&self, password: &str) -> bool {
         bcrypt::verify(password, &self.password_hash)
     }
-    
+
     pub fn to_dto(&self) -> UserDTO {
         UserDTO {
             id: self.id,
@@ -160,10 +160,7 @@ impl User {
     }
 
     #[allow(unused)]
-    pub async fn get_full_by_token(
-        token: String,
-        mut db: &Database,
-    ) -> UserResult<User> {
+    pub async fn get_full_by_token(token: String, mut db: &Database) -> UserResult<User> {
         let db = db.collection(Self::COLLECTION_NAME);
 
         let filter = doc! {
@@ -177,10 +174,7 @@ impl User {
     }
 
     #[allow(unused)]
-    pub async fn get_by_id(
-        id: Uuid,
-        connection: &Connection<AuthRsDatabase>,
-    ) -> UserResult<User> {
+    pub async fn get_by_id(id: Uuid, connection: &Connection<AuthRsDatabase>) -> UserResult<User> {
         let db = Self::get_collection(connection);
 
         let filter = doc! {
@@ -211,9 +205,7 @@ impl User {
     }
 
     #[allow(unused)]
-    pub async fn get_all(
-        connection: &Connection<AuthRsDatabase>,
-    ) -> UserResult<Vec<User>> {
+    pub async fn get_all(connection: &Connection<AuthRsDatabase>) -> UserResult<Vec<User>> {
         let db = Self::get_collection(connection);
 
         match db.find(None, None).await {
@@ -232,23 +224,20 @@ impl User {
     }
 
     #[allow(unused)]
-    pub async fn insert(
-        &self,
-        connection: &Connection<AuthRsDatabase>,
-    ) -> UserResult<User> {
+    pub async fn insert(&self, connection: &Connection<AuthRsDatabase>) -> UserResult<User> {
         let db = Self::get_collection(connection);
 
         match db.insert_one(self.clone(), None).await {
             Ok(_) => Ok(self.clone()),
-            Err(err) => Err(UserError::DatabaseError(format!("Error inserting user: {}", err))),
+            Err(err) => Err(UserError::DatabaseError(format!(
+                "Error inserting user: {}",
+                err
+            ))),
         }
     }
 
     #[allow(unused)]
-    pub async fn update(
-        &self,
-        connection: &Connection<AuthRsDatabase>,
-    ) -> UserResult<User> {
+    pub async fn update(&self, connection: &Connection<AuthRsDatabase>) -> UserResult<User> {
         let db = Self::get_collection(connection);
 
         let filter = doc! {
@@ -256,7 +245,10 @@ impl User {
         };
         match db.replace_one(filter, self.clone(), None).await {
             Ok(_) => Ok(self.clone()),
-            Err(err) => Err(UserError::DatabaseError(format!("Error updating user: {}", err))),
+            Err(err) => Err(UserError::DatabaseError(format!(
+                "Error updating user: {}",
+                err
+            ))),
         }
     }
 

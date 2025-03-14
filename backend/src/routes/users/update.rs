@@ -7,6 +7,7 @@ use rocket::{
 use rocket_db_pools::Connection;
 use std::collections::HashMap;
 
+use crate::models::user::UserDTO;
 use crate::{
     auth::auth::AuthEntity,
     db::AuthRsDatabase,
@@ -20,7 +21,6 @@ use crate::{
     },
     ADMIN_ROLE_ID, DEFAULT_ROLE_ID, SYSTEM_USER_ID,
 };
-use crate::models::user::UserDTO;
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -65,7 +65,9 @@ async fn update_user_internal(
     let uuid = Uuid::parse_str(id).map_err(|e| UserError::InvalidUuid(e.to_string()))?;
 
     // Check permissions
-    let req_user = req_entity.user().map_err(|_| UserError::MissingPermissions)?;
+    let req_user = req_entity
+        .user()
+        .map_err(|_| UserError::MissingPermissions)?;
     if req_entity.user_id != uuid && !req_user.is_admin() {
         return Err(UserError::MissingPermissions);
     }

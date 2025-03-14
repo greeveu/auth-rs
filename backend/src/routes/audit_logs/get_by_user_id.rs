@@ -21,7 +21,7 @@ pub async fn get_audit_logs_by_user_id(
 ) -> Json<HttpResponse<Vec<AuditLog>>> {
     let user_uuid = match parse_uuid(id) {
         Ok(uuid) => uuid,
-        Err(err) => return Json(HttpResponse::from(err)),
+        Err(err) => return Json(err.into()),
     };
 
     if !req_entity.is_user()
@@ -36,7 +36,10 @@ pub async fn get_audit_logs_by_user_id(
     }
 
     match AuditLog::get_by_user_id(user_uuid, &db).await {
-        Ok(audit_logs) => Json(HttpResponse::success("Audit Logs found by user id", audit_logs)),
-        Err(err) => Json(HttpResponse::from(err)),
+        Ok(audit_logs) => Json(HttpResponse::success(
+            "Audit Logs found by user id",
+            audit_logs,
+        )),
+        Err(err) => Json(err.into()),
     }
 }

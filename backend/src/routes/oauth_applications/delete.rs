@@ -25,7 +25,7 @@ pub async fn delete_oauth_application(
 
     let uuid = match parse_uuid(id) {
         Ok(uuid) => uuid,
-        Err(err) => return Json(HttpResponse::from(err)),
+        Err(err) => return Json(err.into()),
     };
 
     let oauth_application = match OAuthApplication::get_full_by_id(uuid, &db).await {

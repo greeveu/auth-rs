@@ -1,8 +1,9 @@
 use mongodb::bson::Uuid;
-use rocket::{delete, error, serde::json::Json};
 use rocket::yansi::Paint;
+use rocket::{delete, error, serde::json::Json};
 use rocket_db_pools::Connection;
 
+use crate::utils::parse_uuid;
 use crate::{
     auth::auth::AuthEntity,
     db::AuthRsDatabase,
@@ -12,7 +13,6 @@ use crate::{
         role::Role,
     },
 };
-use crate::utils::parse_uuid;
 
 #[allow(unused)]
 #[delete("/roles/<id>", format = "json")]
@@ -31,7 +31,9 @@ pub async fn delete_role(
 
     let uuid = match parse_uuid(id) {
         Ok(uuid) => uuid,
-        Err(err) => { return Json(HttpResponse::from(err)); }
+        Err(err) => {
+            return Json(err.into());
+        }
     };
 
     let role = match Role::get_by_id(uuid, &db).await {

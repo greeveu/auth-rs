@@ -39,7 +39,7 @@ pub async fn get_role_by_id(
 
     let uuid = match parse_uuid(id) {
         Ok(uuid) => uuid,
-        Err(err) => return Json(HttpResponse::from(err)),
+        Err(err) => return Json(err.into()),
     };
 
     match Role::get_by_id(uuid, &db).await {

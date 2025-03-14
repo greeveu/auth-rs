@@ -4,18 +4,15 @@ use rocket::{
 };
 use rocket_db_pools::Connection;
 
+use crate::models::user::UserDTO;
 use crate::{
     auth::{auth::AuthEntity, mfa::MfaHandler},
     db::AuthRsDatabase,
     errors::{ApiError, ApiResult},
-    models::{
-        http_response::HttpResponse,
-        user::User,
-    },
+    models::{http_response::HttpResponse, user::User},
     routes::auth::login::LoginResponse,
     utils::parse_uuid,
 };
-use crate::models::user::UserDTO;
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -85,7 +82,7 @@ pub async fn enable_totp_mfa(
 
     match process_enable_totp_mfa(&db, req_entity, id, mfa_data).await {
         Ok((message, response)) => Json(HttpResponse::success(&message, response)),
-        Err(err) => Json(HttpResponse::from(err)),
+        Err(err) => Json(err.into()),
     }
 }
 
@@ -164,6 +161,6 @@ pub async fn disable_totp_mfa(
 
     match process_disable_totp_mfa(&db, req_entity, id, mfa_data).await {
         Ok(user) => Json(HttpResponse::success("TOTP MFA disabled.", user.to_dto())),
-        Err(err) => Json(HttpResponse::from(err)),
+        Err(err) => Json(err.into()),
     }
 }

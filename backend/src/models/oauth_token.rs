@@ -4,6 +4,7 @@ use crate::errors::{AppError, AppResult};
 use anyhow::Result;
 use mongodb::bson::{doc, DateTime, Uuid};
 use rand::Rng;
+use rocket::form::validate::Contains;
 use rocket::{
     futures::StreamExt,
     serde::{Deserialize, Serialize},
@@ -13,23 +14,22 @@ use rocket_db_pools::{
     Connection,
 };
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use rocket::form::validate::Contains;
 use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum OAuthTokenError {
     #[error("Token not found")]
     NotFound,
-    
+
     #[error("Token expired")]
     Expired,
-    
+
     #[error("Database error: {0}")]
     DatabaseError(String),
-    
+
     #[error("Internal server error: {0}")]
     InternalError(String),
-    
+
     #[error("Unauthorized: {0}")]
     Unauthorized(String),
 }
@@ -51,7 +51,9 @@ impl<T> From<OAuthTokenError> for HttpResponse<T> {
         match error {
             OAuthTokenError::NotFound => HttpResponse::not_found("Token not found"),
             OAuthTokenError::Expired => HttpResponse::unauthorized("Token expired"),
-            OAuthTokenError::DatabaseError(msg) => HttpResponse::internal_error(&format!("Database error: {}", msg)),
+            OAuthTokenError::DatabaseError(msg) => {
+                HttpResponse::internal_error(&format!("Database error: {}", msg))
+            }
             OAuthTokenError::InternalError(msg) => HttpResponse::internal_error(&msg),
             OAuthTokenError::Unauthorized(msg) => HttpResponse::unauthorized(&msg),
         }
@@ -131,7 +133,10 @@ impl OAuthToken {
 
         match db.insert_one(self.clone(), None).await {
             Ok(_) => Ok(self.clone()),
-            Err(err) => Err(OAuthTokenError::DatabaseError(format!("Error inserting oauth token: {:?}", err))),
+            Err(err) => Err(OAuthTokenError::DatabaseError(format!(
+                "Error inserting oauth token: {:?}",
+                err
+            ))),
         }
     }
 
@@ -159,7 +164,10 @@ impl OAuthToken {
                 }
             }
             Ok(None) => Err(OAuthTokenError::NotFound),
-            Err(err) => Err(OAuthTokenError::DatabaseError(format!("Error finding token: {:?}", err))),
+            Err(err) => Err(OAuthTokenError::DatabaseError(format!(
+                "Error finding token: {:?}",
+                err
+            ))),
         }
     }
 
@@ -184,7 +192,10 @@ impl OAuthToken {
                     .await;
                 Ok(tokens)
             }
-            Err(err) => Err(OAuthTokenError::DatabaseError(format!("Error fetching tokens: {:?}", err))),
+            Err(err) => Err(OAuthTokenError::DatabaseError(format!(
+                "Error fetching tokens: {:?}",
+                err
+            ))),
         }
     }
 
@@ -209,7 +220,10 @@ impl OAuthToken {
                     .await;
                 Ok(tokens)
             }
-            Err(err) => Err(OAuthTokenError::DatabaseError(format!("Error fetching tokens: {:?}", err))),
+            Err(err) => Err(OAuthTokenError::DatabaseError(format!(
+                "Error fetching tokens: {:?}",
+                err
+            ))),
         }
     }
 
@@ -236,7 +250,10 @@ impl OAuthToken {
                     .await;
                 Ok(tokens)
             }
-            Err(err) => Err(OAuthTokenError::DatabaseError(format!("Error fetching tokens: {:?}", err))),
+            Err(err) => Err(OAuthTokenError::DatabaseError(format!(
+                "Error fetching tokens: {:?}",
+                err
+            ))),
         }
     }
 
@@ -257,7 +274,10 @@ impl OAuthToken {
 
         match db.replace_one(filter, self.clone(), None).await {
             Ok(_) => Ok(self.clone()),
-            Err(err) => Err(OAuthTokenError::DatabaseError(format!("Error reauthenticating token: {:?}", err))),
+            Err(err) => Err(OAuthTokenError::DatabaseError(format!(
+                "Error reauthenticating token: {:?}",
+                err
+            ))),
         }
     }
 
@@ -273,7 +293,10 @@ impl OAuthToken {
         };
         match db.delete_one(filter, None).await {
             Ok(_) => Ok(self.clone()),
-            Err(err) => Err(OAuthTokenError::DatabaseError(format!("Error deleting oauth token: {:?}", err))),
+            Err(err) => Err(OAuthTokenError::DatabaseError(format!(
+                "Error deleting oauth token: {:?}",
+                err
+            ))),
         }
     }
 

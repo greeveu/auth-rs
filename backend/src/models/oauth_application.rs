@@ -62,7 +62,9 @@ impl From<AppError> for OAuthApplicationError {
         match error {
             AppError::DatabaseError(msg) => OAuthApplicationError::DatabaseError(msg),
             AppError::MongoError(err) => OAuthApplicationError::DatabaseError(err.to_string()),
-            AppError::RocketMongoError(err) => OAuthApplicationError::DatabaseError(err.to_string()),
+            AppError::RocketMongoError(err) => {
+                OAuthApplicationError::DatabaseError(err.to_string())
+            }
             AppError::InternalServerError(msg) => OAuthApplicationError::InternalServerError(msg),
             _ => OAuthApplicationError::InternalServerError("Unexpected error".to_string()),
         }
@@ -183,20 +185,21 @@ impl OAuthApplication {
         match db.find(filter, None).await {
             Ok(cursor) => {
                 let oauth_applications = cursor
-                    .map(|doc| {
-                        match doc {
-                            Ok(app) => {
-                                let oauth_application: OAuthApplication = app;
-                                oauth_application
-                            },
-                            Err(err) => panic!("Error parsing document: {:?}", err),
+                    .map(|doc| match doc {
+                        Ok(app) => {
+                            let oauth_application: OAuthApplication = app;
+                            oauth_application
                         }
+                        Err(err) => panic!("Error parsing document: {:?}", err),
                     })
                     .collect::<Vec<OAuthApplication>>()
                     .await;
                 Ok(oauth_applications)
             }
-            Err(err) => Err(OAuthApplicationError::DatabaseError(format!("Error fetching OAuth Applications: {:?}", err))),
+            Err(err) => Err(OAuthApplicationError::DatabaseError(format!(
+                "Error fetching OAuth Applications: {:?}",
+                err
+            ))),
         }
     }
 
@@ -209,7 +212,10 @@ impl OAuthApplication {
 
         match db.insert_one(self.clone(), None).await {
             Ok(_) => Ok(self.clone()),
-            Err(err) => Err(OAuthApplicationError::DatabaseError(format!("Error inserting OAuth Application: {:?}", err))),
+            Err(err) => Err(OAuthApplicationError::DatabaseError(format!(
+                "Error inserting OAuth Application: {:?}",
+                err
+            ))),
         }
     }
 
@@ -225,7 +231,10 @@ impl OAuthApplication {
         };
         match db.replace_one(filter, self.clone(), None).await {
             Ok(_) => Ok(self.clone()),
-            Err(err) => Err(OAuthApplicationError::DatabaseError(format!("Error updating OAuth Application: {:?}", err))),
+            Err(err) => Err(OAuthApplicationError::DatabaseError(format!(
+                "Error updating OAuth Application: {:?}",
+                err
+            ))),
         }
     }
 
@@ -241,7 +250,10 @@ impl OAuthApplication {
         };
         match db.delete_one(filter, None).await {
             Ok(_) => Ok(self.clone()),
-            Err(err) => Err(OAuthApplicationError::DatabaseError(format!("Error deleting OAuth Application: {:?}", err))),
+            Err(err) => Err(OAuthApplicationError::DatabaseError(format!(
+                "Error deleting OAuth Application: {:?}",
+                err
+            ))),
         }
     }
 

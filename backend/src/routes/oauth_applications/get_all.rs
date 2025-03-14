@@ -44,5 +44,8 @@ pub async fn get_all_oauth_applications(
         Err(err) => return Json(err.into()),
     };
 
-    Json(HttpResponse::success("Successfully retrieved your oauth applications", applications.into_iter().map(|app| app.to_dto()).collect()))
+    Json(HttpResponse::success(
+        "Successfully retrieved your oauth applications",
+        applications.into_iter().map(|app| app.to_dto()).collect(),
+    ))
 }

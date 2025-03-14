@@ -42,7 +42,9 @@ pub async fn update_oauth_application(
 
     let uuid = match parse_uuid(id) {
         Ok(uuid) => uuid,
-        Err(err) => { return Json(HttpResponse::from(err)); }
+        Err(err) => {
+            return Json(err.into());
+        }
     };
 
     let old_oauth_application = match OAuthApplication::get_by_id(uuid, &db).await {
@@ -100,7 +102,10 @@ pub async fn update_oauth_application(
     }
 
     if new_values.is_empty() {
-        return Json(HttpResponse::success("No updates applied.", new_oauth_application.to_dto()));
+        return Json(HttpResponse::success(
+            "No updates applied.",
+            new_oauth_application.to_dto(),
+        ));
     }
 
     match new_oauth_application.update(&db).await {

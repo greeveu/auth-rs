@@ -136,10 +136,7 @@ impl Role {
     }
 
     #[allow(unused)]
-    pub async fn get_by_id(
-        id: Uuid,
-        connection: &Connection<AuthRsDatabase>,
-    ) -> RoleResult<Role> {
+    pub async fn get_by_id(id: Uuid, connection: &Connection<AuthRsDatabase>) -> RoleResult<Role> {
         let db = Self::get_collection(connection);
 
         let filter = doc! {
@@ -179,38 +176,36 @@ impl Role {
         match db.find(filter, None).await {
             Ok(cursor) => {
                 let roles = cursor
-                    .map(|doc| {
-                        match doc {
-                            Ok(role) => role,
-                            Err(err) => panic!("Error parsing role document: {:?}", err),
-                        }
+                    .map(|doc| match doc {
+                        Ok(role) => role,
+                        Err(err) => panic!("Error parsing role document: {:?}", err),
                     })
                     .collect::<Vec<Role>>()
                     .await;
                 Ok(roles)
             }
-            Err(err) => Err(RoleError::DatabaseError(format!("Error fetching roles: {:?}", err))),
+            Err(err) => Err(RoleError::DatabaseError(format!(
+                "Error fetching roles: {:?}",
+                err
+            ))),
         }
     }
 
     #[allow(unused)]
-    pub async fn insert(
-        &self,
-        connection: &Connection<AuthRsDatabase>,
-    ) -> RoleResult<Role> {
+    pub async fn insert(&self, connection: &Connection<AuthRsDatabase>) -> RoleResult<Role> {
         let db = Self::get_collection(connection);
 
         match db.insert_one(self.clone(), None).await {
             Ok(_) => Ok(self.clone()),
-            Err(err) => Err(RoleError::DatabaseError(format!("Error inserting role: {:?}", err))),
+            Err(err) => Err(RoleError::DatabaseError(format!(
+                "Error inserting role: {:?}",
+                err
+            ))),
         }
     }
 
     #[allow(unused)]
-    pub async fn update(
-        &self,
-        connection: &Connection<AuthRsDatabase>,
-    ) -> RoleResult<Role> {
+    pub async fn update(&self, connection: &Connection<AuthRsDatabase>) -> RoleResult<Role> {
         let db = Self::get_collection(connection);
 
         // Check if this is a system role
@@ -223,15 +218,15 @@ impl Role {
         };
         match db.replace_one(filter, self.clone(), None).await {
             Ok(_) => Ok(self.clone()),
-            Err(err) => Err(RoleError::DatabaseError(format!("Error updating role: {:?}", err))),
+            Err(err) => Err(RoleError::DatabaseError(format!(
+                "Error updating role: {:?}",
+                err
+            ))),
         }
     }
 
     #[allow(unused)]
-    pub async fn delete(
-        &self,
-        connection: &Connection<AuthRsDatabase>,
-    ) -> RoleResult<Role> {
+    pub async fn delete(&self, connection: &Connection<AuthRsDatabase>) -> RoleResult<Role> {
         let db = Self::get_collection(connection);
 
         // Check if this is a system role
@@ -244,7 +239,10 @@ impl Role {
         };
         match db.delete_one(filter, None).await {
             Ok(_) => Ok(self.clone()),
-            Err(err) => Err(RoleError::DatabaseError(format!("Error deleting role: {:?}", err))),
+            Err(err) => Err(RoleError::DatabaseError(format!(
+                "Error deleting role: {:?}",
+                err
+            ))),
         }
     }
 
