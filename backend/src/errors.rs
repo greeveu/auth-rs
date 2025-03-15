@@ -302,3 +302,30 @@ impl From<RoleError> for AppError {
         }
     }
 }
+
+// Add From<ApiError> implementations for domain-specific errors
+impl From<ApiError> for RoleError {
+    fn from(error: ApiError) -> Self {
+        match error {
+            ApiError::NotFound(_) => RoleError::NotFound(Uuid::new()),
+            ApiError::BadRequest(msg) => RoleError::DatabaseError(msg),
+            ApiError::Forbidden(_) => RoleError::SystemRoleModification,
+            ApiError::Unauthorized(_) => RoleError::SystemRoleModification,
+            ApiError::InternalError(msg) => RoleError::InternalServerError(msg),
+            ApiError::AppError(err) => err.into(),
+        }
+    }
+}
+
+impl From<ApiError> for OAuthApplicationError {
+    fn from(error: ApiError) -> Self {
+        match error {
+            ApiError::NotFound(_) => OAuthApplicationError::NotFound(Uuid::new()),
+            ApiError::BadRequest(msg) => OAuthApplicationError::InvalidData(msg),
+            ApiError::Forbidden(msg) => OAuthApplicationError::InvalidData(msg),
+            ApiError::Unauthorized(msg) => OAuthApplicationError::InvalidData(msg),
+            ApiError::InternalError(msg) => OAuthApplicationError::InternalServerError(msg),
+            ApiError::AppError(err) => err.into(),
+        }
+    }
+}

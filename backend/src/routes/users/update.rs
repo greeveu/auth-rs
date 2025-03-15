@@ -11,7 +11,6 @@ use crate::models::user::UserDTO;
 use crate::{
     auth::auth::AuthEntity,
     db::AuthRsDatabase,
-    errors::AppError,
     models::{
         audit_log::{AuditLog, AuditLogAction, AuditLogEntityType},
         http_response::HttpResponse,
@@ -50,166 +49,203 @@ pub async fn update_user(
     }
 }
 
+struct UserUpdate {
+    user: User,
+    old_values: HashMap<String, String>,
+    new_values: HashMap<String, String>,
+    modified: bool,
+}
+
+impl UserUpdate {
+    fn new(user: User) -> Self {
+        Self {
+            user,
+            old_values: HashMap::new(),
+            new_values: HashMap::new(),
+            modified: false,
+        }
+    }
+
+    fn update_field<T: ToString>(&mut self, field: &str, old_value: T, new_value: T) {
+        self.old_values.insert(field.to_string(), old_value.to_string());
+        self.new_values.insert(field.to_string(), new_value.to_string());
+        self.modified = true;
+    }
+
+    fn update_email(&mut self, new_email: String) {
+        if self.user.email != new_email {
+            let old_email = self.user.email.clone();
+            self.update_field("email", old_email, new_email.clone());
+            self.user.email = new_email;
+        }
+    }
+
+    fn update_password(&mut self, password: String) -> UserResult<()> {
+        let password_hash = bcrypt::hash(password)
+            .map_err(|e| UserError::PasswordHashingError(e.to_string()))?;
+        self.update_field("password", "HIDDEN", "HIDDEN");
+        self.user.password_hash = password_hash;
+        Ok(())
+    }
+
+    fn update_name(&mut self, first_name: Option<String>, last_name: Option<String>) {
+        if let Some(first_name) = first_name {
+            if self.user.first_name != first_name {
+                let old_first_name = self.user.first_name.clone();
+                self.update_field("firstName", old_first_name, first_name.clone());
+                self.user.first_name = first_name;
+            }
+        }
+
+        if let Some(last_name) = last_name {
+            if self.user.last_name != last_name {
+                let old_last_name = self.user.last_name.clone();
+                self.update_field("lastName", old_last_name, last_name.clone());
+                self.user.last_name = last_name;
+            }
+        }
+    }
+
+    async fn update_roles(
+        &mut self,
+        new_roles: Vec<Uuid>,
+        db: &Connection<AuthRsDatabase>,
+        req_user: &User,
+    ) -> UserResult<()> {
+        if self.user.roles == new_roles {
+            return Ok(());
+        }
+
+        // System user check
+        if self.user.id == *SYSTEM_USER_ID {
+            return Err(UserError::SystemUserModification);
+        }
+
+        // Admin permission check
+        if !req_user.is_admin() {
+            return Err(UserError::MissingPermissions);
+        }
+
+        // Validate roles exist
+        let available_roles = Role::get_all(db, None)
+            .await
+            .map_err(|e| UserError::InternalServerError(e.message()))?;
+
+        for role_id in &new_roles {
+            if !available_roles.iter().any(|r| r.id == *role_id) {
+                return Err(UserError::RoleNotFound(*role_id));
+            }
+        }
+
+        let mut final_roles = new_roles;
+        if !final_roles.contains(&DEFAULT_ROLE_ID) {
+            final_roles.push(*DEFAULT_ROLE_ID);
+        }
+
+        // Admin role assignment check
+        if final_roles.contains(&ADMIN_ROLE_ID) && !req_user.is_system_admin() {
+            return Err(UserError::AdminRoleAssignment);
+        }
+
+        let old_roles = self.user.roles.iter().map(ToString::to_string).collect::<Vec<_>>().join(",");
+        let new_roles = final_roles.iter().map(ToString::to_string).collect::<Vec<_>>().join(",");
+        self.update_field("roles", old_roles, new_roles);
+        self.user.roles = final_roles;
+        Ok(())
+    }
+
+    fn update_disabled(&mut self, disabled: bool, req_user: &User) -> UserResult<()> {
+        if self.user.disabled == disabled {
+            return Ok(());
+        }
+
+        if !req_user.is_admin() {
+            return Err(UserError::MissingPermissions);
+        }
+
+        if self.user.id == *SYSTEM_USER_ID {
+            return Err(UserError::SystemUserModification);
+        }
+
+        let old_disabled = self.user.disabled;
+        self.update_field("disabled", old_disabled, disabled);
+        self.user.disabled = disabled;
+        Ok(())
+    }
+
+    async fn save(self, db: &Connection<AuthRsDatabase>, req_user_id: Uuid) -> UserResult<User> {
+        if !self.modified {
+            return Ok(self.user);
+        }
+
+        let updated_user = self.user
+            .update(db)
+            .await
+            .map_err(|e| UserError::DatabaseError(format!("Failed to update user: {}", e)))?;
+
+        // Create audit log
+        if let Err(err) = AuditLog::new(
+            updated_user.id,
+            AuditLogEntityType::User,
+            AuditLogAction::Update,
+            "User updated.".to_string(),
+            req_user_id,
+            Some(self.old_values),
+            Some(self.new_values),
+        )
+        .insert(db)
+        .await
+        {
+            error!("Failed to create audit log: {}", err);
+        }
+
+        Ok(updated_user)
+    }
+}
+
 async fn update_user_internal(
     db: Connection<AuthRsDatabase>,
     req_entity: AuthEntity,
     id: &str,
     data: UpdateUserData,
 ) -> UserResult<User> {
-    // Check if the request is from a user (not a token)
+    // Basic permission checks
     if !req_entity.is_user() {
         return Err(UserError::MissingPermissions);
     }
 
-    // Parse UUID
     let uuid = Uuid::parse_str(id).map_err(|e| UserError::InvalidUuid(e.to_string()))?;
+    let req_user = req_entity.user().map_err(|_| UserError::MissingPermissions)?;
 
-    // Check permissions
-    let req_user = req_entity
-        .user()
-        .map_err(|_| UserError::MissingPermissions)?;
     if req_entity.user_id != uuid && !req_user.is_admin() {
         return Err(UserError::MissingPermissions);
     }
 
-    // Get the user to update
-    let old_user = User::get_by_id(uuid, &db)
+    // Get user and prepare update
+    let user = User::get_by_id(uuid, &db)
         .await
         .map_err(|_| UserError::NotFound(uuid))?;
-    let mut new_user = old_user.clone();
+    let mut update = UserUpdate::new(user);
 
-    let mut old_values: HashMap<String, String> = HashMap::new();
-    let mut new_values: HashMap<String, String> = HashMap::new();
-
-    // Update email if provided and different
+    // Apply updates
     if let Some(email) = data.email {
-        if old_user.email != email {
-            new_user.email = email;
-            old_values.insert("email".to_string(), old_user.email.clone());
-            new_values.insert("email".to_string(), new_user.email.clone());
-        }
+        update.update_email(email);
     }
 
-    // Update password if provided
     if let Some(password) = data.password {
-        let password_hash =
-            bcrypt::hash(password).map_err(|e| UserError::PasswordHashingError(e.to_string()))?;
-
-        new_user.password_hash = password_hash;
-        old_values.insert("password".to_string(), "HIDDEN".to_string());
-        new_values.insert("password".to_string(), "HIDDEN".to_string());
+        update.update_password(password)?;
     }
 
-    // Update first name if provided and different
-    if let Some(first_name) = data.first_name {
-        if old_user.first_name != first_name {
-            new_user.first_name = first_name;
-            old_values.insert("firstName".to_string(), old_user.first_name.clone());
-            new_values.insert("firstName".to_string(), new_user.first_name.clone());
-        }
+    update.update_name(data.first_name, data.last_name);
+
+    if let Some(roles) = data.roles {
+        update.update_roles(roles, &db, &req_user).await?;
     }
 
-    // Update last name if provided and different
-    if let Some(last_name) = data.last_name {
-        if old_user.last_name != last_name {
-            new_user.last_name = last_name;
-            old_values.insert("lastName".to_string(), old_user.last_name.clone());
-            new_values.insert("lastName".to_string(), new_user.last_name.clone());
-        }
-    }
-
-    // Update roles if provided, different, and user is admin
-    if let Some(mut new_roles) = data.roles {
-        if old_user.roles != new_roles && req_user.is_admin() {
-            // Ensure the target user is not the system user
-            if new_user.id == *SYSTEM_USER_ID {
-                return Err(UserError::SystemUserModification);
-            }
-
-            // Get available roles
-            let available_roles = Role::get_all(&db, None)
-                .await
-                .map_err(|e| UserError::InternalServerError(e.message()))?;
-
-            // Validate each role exists
-            for role_id in &new_roles {
-                if !available_roles.iter().any(|r| r.id == *role_id) {
-                    return Err(UserError::RoleNotFound(*role_id));
-                }
-            }
-
-            // Ensure DEFAULT_ROLE_ID is always included
-            if !new_roles.contains(&DEFAULT_ROLE_ID) {
-                new_roles.push(*DEFAULT_ROLE_ID);
-            }
-
-            // Only system admin can assign admin role
-            if new_roles.contains(&ADMIN_ROLE_ID) && !req_user.is_system_admin() {
-                return Err(UserError::AdminRoleAssignment);
-            }
-
-            new_user.roles = new_roles;
-            old_values.insert(
-                "roles".to_string(),
-                old_user
-                    .roles
-                    .iter()
-                    .map(ToString::to_string)
-                    .collect::<Vec<_>>()
-                    .join(","),
-            );
-            new_values.insert(
-                "roles".to_string(),
-                new_user
-                    .roles
-                    .iter()
-                    .map(ToString::to_string)
-                    .collect::<Vec<_>>()
-                    .join(","),
-            );
-        }
-    }
-
-    // Update disabled status if provided, different, and user is admin
     if let Some(disabled) = data.disabled {
-        if old_user.disabled != disabled && req_user.is_admin() {
-            // Prevent disabling system user
-            if new_user.id == *SYSTEM_USER_ID {
-                return Err(UserError::SystemUserModification);
-            }
-
-            new_user.disabled = disabled;
-            old_values.insert("disabled".to_string(), old_user.disabled.to_string());
-            new_values.insert("disabled".to_string(), new_user.disabled.to_string());
-        }
+        update.update_disabled(disabled, &req_user)?;
     }
 
-    // If no changes were made, return early
-    if new_values.is_empty() {
-        return Ok(new_user);
-    }
-
-    // Update the user
-    let updated_user = new_user
-        .update(&db)
-        .await
-        .map_err(|e| UserError::DatabaseError(format!("Failed to update user: {}", e)))?;
-
-    // Log the audit
-    if let Err(err) = AuditLog::new(
-        updated_user.id,
-        AuditLogEntityType::User,
-        AuditLogAction::Update,
-        "User updated.".to_string(),
-        req_entity.user_id,
-        Some(old_values),
-        Some(new_values),
-    )
-    .insert(&db)
-    .await
-    {
-        error!("Failed to create audit log: {}", err);
-    }
-
-    Ok(updated_user)
+    // Save changes
+    update.save(&db, req_entity.user_id).await
 }

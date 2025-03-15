@@ -98,7 +98,7 @@ impl User {
             password_hash,
             totp_secret: None,
             token: Self::generate_token(),
-            roles: Vec::from([(*DEFAULT_ROLE_ID)]),
+            roles: Vec::from([*DEFAULT_ROLE_ID]),
             disabled: false,
             created_at: DateTime::now(),
         })
@@ -168,6 +168,7 @@ impl User {
         };
         match db.find_one(filter, None).await {
             Ok(Some(user)) => Ok(user),
+            //TODO: Not sure if we should return a placeholder UUID here
             Ok(None) => Err(UserError::NotFound(Uuid::new())), // Using a placeholder UUID
             Err(err) => Err(UserError::DatabaseError(err.to_string())),
         }

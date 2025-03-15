@@ -9,10 +9,12 @@ use crate::utils::parse_uuid;
 use crate::{
     auth::auth::AuthEntity,
     db::AuthRsDatabase,
+    errors::{ApiError},
     models::{
         audit_log::{AuditLog, AuditLogAction, AuditLogEntityType},
         http_response::HttpResponse,
         role::Role,
+        role::RoleResult,
     },
 };
 
@@ -30,68 +32,105 @@ pub async fn update_role(
     id: &str,
     data: Json<UpdateRoleData>,
 ) -> Json<HttpResponse<Role>> {
-    let data = data.into_inner();
+    let result = update_role_internal(db, req_entity, id, data.into_inner()).await;
 
-    if !req_entity.is_user() {
-        return Json(HttpResponse::forbidden("Forbidden"));
-    }
-
-    if !req_entity.user.unwrap().is_admin() {
-        return Json(HttpResponse::forbidden("Missing permissions!"));
-    }
-
-    let uuid = match parse_uuid(id) {
-        Ok(uuid) => uuid,
-        Err(err) => {
-            return Json(err.into());
-        }
-    };
-
-    let old_role = match Role::get_by_id(uuid, &db).await {
-        Ok(role) => role,
-        Err(err) => return Json(err.into()),
-    };
-
-    // Prevent modification of system roles
-    if old_role.system {
-        return Json(HttpResponse::forbidden("Cannot modify system role"));
-    }
-
-    let mut new_role = old_role.clone();
-
-    let mut old_values: HashMap<String, String> = HashMap::new();
-    let mut new_values: HashMap<String, String> = HashMap::new();
-
-    if data.name.is_some() && old_role.name != data.name.clone().unwrap() {
-        new_role.name = data.name.unwrap();
-        old_values.insert("name".to_string(), old_role.name.clone());
-        new_values.insert("name".to_string(), new_role.name.clone());
-    }
-
-    if new_values.is_empty() {
-        return Json(HttpResponse::success("No updates applied.", new_role));
-    }
-
-    match new_role.update(&db).await {
-        Ok(role) => {
-            match AuditLog::new(
-                role.id,
-                AuditLogEntityType::Role,
-                AuditLogAction::Update,
-                "Role updated.".to_string(),
-                req_entity.user_id,
-                Some(old_values),
-                Some(new_values),
-            )
-            .insert(&db)
-            .await
-            {
-                Ok(_) => (),
-                Err(err) => error!("{}", err),
-            }
-
-            Json(HttpResponse::success("Role updated", role))
-        }
+    match result {
+        Ok(role) => Json(HttpResponse::success("Role updated", role)),
         Err(err) => Json(err.into()),
     }
+}
+
+struct RoleUpdate {
+    role: Role,
+    old_values: HashMap<String, String>,
+    new_values: HashMap<String, String>,
+    modified: bool,
+}
+
+impl RoleUpdate {
+    fn new(role: Role) -> Self {
+        Self {
+            role,
+            old_values: HashMap::new(),
+            new_values: HashMap::new(),
+            modified: false,
+        }
+    }
+
+    fn update_field<T: ToString>(&mut self, field: &str, old_value: T, new_value: T) {
+        self.old_values.insert(field.to_string(), old_value.to_string());
+        self.new_values.insert(field.to_string(), new_value.to_string());
+        self.modified = true;
+    }
+
+    fn update_name(&mut self, new_name: String) {
+        if self.role.name != new_name {
+            let old_name = self.role.name.clone();
+            self.update_field("name", old_name, new_name.clone());
+            self.role.name = new_name;
+        }
+    }
+
+    async fn save(self, db: &Connection<AuthRsDatabase>, req_user_id: mongodb::bson::Uuid) -> RoleResult<Role> {
+        if !self.modified {
+            return Ok(self.role);
+        }
+
+        let updated_role = self.role.update(db).await?;
+
+        // Create audit log
+        if let Err(err) = AuditLog::new(
+            updated_role.id,
+            AuditLogEntityType::Role,
+            AuditLogAction::Update,
+            "Role updated.".to_string(),
+            req_user_id,
+            Some(self.old_values),
+            Some(self.new_values),
+        )
+        .insert(db)
+        .await
+        {
+            error!("Failed to create audit log: {}", err);
+        }
+
+        Ok(updated_role)
+    }
+}
+
+async fn update_role_internal(
+    db: Connection<AuthRsDatabase>,
+    req_entity: AuthEntity,
+    id: &str,
+    data: UpdateRoleData,
+) -> RoleResult<Role> {
+    // Basic permission checks
+    if !req_entity.is_user() {
+        return Err(ApiError::Forbidden("Forbidden".to_string()).into());
+    }
+
+    let req_user = req_entity.user().map_err(|_| ApiError::Forbidden("Forbidden".to_string()))?;
+    if !req_user.is_admin() {
+        return Err(ApiError::Forbidden("Missing permissions!".to_string()).into());
+    }
+
+    let uuid = parse_uuid(id).map_err(|e| ApiError::BadRequest(e.to_string()))?;
+    
+    // Get role and prepare update
+    let role = Role::get_by_id(uuid, &db).await?;
+
+    // Prevent modification of system roles
+    if role.system {
+        return Err(ApiError::Forbidden("Cannot modify system role".to_string()).into());
+    }
+
+    let mut update = RoleUpdate::new(role);
+
+    // Apply updates
+    if let Some(name) = data.name {
+        update.update_name(name);
+    }
+
+    // Save changes
+    update.save(&db, req_entity.user_id).await
 }
