@@ -67,6 +67,9 @@ impl MfaHandler {
         mfa_sessions.insert(flow.flow_id, flow.clone());
         drop(mfa_sessions);
 
+        //TODO: Store this state in the db with a timestamp, and check for expiration
+        //  We can not and should not rely on the application not crashing or restarting
+        //  This application should be completely stateless
         // invalidate flow after 5 minutes
         spawn(async move {
             sleep(Duration::from_secs(300)).await;
@@ -110,7 +113,10 @@ impl MfaHandler {
         let mut mfa_sessions = MFA_SESSIONS.lock().await;
         mfa_sessions.insert(flow.flow_id, flow.clone());
         drop(mfa_sessions);
-
+        
+        //TODO: Store this state in the db with a timestamp, and check for expiration
+        //  We can not and should not rely on the application not crashing or restarting
+        //  This application should be completely stateless
         // invalidate flow after 5 minutes
         spawn(async move {
             sleep(Duration::from_secs(300)).await;

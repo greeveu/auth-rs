@@ -81,6 +81,9 @@ pub async fn authorize_oauth_application(
     );
     drop(codes);
 
+    //TODO: Store this state in the db with a timestamp, and check for expiration
+    //  We can not and should not rely on the application not crashing or restarting
+    //  This application should be completely stateless
     // delete code after 5 minutes
     tokio::spawn(async move {
         tokio::time::sleep(tokio::time::Duration::from_secs(300)).await;

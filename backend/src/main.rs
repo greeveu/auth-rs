@@ -25,6 +25,7 @@ use routes::oauth::token::TokenOAuthData;
 
 // oauth codes stored in memory
 lazy_static::lazy_static! {
+    //TODO: Replace with Redis or other cache, so this application can be stateless
     static ref OAUTH_CODES: Mutex<HashMap<u32, TokenOAuthData>> = Mutex::new(HashMap::new());
     static ref MFA_SESSIONS: Mutex<HashMap<Uuid, MfaHandler>> = Mutex::new(HashMap::new());
 
@@ -84,7 +85,7 @@ async fn initialize_database(db: &AuthRsDatabase) -> AppResult<()> {
             "".to_string(),
             Vec::from([(*ADMIN_ROLE_ID).to_string(), (*DEFAULT_ROLE_ID).to_string()]),
         )
-        .map_err(|e| AppError::from(e))?;
+        .map_err(AppError::from)?;
 
         users_collection
             .insert_one(system_user, None)
