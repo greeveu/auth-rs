@@ -1,6 +1,6 @@
 use super::{http_response::HttpResponse, oauth_scope::OAuthScope};
 use crate::db::{get_main_db, AuthRsDatabase};
-use crate::errors::{AppError, AppResult};
+use crate::errors::AppError;
 use anyhow::Result;
 use mongodb::bson::{doc, DateTime, Uuid};
 use rand::Rng;
@@ -78,10 +78,10 @@ impl OAuthToken {
     pub const COLLECTION_NAME: &'static str = "oauth-tokens";
 
     fn generate_token() -> String {
-        let mut rng = rand::thread_rng();
+        let mut rng = rand::rng();
         let token: String = (0..128)
             .map(|_| {
-                let idx = rng.gen_range(0..62);
+                let idx = rng.random_range(0..62);
                 match idx {
                     0..=9 => (b'0' + idx as u8) as char,
                     10..=35 => (b'a' + (idx - 10) as u8) as char,

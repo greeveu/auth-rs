@@ -1,5 +1,3 @@
-use mongodb::bson::Uuid;
-use rocket::yansi::Paint;
 use rocket::{delete, error, serde::json::Json};
 use rocket_db_pools::Connection;
 

@@ -11,7 +11,7 @@ use auth::mfa::MfaHandler;
 use db::AuthRsDatabase;
 use dotenv::dotenv;
 use errors::{AppError, AppResult};
-use models::{role::Role, user::User, user_error::UserError};
+use models::{role::Role, user::User};
 use mongodb::bson::Uuid;
 use rocket::{
     fairing::AdHoc,

@@ -10,7 +10,7 @@ use crate::utils::parse_uuid;
 use crate::{
     auth::auth::AuthEntity,
     db::AuthRsDatabase,
-    errors::{ApiError, AppError},
+    errors::ApiError,
     models::{
         audit_log::{AuditLog, AuditLogAction, AuditLogEntityType},
         http_response::HttpResponse,

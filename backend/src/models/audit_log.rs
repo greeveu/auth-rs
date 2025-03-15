@@ -7,6 +7,7 @@ use rocket::{
 };
 use rocket_db_pools::{mongodb::Collection, Connection};
 use std::collections::HashMap;
+use std::fmt;
 use thiserror::Error;
 
 use super::http_response::HttpResponse;
@@ -85,13 +86,15 @@ impl AuditLogEntityType {
             ))),
         }
     }
+}
 
-    pub fn to_string(&self) -> String {
+impl fmt::Display for AuditLogEntityType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            &AuditLogEntityType::User => "USER".to_string(),
-            &AuditLogEntityType::Role => "ROLE".to_string(),
-            &AuditLogEntityType::OAuthApplication => "OAUTH_APPLICATION".to_string(),
-            _ => "UNKNOWN".to_string(),
+            AuditLogEntityType::User => write!(f, "USER"),
+            AuditLogEntityType::Role => write!(f, "ROLE"),
+            AuditLogEntityType::OAuthApplication => write!(f, "OAUTH_APPLICATION"),
+            AuditLogEntityType::Unknown => write!(f, "UNKNOWN"),
         }
     }
 }
