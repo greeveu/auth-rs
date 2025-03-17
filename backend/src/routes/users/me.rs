@@ -1,7 +1,9 @@
+use rocket::http::Status;
 use rocket::{get, serde::json::Json};
 use rocket_db_pools::Connection;
 
 use crate::models::user::UserDTO;
+use crate::utils::response::json_response;
 use crate::{
     auth::auth::AuthEntity,
     db::AuthRsDatabase,
@@ -17,7 +19,7 @@ use crate::{
 pub async fn get_current_user(
     db: Connection<AuthRsDatabase>,
     req_entity: AuthEntity,
-) -> Json<HttpResponse<UserDTO>> {
+) -> (Status, Json<HttpResponse<UserDTO>>) {
     if req_entity.is_token()
         && (!req_entity
             .token
@@ -30,12 +32,12 @@ pub async fn get_current_user(
                 .unwrap()
                 .check_scope(OAuthScope::Users(ScopeActions::All)))
     {
-        return Json(HttpResponse::forbidden("Forbidden"));
+        return json_response(HttpResponse::forbidden("Forbidden"));
     }
 
     match User::get_by_id(req_entity.user_id, &db).await {
-        Ok(user) => Json(HttpResponse::success("Found user by id", user.to_dto())),
-        Err(err) => Json(err.into()),
+        Ok(user) => json_response(HttpResponse::success("Found user by id", user.to_dto())),
+        Err(err) => json_response(err.into()),
     }
 }
 
@@ -44,7 +46,7 @@ pub async fn get_current_user(
 pub async fn get_current_user_plain(
     db: Connection<AuthRsDatabase>,
     req_entity: AuthEntity,
-) -> Option<Json<UserDTO>> {
+) -> (Status, Option<Json<UserDTO>>) {
     if req_entity.is_token()
         && (!req_entity
             .token
@@ -57,11 +59,11 @@ pub async fn get_current_user_plain(
                 .unwrap()
                 .check_scope(OAuthScope::Users(ScopeActions::All)))
     {
-        return None;
+        return (Status::Unauthorized, None);
     }
 
     match User::get_by_id(req_entity.user_id, &db).await {
-        Ok(user) => Some(Json(user.to_dto())),
-        Err(err) => None,
+        Ok(user) => (Status::Ok, Some(Json(user.to_dto()))),
+        Err(err) => (Status::NotFound, None),
     }
 }

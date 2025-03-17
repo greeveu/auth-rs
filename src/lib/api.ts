@@ -9,7 +9,7 @@ import type UserMinimal from "./models/User";
 import type UserUpdates from "./models/UserUpdates";
 
 class AuthRsApi {
-    public static baseUrl = 'https://oauth.timlohrer.de/api';//'http://localhost:8000/api';
+    public static baseUrl = 'http://localhost:8000/api';//'http://localhost:8000/api';
     private token: string | null = null;
     private currentMfaFlowId: string | null = null;
 

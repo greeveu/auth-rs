@@ -3,9 +3,9 @@ use crate::{
     ADMIN_ROLE_ID, DEFAULT_ROLE_ID, SYSTEM_USER_ID,
 };
 use anyhow::Result;
-use argon2::{password_hash, Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use argon2::password_hash::rand_core::OsRng;
 use argon2::password_hash::SaltString;
+use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use base64::{engine::general_purpose, Engine as _};
 use mongodb::bson::{doc, DateTime, Uuid};
 use rand::Rng;
@@ -68,8 +68,11 @@ impl User {
     }
 
     pub fn verify_password(&self, password: &str) -> Result<(), UserError> {
-        let hash = PasswordHash::new(&self.password_hash).map_err(|_| UserError::PasswordHashingError)?;
-        Argon2::default().verify_password(password.as_bytes(), &hash).map_err(|_| UserError::PasswordHashingError)
+        let hash =
+            PasswordHash::new(&self.password_hash).map_err(|_| UserError::PasswordHashingError)?;
+        Argon2::default()
+            .verify_password(password.as_bytes(), &hash)
+            .map_err(|_| UserError::PasswordHashingError)
     }
 
     pub fn to_dto(&self) -> UserDTO {
@@ -93,7 +96,10 @@ impl User {
     ) -> UserResult<Self> {
         let salt = SaltString::generate(&mut OsRng);
         let argon2 = Argon2::default();
-        let password_hash = argon2.hash_password(password.as_bytes(), &salt).map_err(|_| UserError::PasswordHashingError)?.to_string();
+        let password_hash = argon2
+            .hash_password(password.as_bytes(), &salt)
+            .map_err(|_| UserError::PasswordHashingError)?
+            .to_string();
 
         Ok(Self {
             id: Uuid::new(),
@@ -120,7 +126,10 @@ impl User {
     ) -> UserResult<Self> {
         let salt = SaltString::generate(&mut OsRng);
         let argon2 = Argon2::default();
-        let password_hash = argon2.hash_password(password.as_bytes(), &salt).map_err(|_| UserError::PasswordHashingError)?.to_string();
+        let password_hash = argon2
+            .hash_password(password.as_bytes(), &salt)
+            .map_err(|_| UserError::PasswordHashingError)?
+            .to_string();
 
         Ok(Self {
             id,

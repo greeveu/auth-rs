@@ -1,7 +1,9 @@
 use mongodb::bson::doc;
+use rocket::http::Status;
 use rocket::{get, serde::json::Json};
 use rocket_db_pools::Connection;
 
+use crate::utils::response::json_response;
 use crate::{
     auth::auth::AuthEntity,
     db::AuthRsDatabase,
@@ -17,7 +19,7 @@ use crate::{
 pub async fn get_all_oauth_applications(
     db: Connection<AuthRsDatabase>,
     req_entity: AuthEntity,
-) -> Json<HttpResponse<Vec<OAuthApplicationDTO>>> {
+) -> (Status, Json<HttpResponse<Vec<OAuthApplicationDTO>>>) {
     if req_entity.is_token()
         && (!req_entity
             .token
@@ -29,7 +31,7 @@ pub async fn get_all_oauth_applications(
                 .unwrap()
                 .check_scope(OAuthScope::OAuthApplications(ScopeActions::All)))
     {
-        return Json(HttpResponse::forbidden("Forbidden"));
+        return json_response(HttpResponse::forbidden("Forbidden"));
     }
 
     let filter = match req_entity.user.unwrap().is_admin() {
@@ -41,10 +43,10 @@ pub async fn get_all_oauth_applications(
 
     let applications = match OAuthApplication::get_all(&db, filter).await {
         Ok(oauth_applications) => oauth_applications,
-        Err(err) => return Json(err.into()),
+        Err(err) => return json_response(err.into()),
     };
 
-    Json(HttpResponse::success(
+    json_response(HttpResponse::success(
         "Successfully retrieved your oauth applications",
         applications.into_iter().map(|app| app.to_dto()).collect(),
     ))

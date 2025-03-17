@@ -1,4 +1,5 @@
 use mongodb::bson::Uuid;
+use rocket::http::Status;
 use rocket::{
     form::Form,
     post,
@@ -59,12 +60,12 @@ pub struct TokenOAuthResponse {
 pub async fn get_oauth_token(
     db: Connection<AuthRsDatabase>,
     data: Form<TokenOAuthFieldData>,
-) -> Option<Json<TokenOAuthResponse>> {
+) -> (Status, Option<Json<TokenOAuthResponse>>) {
     let form_data = data.into_inner();
 
     let client_id = match Uuid::parse_str(&form_data.client_id) {
         Ok(client_id) => client_id,
-        Err(_) => return None,
+        Err(_) => return (Status::BadRequest, None),
     };
 
     let data = TokenOAuthData {
@@ -80,7 +81,7 @@ pub async fn get_oauth_token(
     let mut codes = OAUTH_CODES.lock().await;
     let code_data = match codes.get(&data.code) {
         Some(code_data) => code_data,
-        None => return None,
+        None => return (Status::Unauthorized, None),
     };
 
     if code_data.client_id != data.client_id
@@ -88,7 +89,7 @@ pub async fn get_oauth_token(
         || code_data.client_secret.trim() != data.client_secret.trim()
         || code_data.redirect_uri.trim() != data.redirect_uri.trim()
     {
-        return None;
+        return (Status::Unauthorized, None);
     }
 
     let mut existing_tokens = match OAuthToken::get_by_user_and_application_id(
@@ -99,7 +100,7 @@ pub async fn get_oauth_token(
     .await
     {
         Ok(tokens) => tokens,
-        Err(err) => return None,
+        Err(err) => return (Status::BadRequest, None),
     };
 
     let token = if !existing_tokens.is_empty() {
@@ -124,7 +125,7 @@ pub async fn get_oauth_token(
         .await
         {
             Ok(token) => token,
-            Err(_) => return None,
+            Err(_) => return (Status::InternalServerError, None),
         }
     };
 
@@ -132,15 +133,18 @@ pub async fn get_oauth_token(
 
     drop(codes);
 
-    Some(Json(TokenOAuthResponse {
-        access_token: token.token.to_string(),
-        token_type: "Bearer".to_string(),
-        expires_in: token.expires_in,
-        scope: token
-            .scope
-            .iter()
-            .map(|s| s.to_string())
-            .collect::<Vec<String>>()
-            .join(","),
-    }))
+    (
+        Status::Ok,
+        Some(Json(TokenOAuthResponse {
+            access_token: token.token.to_string(),
+            token_type: "Bearer".to_string(),
+            expires_in: token.expires_in,
+            scope: token
+                .scope
+                .iter()
+                .map(|s| s.to_string())
+                .collect::<Vec<String>>()
+                .join(","),
+        })),
+    )
 }

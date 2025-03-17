@@ -1,3 +1,4 @@
+use rocket::http::Status;
 use rocket::{post, serde::json::Json};
 use rocket_db_pools::Connection;
 
@@ -16,6 +17,6 @@ use crate::{
 pub async fn register(
     db: Connection<AuthRsDatabase>,
     data: Json<CreateUserData>,
-) -> Json<HttpResponse<UserDTO>> {
+) -> (Status, Json<HttpResponse<UserDTO>>) {
     create_user(db, data).await
 }

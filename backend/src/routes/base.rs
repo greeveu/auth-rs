@@ -1,4 +1,3 @@
-
 use rocket::{get, serde::json::Json};
 
 use crate::models::http_response::HttpResponse;

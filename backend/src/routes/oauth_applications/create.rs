@@ -1,9 +1,11 @@
+use rocket::http::Status;
 use rocket::{
     error, post,
     serde::{json::Json, Deserialize},
 };
 use rocket_db_pools::Connection;
 
+use crate::utils::response::json_response;
 use crate::{
     auth::auth::AuthEntity,
     db::AuthRsDatabase,
@@ -29,11 +31,11 @@ pub async fn create_oauth_application(
     db: Connection<AuthRsDatabase>,
     req_entity: AuthEntity,
     data: Json<CreateOAuthApplicationData>,
-) -> Json<HttpResponse<OAuthApplication>> {
+) -> (Status, Json<HttpResponse<OAuthApplication>>) {
     let data = data.into_inner();
 
     if !req_entity.is_user() {
-        return Json(HttpResponse::forbidden("Forbidden"));
+        return json_response(HttpResponse::forbidden("Forbidden"));
     }
 
     let oauth_application = match OAuthApplication::new(
@@ -43,7 +45,7 @@ pub async fn create_oauth_application(
         req_entity.user_id,
     ) {
         Ok(oauth_application) => oauth_application,
-        Err(err) => return Json(err.into()),
+        Err(err) => return json_response(err.into()),
     };
 
     match oauth_application.insert(&db).await {
@@ -64,12 +66,12 @@ pub async fn create_oauth_application(
                 Err(err) => error!("{}", err),
             }
 
-            Json(HttpResponse {
+            json_response(HttpResponse {
                 status: 201,
                 message: "OAuth Application created".to_string(),
                 data: Some(oauth_application),
             })
         }
-        Err(err) => Json(err.into()),
+        Err(err) => json_response(err.into()),
     }
 }

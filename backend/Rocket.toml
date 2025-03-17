@@ -1,5 +1,5 @@
 [default.databases.auth-rs-db] 
-url = "${MONGODB_URI:mongodb://mongodb:27017}"
+url = "${MONGODB_URI}"
 
 [default]
 address = "0.0.0.0"

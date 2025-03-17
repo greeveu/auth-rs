@@ -1,7 +1,9 @@
+use rocket::http::Status;
 use rocket::{get, serde::json::Json};
 use rocket_db_pools::Connection;
 
-use crate::utils::parse_uuid;
+use crate::utils::parse_uuid::parse_uuid;
+use crate::utils::response::json_response;
 use crate::{
     auth::auth::AuthEntity,
     db::AuthRsDatabase,
@@ -18,9 +20,9 @@ pub async fn get_role_by_id(
     db: Connection<AuthRsDatabase>,
     req_entity: AuthEntity,
     id: &str,
-) -> Json<HttpResponse<Role>> {
+) -> (Status, Json<HttpResponse<Role>>) {
     if !req_entity.is_token() {
-        return Json(HttpResponse::bad_request("Missing token"));
+        return json_response(HttpResponse::bad_request("Missing token"));
     }
 
     //TODO: Should this only fail if BOTH are not there or if either is not there?
@@ -34,16 +36,16 @@ pub async fn get_role_by_id(
             .unwrap()
             .check_scope(OAuthScope::Roles(ScopeActions::All))
     {
-        return Json(HttpResponse::forbidden("Forbidden"));
+        return json_response(HttpResponse::forbidden("Forbidden"));
     }
 
     let uuid = match parse_uuid(id) {
         Ok(uuid) => uuid,
-        Err(err) => return Json(err.into()),
+        Err(err) => return json_response(err.into()),
     };
 
     match Role::get_by_id(uuid, &db).await {
-        Ok(role) => Json(HttpResponse::success("Found role by id", role)),
-        Err(err) => Json(err.into()),
+        Ok(role) => json_response(HttpResponse::success("Found role by id", role)),
+        Err(err) => json_response(err.into()),
     }
 }

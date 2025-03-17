@@ -1,4 +1,5 @@
 use mongodb::bson::Uuid;
+use rocket::http::Status;
 use rocket::{
     post,
     serde::{json::Json, Deserialize, Serialize},
@@ -6,6 +7,7 @@ use rocket::{
 use rocket_db_pools::Connection;
 
 use crate::models::user::UserDTO;
+use crate::utils::response::json_response;
 use crate::{
     auth::mfa::MfaHandler,
     db::AuthRsDatabase,
@@ -76,7 +78,7 @@ async fn process_login(
 pub async fn login(
     db: Connection<AuthRsDatabase>,
     data: Json<LoginData>,
-) -> Json<HttpResponse<LoginResponse>> {
+) -> (Status, Json<HttpResponse<LoginResponse>>) {
     let login_data = data.into_inner();
 
     match process_login(&db, login_data).await {
@@ -86,8 +88,8 @@ pub async fn login(
             } else {
                 "Login successful"
             };
-            Json(HttpResponse::success(message, response))
+            json_response(HttpResponse::success(message, response))
         }
-        Err(err) => Json(err.into()),
+        Err(err) => json_response(err.into()),
     }
 }

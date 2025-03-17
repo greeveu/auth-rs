@@ -1,4 +1,4 @@
-use rocket::{get, serde::json::Json};
+use rocket::{get, http::Status, serde::json::Json};
 use rocket_db_pools::Connection;
 
 use crate::models::user::UserDTO;
@@ -10,7 +10,7 @@ use crate::{
         oauth_scope::{OAuthScope, ScopeActions},
         user::User,
     },
-    utils::parse_uuid,
+    utils::{parse_uuid::parse_uuid, response::json_response},
 };
 
 #[allow(unused)]
@@ -19,7 +19,7 @@ pub async fn get_user_by_id(
     db: Connection<AuthRsDatabase>,
     req_entity: AuthEntity,
     id: &str,
-) -> Json<HttpResponse<UserDTO>> {
+) -> (Status, Json<HttpResponse<UserDTO>>) {
     if req_entity.is_token()
         && (!req_entity
             .token
@@ -32,12 +32,12 @@ pub async fn get_user_by_id(
                 .unwrap()
                 .check_scope(OAuthScope::Users(ScopeActions::All)))
     {
-        return Json(HttpResponse::forbidden("Forbidden"));
+        return json_response(HttpResponse::forbidden("Forbidden"));
     }
 
     let uuid = match parse_uuid(id) {
         Ok(uuid) => uuid,
-        Err(err) => return Json(err.into()),
+        Err(err) => return json_response(err.into()),
     };
 
     if (req_entity.is_user()
@@ -45,11 +45,11 @@ pub async fn get_user_by_id(
         && !req_entity.user.as_ref().unwrap().is_admin())
         || req_entity.is_token() && req_entity.user_id != uuid
     {
-        return Json(HttpResponse::forbidden("Missing permissions!"));
+        return json_response(HttpResponse::forbidden("Missing permissions!"));
     }
 
     match User::get_by_id(uuid, &db).await {
-        Ok(user) => Json(HttpResponse::success("Found user by id", user.to_dto())),
-        Err(err) => Json(err.into()),
+        Ok(user) => json_response(HttpResponse::success("Found user by id", user.to_dto())),
+        Err(err) => json_response(err.into()),
     }
 }

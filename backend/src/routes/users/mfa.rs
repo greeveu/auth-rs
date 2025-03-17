@@ -1,3 +1,4 @@
+use rocket::http::Status;
 use rocket::{
     post,
     serde::{json::Json, Deserialize},
@@ -5,13 +6,14 @@ use rocket::{
 use rocket_db_pools::Connection;
 
 use crate::models::user::UserDTO;
+use crate::utils::response::json_response;
 use crate::{
     auth::{auth::AuthEntity, mfa::MfaHandler},
     db::AuthRsDatabase,
     errors::{ApiError, ApiResult},
     models::{http_response::HttpResponse, user::User},
     routes::auth::login::LoginResponse,
-    utils::parse_uuid,
+    utils::parse_uuid::parse_uuid,
 };
 
 #[derive(Deserialize)]
@@ -77,12 +79,12 @@ pub async fn enable_totp_mfa(
     req_entity: AuthEntity,
     id: &str,
     data: Json<EnableMfaData>,
-) -> Json<HttpResponse<LoginResponse>> {
+) -> (Status, Json<HttpResponse<LoginResponse>>) {
     let mfa_data = data.into_inner();
 
     match process_enable_totp_mfa(&db, req_entity, id, mfa_data).await {
-        Ok((message, response)) => Json(HttpResponse::success(&message, response)),
-        Err(err) => Json(err.into()),
+        Ok((message, response)) => json_response(HttpResponse::success(&message, response)),
+        Err(err) => json_response(err.into()),
     }
 }
 

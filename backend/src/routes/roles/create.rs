@@ -1,9 +1,11 @@
+use rocket::http::Status;
 use rocket::{
     error, post,
     serde::{json::Json, Deserialize},
 };
 use rocket_db_pools::Connection;
 
+use crate::utils::response::json_response;
 use crate::{
     auth::auth::AuthEntity,
     db::AuthRsDatabase,
@@ -26,26 +28,26 @@ pub async fn create_role(
     db: Connection<AuthRsDatabase>,
     req_entity: AuthEntity,
     data: Json<CreateRoleData>,
-) -> Json<HttpResponse<Role>> {
+) -> (Status, Json<HttpResponse<Role>>) {
     let data = data.into_inner();
 
     if !req_entity.is_user() {
-        return Json(HttpResponse::forbidden("Forbidden"));
+        return json_response(HttpResponse::forbidden("Forbidden"));
     }
 
     if !req_entity.user.unwrap().is_admin() {
-        return Json(HttpResponse::forbidden("Missing permissions!"));
+        return json_response(HttpResponse::forbidden("Missing permissions!"));
     }
 
     if Role::get_by_name(&data.name, &db).await.is_ok() {
-        return Json(HttpResponse::bad_request(
+        return json_response(HttpResponse::bad_request(
             "Role with that name already exists",
         ));
     }
 
     let role = match Role::new(data.name) {
         Ok(role) => role,
-        Err(err) => return Json(err.into()),
+        Err(err) => return json_response(err.into()),
     };
 
     match role.insert(&db).await {
@@ -66,12 +68,12 @@ pub async fn create_role(
                 Err(err) => error!("{}", err),
             }
 
-            Json(HttpResponse {
+            json_response(HttpResponse {
                 status: 201,
                 message: "Role created".to_string(),
                 data: Some(role),
             })
         }
-        Err(err) => Json(err.into()),
+        Err(err) => json_response(err.into()),
     }
 }

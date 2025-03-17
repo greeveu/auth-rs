@@ -1,4 +1,5 @@
 use mongodb::bson::Uuid;
+use rocket::http::Status;
 use rocket::{
     post,
     serde::{json::Json, Deserialize, Serialize},
@@ -39,7 +40,7 @@ pub async fn authorize_oauth_application(
     db: Connection<AuthRsDatabase>,
     req_entity: AuthEntity,
     data: Json<AuthorizeOAuthData>,
-) -> Option<Json<AuthorizeOAuthResponse>> {
+) -> (Status, Option<Json<AuthorizeOAuthResponse>>) {
     let data = data.into_inner();
 
     if !req_entity.is_user()
@@ -47,7 +48,7 @@ pub async fn authorize_oauth_application(
         || req_entity.user.unwrap().is_system_admin()
     {
         eprintln!("User is not allowed to authorize applications");
-        return None;
+        return (Status::Unauthorized, None);
     }
 
     let code = rand::random::<u32>();
@@ -56,13 +57,13 @@ pub async fn authorize_oauth_application(
         Ok(app) => app,
         Err(err) => {
             eprintln!("Error getting oauth application: {:?}", err);
-            return None;
+            return (Status::InternalServerError, None);
         }
     };
 
     if !oauth_application.redirect_uris.contains(&data.redirect_uri) {
         eprintln!("Redirect uri is not allowed for this application");
-        return None;
+        return (Status::Unauthorized, None);
     }
 
     let mut codes = OAUTH_CODES.lock().await;
@@ -92,9 +93,12 @@ pub async fn authorize_oauth_application(
         drop(codes);
     });
 
-    Some(Json(AuthorizeOAuthResponse {
-        client_id: data.client_id,
-        redirect_uri,
-        code,
-    }))
+    (
+        Status::Ok,
+        Some(Json(AuthorizeOAuthResponse {
+            client_id: data.client_id,
+            redirect_uri,
+            code,
+        })),
+    )
 }

@@ -1,3 +1,4 @@
+use rocket::http::Status;
 use rocket::{
     error, post,
     serde::{json::Json, Deserialize},
@@ -5,6 +6,7 @@ use rocket::{
 use rocket_db_pools::Connection;
 
 use crate::models::user::UserDTO;
+use crate::utils::response::json_response;
 use crate::{
     db::AuthRsDatabase,
     models::{
@@ -30,16 +32,16 @@ pub struct CreateUserData {
 pub async fn create_user(
     db: Connection<AuthRsDatabase>,
     data: Json<CreateUserData>,
-) -> Json<HttpResponse<UserDTO>> {
+) -> (Status, Json<HttpResponse<UserDTO>>) {
     let result = create_user_internal(db, data.into_inner()).await;
 
     match result {
-        Ok(user) => Json(HttpResponse {
+        Ok(user) => json_response(HttpResponse {
             status: 201,
             message: "User created".to_string(),
             data: Some(user.to_dto()),
         }),
-        Err(err) => Json(err.into()),
+        Err(err) => json_response(err.into()),
     }
 }
 

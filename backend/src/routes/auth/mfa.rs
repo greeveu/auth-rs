@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use mongodb::bson::Uuid;
+use rocket::http::Status;
 use rocket::{
     post,
     serde::{json::Json, Deserialize, Serialize},
@@ -8,6 +9,8 @@ use rocket::{
 use rocket_db_pools::Connection;
 use totp_rs::TOTP;
 
+use super::login::LoginResponse;
+use crate::utils::response::json_response;
 use crate::{
     auth::mfa::{MfaState, MfaType},
     db::AuthRsDatabase,
@@ -18,8 +21,6 @@ use crate::{
     },
     MFA_SESSIONS,
 };
-
-use super::login::LoginResponse;
 
 #[derive(Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -117,11 +118,11 @@ async fn process_mfa(
 pub async fn mfa(
     db: Connection<AuthRsDatabase>,
     data: Json<MfaData>,
-) -> Json<HttpResponse<LoginResponse>> {
+) -> (Status, Json<HttpResponse<LoginResponse>>) {
     let mfa_data = data.into_inner();
 
     match process_mfa(&db, mfa_data).await {
-        Ok((message, response)) => Json(HttpResponse::success(&message, response)),
-        Err(err) => Json(err.into()),
+        Ok((message, response)) => json_response(HttpResponse::success(&message, response)),
+        Err(err) => json_response(err.into()),
     }
 }

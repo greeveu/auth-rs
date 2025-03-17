@@ -1,6 +1,8 @@
+use rocket::http::Status;
 use rocket::{post, serde::json::Json};
 use rocket_db_pools::Connection;
 
+use crate::utils::response::json_response;
 use crate::{
     auth::auth::AuthEntity,
     db::AuthRsDatabase,
@@ -12,9 +14,9 @@ use crate::{
 pub async fn revoke_oauth_token(
     db: Connection<AuthRsDatabase>,
     req_entity: AuthEntity,
-) -> Json<HttpResponse<()>> {
+) -> (Status, Json<HttpResponse<()>>) {
     if !req_entity.is_token() {
-        return Json(HttpResponse::forbidden("No token provided"));
+        return json_response(HttpResponse::forbidden("No token provided"));
     }
 
     let oauth_token = match OAuthToken::get_by_token(
@@ -25,12 +27,12 @@ pub async fn revoke_oauth_token(
     {
         Ok(token) => token,
         Err(_) => {
-            return Json(HttpResponse::internal_error("Failed to revoke token"));
+            return json_response(HttpResponse::internal_error("Failed to revoke token"));
         }
     };
 
     match oauth_token.delete(&db).await {
-        Ok(_) => Json(HttpResponse::success_no_data("Token revoked")),
-        Err(err) => Json(err.into()),
+        Ok(_) => json_response(HttpResponse::success_no_data("Token revoked")),
+        Err(err) => json_response(err.into()),
     }
 }

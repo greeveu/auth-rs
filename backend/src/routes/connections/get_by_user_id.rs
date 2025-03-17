@@ -1,3 +1,4 @@
+use crate::utils::response::json_response;
 use crate::{
     auth::auth::AuthEntity,
     db::AuthRsDatabase,
@@ -7,9 +8,10 @@ use crate::{
         oauth_scope::{OAuthScope, ScopeActions},
         oauth_token::OAuthToken,
     },
-    utils::parse_uuid,
+    utils::parse_uuid::parse_uuid,
 };
 use mongodb::bson::{doc, DateTime, Uuid};
+use rocket::http::Status;
 use rocket::{
     get,
     serde::{json::Json, Deserialize, Serialize},
@@ -35,7 +37,7 @@ pub async fn get_by_user_id(
     db: Connection<AuthRsDatabase>,
     req_entity: AuthEntity,
     id: &str,
-) -> Json<HttpResponse<Vec<OAuthConnection>>> {
+) -> (Status, Json<HttpResponse<Vec<OAuthConnection>>>) {
     if req_entity.is_token()
         && (!req_entity
             .token
@@ -48,12 +50,12 @@ pub async fn get_by_user_id(
                 .unwrap()
                 .check_scope(OAuthScope::Connections(ScopeActions::All)))
     {
-        return Json(HttpResponse::forbidden("Forbidden"));
+        return json_response(HttpResponse::forbidden("Forbidden"));
     }
 
     let uuid = match parse_uuid(id) {
         Ok(uuid) => uuid,
-        Err(err) => return Json(err.into()),
+        Err(err) => return json_response(err.into()),
     };
 
     if (req_entity.is_user()
@@ -61,13 +63,13 @@ pub async fn get_by_user_id(
         && !req_entity.user.clone().unwrap().is_admin())
         || req_entity.is_token() && req_entity.user_id != uuid
     {
-        return Json(HttpResponse::forbidden("Missing permissions!"));
+        return json_response(HttpResponse::forbidden("Missing permissions!"));
     }
 
     let connected_applications = match OAuthToken::get_by_user_id(uuid, &db).await {
         Ok(tokens) => tokens,
         Err(err) => {
-            return Json(err.into());
+            return json_response(err.into());
         }
     };
 
@@ -79,10 +81,10 @@ pub async fn get_by_user_id(
 
     let applications = match OAuthApplication::get_all(&db, Some(filter)).await {
         Ok(applications) => applications,
-        Err(err) => return Json(err.into()),
+        Err(err) => return json_response(err.into()),
     };
 
-    Json(HttpResponse {
+    json_response(HttpResponse {
         status: 200,
         message: "Found connections by user id".to_string(),
         data: Some(

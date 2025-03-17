@@ -1,15 +1,9 @@
-use rocket::{
-    error, patch,
-    serde::{json::Json, Deserialize},
-};
-use rocket_db_pools::Connection;
-use std::collections::HashMap;
-
-use crate::utils::parse_uuid;
+use crate::utils::parse_uuid::parse_uuid;
+use crate::utils::response::json_response;
 use crate::{
     auth::auth::AuthEntity,
     db::AuthRsDatabase,
-    errors::{ApiError},
+    errors::ApiError,
     models::{
         audit_log::{AuditLog, AuditLogAction, AuditLogEntityType},
         http_response::HttpResponse,
@@ -17,6 +11,13 @@ use crate::{
         role::RoleResult,
     },
 };
+use rocket::http::Status;
+use rocket::{
+    error, patch,
+    serde::{json::Json, Deserialize},
+};
+use rocket_db_pools::Connection;
+use std::collections::HashMap;
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -31,12 +32,12 @@ pub async fn update_role(
     req_entity: AuthEntity,
     id: &str,
     data: Json<UpdateRoleData>,
-) -> Json<HttpResponse<Role>> {
+) -> (Status, Json<HttpResponse<Role>>) {
     let result = update_role_internal(db, req_entity, id, data.into_inner()).await;
 
     match result {
-        Ok(role) => Json(HttpResponse::success("Role updated", role)),
-        Err(err) => Json(err.into()),
+        Ok(role) => json_response(HttpResponse::success("Role updated", role)),
+        Err(err) => json_response(err.into()),
     }
 }
 
@@ -58,8 +59,10 @@ impl RoleUpdate {
     }
 
     fn update_field<T: ToString>(&mut self, field: &str, old_value: T, new_value: T) {
-        self.old_values.insert(field.to_string(), old_value.to_string());
-        self.new_values.insert(field.to_string(), new_value.to_string());
+        self.old_values
+            .insert(field.to_string(), old_value.to_string());
+        self.new_values
+            .insert(field.to_string(), new_value.to_string());
         self.modified = true;
     }
 
@@ -71,7 +74,11 @@ impl RoleUpdate {
         }
     }
 
-    async fn save(self, db: &Connection<AuthRsDatabase>, req_user_id: mongodb::bson::Uuid) -> RoleResult<Role> {
+    async fn save(
+        self,
+        db: &Connection<AuthRsDatabase>,
+        req_user_id: mongodb::bson::Uuid,
+    ) -> RoleResult<Role> {
         if !self.modified {
             return Ok(self.role);
         }
@@ -109,13 +116,15 @@ async fn update_role_internal(
         return Err(ApiError::Forbidden("Forbidden".to_string()).into());
     }
 
-    let req_user = req_entity.user().map_err(|_| ApiError::Forbidden("Forbidden".to_string()))?;
+    let req_user = req_entity
+        .user()
+        .map_err(|_| ApiError::Forbidden("Forbidden".to_string()))?;
     if !req_user.is_admin() {
         return Err(ApiError::Forbidden("Missing permissions!".to_string()).into());
     }
 
     let uuid = parse_uuid(id).map_err(|e| ApiError::BadRequest(e.to_string()))?;
-    
+
     // Get role and prepare update
     let role = Role::get_by_id(uuid, &db).await?;
 

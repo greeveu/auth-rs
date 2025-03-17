@@ -1,14 +1,5 @@
-use mongodb::bson::Uuid;
-use rocket::{
-    error, patch,
-    serde::{json::Json, Deserialize},
-};
-use rocket_db_pools::Connection;
-use std::collections::HashMap;
-use argon2::{Argon2, PasswordHasher};
-use argon2::password_hash::rand_core::OsRng;
-use argon2::password_hash::SaltString;
 use crate::models::user::UserDTO;
+use crate::utils::response::json_response;
 use crate::{
     auth::auth::AuthEntity,
     db::AuthRsDatabase,
@@ -21,6 +12,17 @@ use crate::{
     },
     ADMIN_ROLE_ID, DEFAULT_ROLE_ID, SYSTEM_USER_ID,
 };
+use argon2::password_hash::rand_core::OsRng;
+use argon2::password_hash::SaltString;
+use argon2::{Argon2, PasswordHasher};
+use mongodb::bson::Uuid;
+use rocket::http::Status;
+use rocket::{
+    error, patch,
+    serde::{json::Json, Deserialize},
+};
+use rocket_db_pools::Connection;
+use std::collections::HashMap;
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -41,12 +43,12 @@ pub async fn update_user(
     req_entity: AuthEntity,
     id: &str,
     data: Json<UpdateUserData>,
-) -> Json<HttpResponse<UserDTO>> {
+) -> (Status, Json<HttpResponse<UserDTO>>) {
     let result = update_user_internal(db, req_entity, id, data.into_inner()).await;
 
     match result {
-        Ok(user) => Json(HttpResponse::success("User updated", user.to_dto())),
-        Err(err) => Json(err.into()),
+        Ok(user) => json_response(HttpResponse::success("User updated", user.to_dto())),
+        Err(err) => json_response(err.into()),
     }
 }
 
@@ -68,8 +70,10 @@ impl UserUpdate {
     }
 
     fn update_field<T: ToString>(&mut self, field: &str, old_value: T, new_value: T) {
-        self.old_values.insert(field.to_string(), old_value.to_string());
-        self.new_values.insert(field.to_string(), new_value.to_string());
+        self.old_values
+            .insert(field.to_string(), old_value.to_string());
+        self.new_values
+            .insert(field.to_string(), new_value.to_string());
         self.modified = true;
     }
 
@@ -82,9 +86,13 @@ impl UserUpdate {
     }
 
     fn update_password(&mut self, password: String) -> UserResult<()> {
-        let salt = SaltString::from_b64(&self.user.salt).map_err(|_| UserError::PasswordHashingError)?;
+        let salt =
+            SaltString::from_b64(&self.user.salt).map_err(|_| UserError::PasswordHashingError)?;
         let argon2 = Argon2::default();
-        let password_hash = argon2.hash_password(password.as_bytes(), &salt).map_err(|_| UserError::PasswordHashingError)?.to_string();
+        let password_hash = argon2
+            .hash_password(password.as_bytes(), &salt)
+            .map_err(|_| UserError::PasswordHashingError)?
+            .to_string();
         self.update_field("password", "HIDDEN", "HIDDEN");
         self.user.password_hash = password_hash;
         Ok(())
@@ -149,8 +157,18 @@ impl UserUpdate {
             return Err(UserError::AdminRoleAssignment);
         }
 
-        let old_roles = self.user.roles.iter().map(ToString::to_string).collect::<Vec<_>>().join(",");
-        let new_roles = final_roles.iter().map(ToString::to_string).collect::<Vec<_>>().join(",");
+        let old_roles = self
+            .user
+            .roles
+            .iter()
+            .map(ToString::to_string)
+            .collect::<Vec<_>>()
+            .join(",");
+        let new_roles = final_roles
+            .iter()
+            .map(ToString::to_string)
+            .collect::<Vec<_>>()
+            .join(",");
         self.update_field("roles", old_roles, new_roles);
         self.user.roles = final_roles;
         Ok(())
@@ -180,7 +198,8 @@ impl UserUpdate {
             return Ok(self.user);
         }
 
-        let updated_user = self.user
+        let updated_user = self
+            .user
             .update(db)
             .await
             .map_err(|e| UserError::DatabaseError(format!("Failed to update user: {}", e)))?;
@@ -217,7 +236,9 @@ async fn update_user_internal(
     }
 
     let uuid = Uuid::parse_str(id).map_err(|e| UserError::InvalidUuid(e.to_string()))?;
-    let req_user = req_entity.user().map_err(|_| UserError::MissingPermissions)?;
+    let req_user = req_entity
+        .user()
+        .map_err(|_| UserError::MissingPermissions)?;
 
     if req_entity.user_id != uuid && !req_user.is_admin() {
         return Err(UserError::MissingPermissions);

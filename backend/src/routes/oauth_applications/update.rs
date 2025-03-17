@@ -1,12 +1,5 @@
-use mongodb::bson::Uuid;
-use rocket::{
-    error, patch,
-    serde::{json::Json, Deserialize},
-};
-use rocket_db_pools::Connection;
-use std::collections::HashMap;
-
-use crate::utils::parse_uuid;
+use crate::utils::parse_uuid::parse_uuid;
+use crate::utils::response::json_response;
 use crate::{
     auth::auth::AuthEntity,
     db::AuthRsDatabase,
@@ -17,6 +10,14 @@ use crate::{
         oauth_application::{OAuthApplication, OAuthApplicationDTO, OAuthApplicationResult},
     },
 };
+use mongodb::bson::Uuid;
+use rocket::http::Status;
+use rocket::{
+    error, patch,
+    serde::{json::Json, Deserialize},
+};
+use rocket_db_pools::Connection;
+use std::collections::HashMap;
 
 #[derive(Debug, Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -34,12 +35,15 @@ pub async fn update_oauth_application(
     req_entity: AuthEntity,
     id: &str,
     data: Json<UpdateOAuthApplicationData>,
-) -> Json<HttpResponse<OAuthApplicationDTO>> {
+) -> (Status, Json<HttpResponse<OAuthApplicationDTO>>) {
     let result = update_oauth_application_internal(db, req_entity, id, data.into_inner()).await;
 
     match result {
-        Ok(app) => Json(HttpResponse::success("OAuth Application updated", app.to_dto())),
-        Err(err) => Json(err.into()),
+        Ok(app) => json_response(HttpResponse::success(
+            "OAuth Application updated",
+            app.to_dto(),
+        )),
+        Err(err) => json_response(err.into()),
     }
 }
 
@@ -61,8 +65,10 @@ impl OAuthApplicationUpdate {
     }
 
     fn update_field<T: ToString>(&mut self, field: &str, old_value: T, new_value: T) {
-        self.old_values.insert(field.to_string(), old_value.to_string());
-        self.new_values.insert(field.to_string(), new_value.to_string());
+        self.old_values
+            .insert(field.to_string(), old_value.to_string());
+        self.new_values
+            .insert(field.to_string(), new_value.to_string());
         self.modified = true;
     }
 
@@ -76,7 +82,11 @@ impl OAuthApplicationUpdate {
 
     fn update_description(&mut self, new_description: Option<String>) {
         if self.app.description != new_description {
-            let old_description = self.app.description.clone().unwrap_or_else(|| "None".to_string());
+            let old_description = self
+                .app
+                .description
+                .clone()
+                .unwrap_or_else(|| "None".to_string());
             let new_desc = match new_description {
                 Some(desc) if !desc.is_empty() => {
                     let desc_clone = desc.clone();
@@ -101,7 +111,11 @@ impl OAuthApplicationUpdate {
         }
     }
 
-    async fn save(self, db: &Connection<AuthRsDatabase>, req_user_id: Uuid) -> OAuthApplicationResult<OAuthApplication> {
+    async fn save(
+        self,
+        db: &Connection<AuthRsDatabase>,
+        req_user_id: Uuid,
+    ) -> OAuthApplicationResult<OAuthApplication> {
         if !self.modified {
             return Ok(self.app);
         }
@@ -142,7 +156,9 @@ async fn update_oauth_application_internal(
     let uuid = parse_uuid(id).map_err(|e| ApiError::BadRequest(e.to_string()))?;
     let app = OAuthApplication::get_by_id(uuid, &db).await?;
 
-    let req_user = req_entity.user().map_err(|_| ApiError::Forbidden("Forbidden".to_string()))?;
+    let req_user = req_entity
+        .user()
+        .map_err(|_| ApiError::Forbidden("Forbidden".to_string()))?;
     if req_entity.user_id != app.owner && !req_user.is_admin() {
         return Err(ApiError::Forbidden("Missing permissions!".to_string()).into());
     }
