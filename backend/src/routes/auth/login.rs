@@ -44,7 +44,7 @@ async fn process_login(
         return Err(ApiError::Forbidden("User is disabled".to_string()));
     }
 
-    if !user.verify_password(&login_data.password) {
+    if user.verify_password(&login_data.password).is_err() {
         return Err(ApiError::Unauthorized(
             "Invalid email or password".to_string(),
         ));

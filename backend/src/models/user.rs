@@ -3,9 +3,11 @@ use crate::{
     ADMIN_ROLE_ID, DEFAULT_ROLE_ID, SYSTEM_USER_ID,
 };
 use anyhow::Result;
+use argon2::{password_hash, Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
+use argon2::password_hash::rand_core::OsRng;
+use argon2::password_hash::SaltString;
 use base64::{engine::general_purpose, Engine as _};
 use mongodb::bson::{doc, DateTime, Uuid};
-use pwhash::bcrypt;
 use rand::Rng;
 use rocket::{
     futures::StreamExt,
@@ -29,6 +31,7 @@ pub struct User {
     pub first_name: String,
     pub last_name: String,
     pub password_hash: String,
+    pub salt: String,
     pub totp_secret: Option<String>,
     pub token: String,
     pub roles: Vec<Uuid>,
@@ -64,8 +67,9 @@ impl User {
         general_purpose::STANDARD.encode(buffer)
     }
 
-    pub fn verify_password(&self, password: &str) -> bool {
-        bcrypt::verify(password, &self.password_hash)
+    pub fn verify_password(&self, password: &str) -> Result<(), UserError> {
+        let hash = PasswordHash::new(&self.password_hash).map_err(|_| UserError::PasswordHashingError)?;
+        Argon2::default().verify_password(password.as_bytes(), &hash).map_err(|_| UserError::PasswordHashingError)
     }
 
     pub fn to_dto(&self) -> UserDTO {
@@ -87,8 +91,9 @@ impl User {
         first_name: String,
         last_name: String,
     ) -> UserResult<Self> {
-        let password_hash = bcrypt::hash(password)
-            .map_err(|err| UserError::PasswordHashingError(err.to_string()))?;
+        let salt = SaltString::generate(&mut OsRng);
+        let argon2 = Argon2::default();
+        let password_hash = argon2.hash_password(password.as_bytes(), &salt).map_err(|_| UserError::PasswordHashingError)?.to_string();
 
         Ok(Self {
             id: Uuid::new(),
@@ -96,6 +101,7 @@ impl User {
             first_name,
             last_name,
             password_hash,
+            salt: salt.as_str().to_string(),
             totp_secret: None,
             token: Self::generate_token(),
             roles: Vec::from([*DEFAULT_ROLE_ID]),
@@ -112,8 +118,9 @@ impl User {
         last_name: String,
         roles: Vec<String>,
     ) -> UserResult<Self> {
-        let password_hash = bcrypt::hash(password)
-            .map_err(|err| UserError::PasswordHashingError(err.to_string()))?;
+        let salt = SaltString::generate(&mut OsRng);
+        let argon2 = Argon2::default();
+        let password_hash = argon2.hash_password(password.as_bytes(), &salt).map_err(|_| UserError::PasswordHashingError)?.to_string();
 
         Ok(Self {
             id,
@@ -121,6 +128,7 @@ impl User {
             first_name,
             last_name,
             password_hash,
+            salt: salt.as_str().to_string(),
             totp_secret: None,
             token: Self::generate_token(),
             roles: roles

@@ -34,8 +34,8 @@ pub enum AppError {
     #[error("Cannot modify system user")]
     SystemUserModification,
 
-    #[error("Password hashing error: {0}")]
-    PasswordHashingError(String),
+    #[error("Password hashing error")]
+    PasswordHashingError,
 
     #[error("Only system admin can assign admin role")]
     AdminRoleAssignment,
@@ -133,9 +133,9 @@ impl<T> From<AppError> for HttpResponse<T> {
                 message: "Cannot modify system user".to_string(),
                 data: None,
             },
-            AppError::PasswordHashingError(msg) => HttpResponse {
+            AppError::PasswordHashingError => HttpResponse {
                 status: 500,
-                message: format!("Failed to hash password: {}", msg),
+                message: "Error during password hashing".to_string(),
                 data: None,
             },
             AppError::AdminRoleAssignment => HttpResponse {
@@ -260,7 +260,7 @@ impl From<UserError> for AppError {
             UserError::InvalidUuid(msg) => AppError::InvalidUuid(msg),
             UserError::MissingPermissions => AppError::MissingPermissions,
             UserError::SystemUserModification => AppError::SystemUserModification,
-            UserError::PasswordHashingError(msg) => AppError::PasswordHashingError(msg),
+            UserError::PasswordHashingError => AppError::PasswordHashingError,
             UserError::AdminRoleAssignment => AppError::AdminRoleAssignment,
             UserError::RoleNotFound(id) => AppError::RoleNotFound(id),
             UserError::UserDisabled => AppError::UserDisabled,

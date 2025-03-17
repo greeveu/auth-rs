@@ -29,7 +29,7 @@ pub async fn get_role_by_id(
         .as_ref()
         .unwrap()
         .check_scope(OAuthScope::Roles(ScopeActions::Read))
-        && !req_entity
+        || !req_entity
             .token
             .unwrap()
             .check_scope(OAuthScope::Roles(ScopeActions::All))

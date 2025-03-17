@@ -1,12 +1,13 @@
 use mongodb::bson::Uuid;
-use pwhash::bcrypt;
 use rocket::{
     error, patch,
     serde::{json::Json, Deserialize},
 };
 use rocket_db_pools::Connection;
 use std::collections::HashMap;
-
+use argon2::{Argon2, PasswordHasher};
+use argon2::password_hash::rand_core::OsRng;
+use argon2::password_hash::SaltString;
 use crate::models::user::UserDTO;
 use crate::{
     auth::auth::AuthEntity,
@@ -81,8 +82,9 @@ impl UserUpdate {
     }
 
     fn update_password(&mut self, password: String) -> UserResult<()> {
-        let password_hash = bcrypt::hash(password)
-            .map_err(|e| UserError::PasswordHashingError(e.to_string()))?;
+        let salt = SaltString::from_b64(&self.user.salt).map_err(|_| UserError::PasswordHashingError)?;
+        let argon2 = Argon2::default();
+        let password_hash = argon2.hash_password(password.as_bytes(), &salt).map_err(|_| UserError::PasswordHashingError)?.to_string();
         self.update_field("password", "HIDDEN", "HIDDEN");
         self.user.password_hash = password_hash;
         Ok(())

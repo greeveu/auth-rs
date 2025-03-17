@@ -45,7 +45,7 @@ async fn process_enable_totp_mfa(
         .await
         .map_err(|err| ApiError::InternalError(format!("Failed to get user: {:?}", err)))?;
 
-    if !user.verify_password(&mfa_data.password) {
+    if user.verify_password(&mfa_data.password).is_err() {
         return Err(ApiError::Unauthorized("Incorrect password!".to_string()));
     }
 
@@ -137,7 +137,7 @@ async fn process_disable_totp_mfa(
             return Err(ApiError::Unauthorized("Invalid TOTP code!".to_string()));
         }
     } else if let Some(password) = mfa_data.password {
-        if !user.verify_password(&password) {
+        if user.verify_password(&password).is_err() {
             return Err(ApiError::Unauthorized("Incorrect password!".to_string()));
         }
     }
