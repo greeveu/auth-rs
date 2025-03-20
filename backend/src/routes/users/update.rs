@@ -1,3 +1,11 @@
+use mongodb::bson::Uuid;
+use rocket::{
+    error, http::Status, patch, serde::{json::Json, Deserialize}
+};
+use rocket_db_pools::Connection;
+use std::collections::HashMap;
+use argon2::{Argon2, PasswordHasher};
+use argon2::password_hash::SaltString;
 use crate::models::user::UserDTO;
 use crate::utils::response::json_response;
 use crate::{
@@ -12,17 +20,6 @@ use crate::{
     },
     ADMIN_ROLE_ID, DEFAULT_ROLE_ID, SYSTEM_USER_ID,
 };
-use argon2::password_hash::rand_core::OsRng;
-use argon2::password_hash::SaltString;
-use argon2::{Argon2, PasswordHasher};
-use mongodb::bson::Uuid;
-use rocket::http::Status;
-use rocket::{
-    error, patch,
-    serde::{json::Json, Deserialize},
-};
-use rocket_db_pools::Connection;
-use std::collections::HashMap;
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]

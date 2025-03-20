@@ -3,9 +3,9 @@ use crate::{
     ADMIN_ROLE_ID, DEFAULT_ROLE_ID, SYSTEM_USER_ID,
 };
 use anyhow::Result;
+use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use argon2::password_hash::rand_core::OsRng;
 use argon2::password_hash::SaltString;
-use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use base64::{engine::general_purpose, Engine as _};
 use mongodb::bson::{doc, DateTime, Uuid};
 use rand::Rng;
