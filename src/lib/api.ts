@@ -36,13 +36,14 @@ class AuthRsApi {
 
         if (response.ok) {
             const data = await response.json();
+
             if (data.status != 200) {
-                if (data.data?.mfaRequired) {
-                    this.currentMfaFlowId = data.data.mfaFlowId;
-                    return data.data;
-                } else {
-                    throw new Error(data.message);   
-                }
+                throw new Error(data.message);
+            }
+
+            if (data.data?.mfaRequired) {
+                this.currentMfaFlowId = data.data.mfaFlowId;
+                return data.data;
             }
             new AuthStateManager().setToken(data.data.token);
             this.token = data.data.token;
