@@ -139,10 +139,10 @@
     </Popup>
 {/if}
 
-{#if users.length < 1}
+{#if users.length > 1}
     <div class="flex flex-col items-center justify-center gap-[25px] h-full w-full">
         <PackageOpen size="75" class="opacity-40" />
-            <p class="text-[20px] opacity-50">There are currently no users set up. (? LOL)</p>
+            <p class="text-[20px] opacity-50">There are currently no users set up.</p>
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <p
