@@ -187,7 +187,7 @@ impl UserUpdate {
             return Ok(());
         }
 
-        if !req_user.is_admin() {
+        if !req_user.is_admin() || req_user.id == self.user.id {
             return Err(UserError::MissingPermissions);
         }
 
