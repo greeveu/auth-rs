@@ -1,7 +1,8 @@
 ## Backend
 - [ ] Recursivly remove roles from users when role is deleted
-- [ ] Return http status code in base response
+- [x] Return http status code in base response
 - [ ] Validate redirect URI (not sure if we already do this)
+- [ ] Emails are not unique???
 
 ## Frontend
 - [ ] Frontend missing auth flow id
