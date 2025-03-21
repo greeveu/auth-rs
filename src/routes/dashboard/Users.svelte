@@ -1,4 +1,5 @@
 <script lang="ts">
+	import TextInput from './../../lib/components/dashboard/TextInput.svelte';
 	import Popup from '../../lib/components/global/Popup.svelte';
 	import type AuthRsApi from "$lib/api";
 	import { PackageOpen, Pen, Trash } from "lucide-svelte";
@@ -27,6 +28,7 @@
     let editUserFirstName: string = '';
     let editUserLastName: string = '';
     let editUserPassword: string = '';
+    let editUserPasswordConfirm: string = '';
 
     let deleteUserPopup: boolean = false;
     let deleteUser: UserMinimal | null = null;
@@ -41,10 +43,18 @@
         showNewUserPopup = true;
     }
 
-    function userDataIsValid(): boolean {
+    $: newUserDataIsValid = () => {
         const emailValid = newUserEmail.length > 3 && newUserEmail.includes('@') && newUserEmail.includes('.');
-        const nameValid = newUserFirstName.length > 3 && newUserLastName.length > 3;
+        const nameValid = newUserFirstName.length > 1;
         const passwordValid = newUserPassword.length > 7 && newUserPassword === newUserPasswordConfirm;
+
+        return emailValid && nameValid && passwordValid;
+    }
+
+    $: editUserDataIsValid = () => {
+        const emailValid = editUserEmail.length >= 5 && editUserEmail.includes('@') && editUserEmail.includes('.');
+        const nameValid = editUserFirstName.length > 0;
+        const passwordValid = (editUserPassword.length < 1 && editUserPasswordConfirm.length < 1) || (editUserPassword.length > 7 && editUserPassword === editUserPasswordConfirm);
 
         return emailValid && nameValid && passwordValid;
     }
@@ -59,62 +69,17 @@
 {#if showNewUserPopup}
     <Popup title="Create User" onClose={() => showNewUserPopup = false}>
         <div class="flex flex-col items-center justify-center min-w-[350px] max-w-[400px]">
-            <p class="text-[14px] self-start h-[17.5px] opacity-50">Email</p>
-            <!-- svelte-ignore a11y_autofocus -->
-            <input
-                type="text"
-                placeholder="Name"
-                bind:value={newUserEmail}
-                class="border-[1.5px] border-gray-300 rounded-md opacity-75 w-full"
-                style="padding: 5px 10px; margin-top: 5px; margin-bottom: 10px;"
-                autofocus
-            >
-            <p class="text-[14px] self-start h-[17.5px] opacity-50">First Name</p>
-            <!-- svelte-ignore a11y_autofocus -->
-            <input
-                type="text"
-                placeholder="First Name"
-                bind:value={newUserFirstName}
-                class="border-[1.5px] border-gray-300 rounded-md opacity-75 w-full"
-                style="padding: 5px 10px; margin-top: 5px; margin-bottom: 10px;"
-                autofocus
-            >
-            <p class="text-[14px] self-start h-[17.5px] opacity-50">Last Name</p>
-            <!-- svelte-ignore a11y_autofocus -->
-            <input
-                type="text"
-                placeholder="Last Name"
-                bind:value={newUserLastName}
-                class="border-[1.5px] border-gray-300 rounded-md opacity-75 w-full"
-                style="padding: 5px 10px; margin-top: 5px; margin-bottom: 10px;"
-                autofocus
-            >
-            <p class="text-[14px] self-start h-[17.5px] opacity-50">Password</p>
-            <!-- svelte-ignore a11y_autofocus -->
-            <input
-                type="text"
-                placeholder="Password"
-                bind:value={newUserPassword}
-                class="border-[1.5px] border-gray-300 rounded-md opacity-75 w-full"
-                style="padding: 5px 10px; margin-top: 5px; margin-bottom: 10px;"
-                autofocus
-            >
-            <p class="text-[14px] self-start h-[17.5px] opacity-50">Confirm Password</p>
-            <!-- svelte-ignore a11y_autofocus -->
-            <input
-                type="text"
-                placeholder="Confirm Password"
-                bind:value={newUserPasswordConfirm}
-                class="border-[1.5px] border-gray-300 rounded-md opacity-75 w-full"
-                style="padding: 5px 10px; margin-top: 5px; margin-bottom: 10px;"
-                autofocus
-            >
+            <TextInput label="Email" bind:value={newUserEmail} />
+            <TextInput label="First Name" bind:value={newUserFirstName} />
+            <TextInput label="Last Name" bind:value={newUserLastName} />
+            <TextInput label="Password" bind:value={newUserPassword} type="password" />
+            <TextInput label="Confirm Password" bind:value={newUserPasswordConfirm} type="password" />
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
-                class="text-green-600 rounded-md {userDataIsValid() ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px] button green-button"
+                class="text-green-600 rounded-md {newUserDataIsValid() ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px] button green-button"
                 style="margin-top: 25px; margin-bottom: 10px;"
-                on:click={userDataIsValid() ? () => {
+                on:click={newUserDataIsValid() ? () => {
                     showNewUserPopup = false;
                     api.createUser(newUserEmail, newUserFirstName, newUserLastName, newUserPassword)
                         .then(createdUser => {
@@ -131,54 +96,19 @@
 {#if editUserPopup}
     <Popup title="Edit User" onClose={() => editUserPopup = false}>
         <div class="flex flex-col items-center justify-center min-w-[350px]">
-            <p class="text-[14px] self-start h-[17.5px] opacity-50">Email</p>
-            <!-- svelte-ignore a11y_autofocus -->
-            <input
-                type="text"
-                placeholder="Email"
-                bind:value={editUserEmail}
-                class="border-[1.5px] border-gray-300 rounded-md opacity-75 w-full"
-                style="padding: 5px 10px; margin-top: 5px; margin-bottom: 10px;"
-                autofocus
-            >
-            <p class="text-[14px] self-start h-[17.5px] opacity-50">First Name</p>
-            <!-- svelte-ignore a11y_autofocus -->
-            <input
-                type="text"
-                placeholder="First Name"
-                bind:value={editUserFirstName}
-                class="border-[1.5px] border-gray-300 rounded-md opacity-75 w-full"
-                style="padding: 5px 10px; margin-top: 5px; margin-bottom: 10px;"
-                autofocus
-            >
-            <p class="text-[14px] self-start h-[17.5px] opacity-50">Last Name</p>
-            <!-- svelte-ignore a11y_autofocus -->
-            <input
-                type="text"
-                placeholder="Last Name"
-                bind:value={editUserLastName}
-                class="border-[1.5px] border-gray-300 rounded-md opacity-75 w-full"
-                style="padding: 5px 10px; margin-top: 5px; margin-bottom: 10px;"
-                autofocus
-            >
-            <p class="text-[14px] self-start h-[17.5px] opacity-50">Password</p>
-            <!-- svelte-ignore a11y_autofocus -->
-            <input
-                type="text"
-                placeholder="Password"
-                bind:value={editUserPassword}
-                class="border-[1.5px] border-gray-300 rounded-md opacity-75 w-full"
-                style="padding: 5px 10px; margin-top: 5px; margin-bottom: 10px;"
-                autofocus
-            >
+            <TextInput label="Email" bind:value={editUserEmail}  />
+            <TextInput label="First Name" bind:value={editUserFirstName}  />
+            <TextInput label="Last Name" bind:value={editUserLastName}  />
+            <TextInput label="Password" bind:value={editUserPassword}  />
+            <TextInput label="Confirm Password" bind:value={editUserPasswordConfirm}  />
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
-                class="text-green-600 rounded-md {userDataIsValid() ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px] button green-button"
+                class="text-green-600 rounded-md {editUserDataIsValid() ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px] button green-button"
                 style="margin-top: 20px; margin-bottom: 10px;"
-                on:click={userDataIsValid() ? () => {
+                on:click={editUserDataIsValid() ? () => {
                     editUserPopup = false;
-                    api.updateUser(editUser!, new UserMinimalUpdates({ email: editUserEmail, password: editUserPassword, firstName: editUserFirstName, lastName: editUserLastName, roles: null, disabled: null }))
+                    api.updateUser(editUser!, new UserMinimalUpdates({ email: editUserEmail, password: editUserPassword.length < 1 ? null : editUserPassword, firstName: editUserFirstName, lastName: editUserLastName, roles: null, disabled: null }))
                         .then(newUser => {
                             users[users.map(user => user._id).indexOf(editUser!._id)] = newUser;
                         })
@@ -241,6 +171,7 @@
                         <!-- svelte-ignore a11y_no_static_element_interactions -->
                         <div class="flex self-end" style="margin-right: 12.5px;" on:click={() => {
                             editUser = user;
+                            editUserEmail = user.email;
                             editUserFirstName = user.firstName;
                             editUserLastName = user.lastName;
                             editUserPopup = true;
@@ -270,19 +201,3 @@
         {/each}
     </div>
 {/if}
-
-<style>
-    input:focus {
-        outline: none;
-        border: solid 1.5px var(--color-blue-500);
-    }
-
-    ::-webkit-scrollbar {
-        width: 5px;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background-color: var(--color-blue-500);
-        border-radius: 10px;
-    }
-</style>

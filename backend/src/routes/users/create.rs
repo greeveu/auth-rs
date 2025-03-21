@@ -54,6 +54,16 @@ async fn create_user_internal(
         return Err(UserError::EmailAlreadyExists(data.email));
     }
 
+    if !data.email.contains('@') || !data.email.contains('.') || data.email.len() < 5 {
+        return Err(UserError::InvalidEmail);
+    }
+    if data.first_name.len() < 1 {
+       return Err(UserError::FirstNameRequired);
+    }
+    if data.password.len() < 8 {
+        return Err(UserError::PasswordToShort);
+    }
+
     // Create new user
     let user = User::new(data.email.to_lowercase(), data.password, data.first_name, data.last_name)?;
 

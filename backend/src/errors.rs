@@ -73,6 +73,9 @@ pub enum AppError {
     #[error("Validation error: {0}")]
     ValidationError(String),
 
+    #[error("Invalid or missing fields: {0}")]
+    InvalidOrMissingFields(String),
+
     #[error("HTTP response error: {0}")]
     HttpResponseError(String),
 }
@@ -203,6 +206,12 @@ impl<T> From<AppError> for HttpResponse<T> {
                 message: msg,
                 data: None,
             },
+
+            AppError::InvalidOrMissingFields(msg) => HttpResponse {
+                status: 400,
+                message: format!("Invalid or missing fields: {}", msg),
+                data: None,
+            },
         }
     }
 }
@@ -254,9 +263,7 @@ impl From<UserError> for AppError {
     fn from(error: UserError) -> Self {
         match error {
             UserError::NotFound(id) => AppError::UserNotFound(id),
-            UserError::EmailAlreadyExists(email) => {
-                AppError::ValidationError(format!("User with email {} already exists", email))
-            }
+            UserError::EmailAlreadyExists(email) => AppError::ValidationError(format!("User with email {} already exists", email)),
             UserError::InvalidUuid(msg) => AppError::InvalidUuid(msg),
             UserError::MissingPermissions => AppError::MissingPermissions,
             UserError::SystemUserModification => AppError::SystemUserModification,
@@ -267,6 +274,9 @@ impl From<UserError> for AppError {
             UserError::NoUpdatesApplied => AppError::NoUpdatesApplied,
             UserError::DatabaseError(msg) => AppError::DatabaseError(msg),
             UserError::InternalServerError(msg) => AppError::InternalServerError(msg),
+            UserError::InvalidEmail => AppError::InvalidOrMissingFields("Invalid email".to_string()),
+            UserError::FirstNameRequired => AppError::InvalidOrMissingFields("First name required".to_string()),
+            UserError::PasswordToShort => AppError::InvalidOrMissingFields("Password too short".to_string()),
         }
     }
 }

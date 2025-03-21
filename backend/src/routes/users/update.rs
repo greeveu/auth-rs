@@ -74,15 +74,22 @@ impl UserUpdate {
         self.modified = true;
     }
 
-    fn update_email(&mut self, new_email: String) {
+    fn update_email(&mut self, new_email: String) -> UserResult<()> {
         if self.user.email != new_email {
+            if !new_email.contains(".") || !new_email.contains("@") || new_email.len() < 5 {
+                return Err(UserError::InvalidEmail);
+            }
             let old_email = self.user.email.clone();
             self.update_field("email", old_email, new_email.clone());
             self.user.email = new_email;
         }
+        Ok(())
     }
 
     fn update_password(&mut self, password: String) -> UserResult<()> {
+        if password.len() < 8 {
+            return Err(UserError::PasswordToShort);
+        }
         let salt =
             SaltString::from_b64(&self.user.salt).map_err(|_| UserError::PasswordHashingError)?;
         let argon2 = Argon2::default();
@@ -95,9 +102,12 @@ impl UserUpdate {
         Ok(())
     }
 
-    fn update_name(&mut self, first_name: Option<String>, last_name: Option<String>) {
+    fn update_name(&mut self, first_name: Option<String>, last_name: Option<String>) -> UserResult<()> {
         if let Some(first_name) = first_name {
             if self.user.first_name != first_name {
+                if first_name.len() < 1 {
+                    return Err(UserError::FirstNameRequired);
+                }
                 let old_first_name = self.user.first_name.clone();
                 self.update_field("firstName", old_first_name, first_name.clone());
                 self.user.first_name = first_name;
@@ -111,6 +121,7 @@ impl UserUpdate {
                 self.user.last_name = last_name;
             }
         }
+        Ok(())
     }
 
     async fn update_roles(
@@ -249,14 +260,14 @@ async fn update_user_internal(
 
     // Apply updates
     if let Some(email) = data.email {
-        update.update_email(email);
+        update.update_email(email)?;
     }
 
     if let Some(password) = data.password {
         update.update_password(password)?;
     }
 
-    update.update_name(data.first_name, data.last_name);
+    update.update_name(data.first_name, data.last_name)?;
 
     if let Some(roles) = data.roles {
         update.update_roles(roles, &db, &req_user).await?;
