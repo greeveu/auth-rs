@@ -12,7 +12,6 @@ use crate::{
     },
     ADMIN_ROLE_ID, DEFAULT_ROLE_ID, SYSTEM_USER_ID,
 };
-use argon2::password_hash::rand_core::OsRng;
 use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHasher};
 use mongodb::bson::Uuid;
@@ -262,11 +261,11 @@ async fn update_user_internal(
     update.update_name(data.first_name, data.last_name);
 
     if let Some(roles) = data.roles {
-        update.update_roles(roles, &db, &req_user).await?;
+        update.update_roles(roles, &db, req_user).await?;
     }
 
     if let Some(disabled) = data.disabled {
-        update.update_disabled(disabled, &req_user)?;
+        update.update_disabled(disabled, req_user)?;
     }
 
     // Save changes
