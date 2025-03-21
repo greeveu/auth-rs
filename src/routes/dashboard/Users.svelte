@@ -2,7 +2,7 @@
 	import TextInput from './../../lib/components/dashboard/TextInput.svelte';
 	import Popup from '../../lib/components/global/Popup.svelte';
 	import type AuthRsApi from "$lib/api";
-	import { PackageOpen, Pen, Trash } from "lucide-svelte";
+	import { PackageOpen, Pen, Trash, UserCheck, UserX } from "lucide-svelte";
 	import { onMount } from "svelte";
 	import UserMinimalUpdates from '$lib/models/UserUpdates';
 	import UserMinimal from '$lib/models/User';
@@ -11,6 +11,7 @@
 	import type Role from '$lib/models/Role';
 
     export let api: AuthRsApi;
+    export let currentUser: UserMinimal;
     export let users: UserMinimal[];
     export let roles: Role[];
 
@@ -29,6 +30,12 @@
     let editUserLastName: string = '';
     let editUserPassword: string = '';
     let editUserPasswordConfirm: string = '';
+
+    let disableUserPopup: boolean = false;
+    let disableUser: UserMinimal | null = null;
+
+    let enableUserPopup: boolean = false;
+    let enableUser: UserMinimal | null = null;
 
     let deleteUserPopup: boolean = false;
     let deleteUser: UserMinimal | null = null;
@@ -81,7 +88,7 @@
                 style="margin-top: 25px; margin-bottom: 10px;"
                 on:click={newUserDataIsValid() ? () => {
                     showNewUserPopup = false;
-                    api.createUser(newUserEmail, newUserFirstName, newUserLastName, newUserPassword)
+                    api.createUser(newUserEmail, newUserPassword, newUserFirstName, newUserLastName)
                         .then(createdUser => {
                             newUser = createdUser;
                             users = [...users, createdUser]
@@ -109,12 +116,56 @@
                 on:click={editUserDataIsValid() ? () => {
                     editUserPopup = false;
                     api.updateUser(editUser!, new UserMinimalUpdates({ email: editUserEmail, password: editUserPassword.length < 1 ? null : editUserPassword, firstName: editUserFirstName, lastName: editUserLastName, roles: null, disabled: null }))
-                        .then(newUser => {
-                            users[users.map(user => user._id).indexOf(editUser!._id)] = newUser;
+                        .then(editedUser => {
+                            users[users.map(user => user._id).indexOf(editUser!._id)] = editedUser;
                         })
                         .catch(e => console.error(e));
                 } : null}
             >Save</p>
+        </div>
+    </Popup>
+{/if}
+
+{#if disableUserPopup}
+    <Popup title="Disable User" onClose={() => disableUserPopup = false}>
+        <div class="flex flex-col items-center justify-center max-w-[350px]" style="margin-top: 20px; margin-bottom: 20px;">
+            <p class="text-[14px] text-center opacity-50">Are you sure you want to disable the user "{disableUser?.firstName} {disableUser?.lastName}"?</p>
+            <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <p
+                class="text-red-600 cursor-pointer rounded-md text-[18px] button red-button"
+                style="margin-top: 25px;"
+                on:click={() => {
+                    deleteUserPopup = false;
+                    api.updateUser(disableUser!, new UserMinimalUpdates({ email: null, password: null, firstName: null, lastName: null, roles: null, disabled: true }))
+                        .then(disabledUser => {
+                            users[users.map(user => user._id).indexOf(disableUser!._id)] = disabledUser;
+                        })
+                        .catch(e => console.error(e));
+                }}
+            >Confirm</p>
+        </div>
+    </Popup>
+{/if}
+
+{#if enableUserPopup}
+    <Popup title="Enable User" onClose={() => enableUserPopup = false}>
+        <div class="flex flex-col items-center justify-center max-w-[350px]" style="margin-top: 20px; margin-bottom: 20px;">
+            <p class="text-[14px] text-center opacity-50">Are you sure you want to enable the user "{enableUser?.firstName} {enableUser?.lastName}"?</p>
+            <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <p
+                class="text-green-600 cursor-pointer rounded-md text-[18px] button red-button"
+                style="margin-top: 25px;"
+                on:click={() => {
+                    enableUserPopup = false;
+                    api.updateUser(enableUser!, new UserMinimalUpdates({ email: null, password: null, firstName: null, lastName: null, roles: null, disabled: false }))
+                        .then(enabledUser => {
+                            users[users.map(user => user._id).indexOf(enableUser!._id)] = enabledUser;
+                        })
+                        .catch(e => console.error(e));
+                }}
+            >Confirm</p>
         </div>
     </Popup>
 {/if}
@@ -164,12 +215,12 @@
     <div class="flex flex-wrap overflow-y-scroll gap-[25px]">
         {#each users.filter(u => u._id != UserMinimal.DEFAULT_USER_ID) as user}
             <div class="flex flex-col items-start justify start gap-[10px] min-w-[300px] border-[2px] border-[#333] rounded-md" style="padding: 15px;">
-                <div class="flex flex-row justify-between w-full">
+                <div class="flex flex-row justify-between w-full gap-[20px]">
                     <p class="text-[20px] font-bold h-[20px]">{user.firstName} {user.lastName}</p>
                     <div class="flex flex-row">
                         <!-- svelte-ignore a11y_click_events_have_key_events -->
                         <!-- svelte-ignore a11y_no_static_element_interactions -->
-                        <div class="flex self-end" style="margin-right: 12.5px;" on:click={() => {
+                        <div class="flex self-end" style="margin-right: 15px;" on:click={() => {
                             editUser = user;
                             editUserEmail = user.email;
                             editUserFirstName = user.firstName;
@@ -181,6 +232,31 @@
                                 size=20
                             />
                         </div>
+                        {#if user._id != currentUser._id}
+                            <!-- svelte-ignore a11y_click_events_have_key_events -->
+                            <!-- svelte-ignore a11y_no_static_element_interactions -->
+                            <div class="flex self-end" style="margin-right: 12.5px;" on:click={() => {
+                                if (user.disabled) {
+                                    enableUser = user;
+                                    enableUserPopup = true;
+                                } else {
+                                    disableUser = user;
+                                    disableUserPopup = true;
+                                }
+                            }}>
+                                {#if user.disabled}
+                                    <UserCheck
+                                        class="cursor-pointer hover:text-green-600 transition-all"
+                                        size=20
+                                    />
+                                {:else}
+                                    <UserX
+                                        class="cursor-pointer hover:text-red-600 transition-all"
+                                        size=20
+                                    />
+                                {/if}
+                            </div>
+                        {/if}
                         <!-- svelte-ignore a11y_click_events_have_key_events -->
                         <!-- svelte-ignore a11y_no_static_element_interactions -->
                         <div class="flex self-end" on:click={() => {
@@ -196,7 +272,7 @@
                 </div>
                 <p class="text-[12px] opacity-35 h-[20px]">Created at {UserMinimal.getCreatedAt(user).getDate()}.{UserMinimal.getCreatedAt(user).getMonth()}.{UserMinimal.getCreatedAt(user).getFullYear()}</p>
                 <TextField label="Email" value={user.email} readonly />
-                <RoleList label="Roles" roles={roles.filter(r => user.roles.includes(r._id))} onAdd={() => {}} onRemove={() => {}} readOnly={false} disableOutline />
+                <RoleList label="Roles" roles={roles.filter(r => user.roles.includes(r._id))} onAdd={() => {}} onRemove={() => {}} readOnly={false} isSystemAdmin={currentUser._id == UserMinimal.DEFAULT_USER_ID} disableOutline />
             </div>
         {/each}
     </div>

@@ -89,7 +89,7 @@
                 {:else if currentTabIndex == 4}
                     <Logs bind:api bind:user bind:users bind:roles bind:applications bind:auditLogs />
                 {:else if currentTabIndex == 6}
-                    <Users bind:api bind:users bind:roles />
+                    <Users bind:api bind:currentUser={user} bind:users bind:roles />
                 {:else if currentTabIndex == 7}
                     <Roles bind:api bind:roles />
                 {:else if currentTabIndex == 8}

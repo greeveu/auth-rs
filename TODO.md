@@ -9,7 +9,8 @@
 
 - [x] Frontend missing auth flow id
 - [ ] User roles dropdown
-- [ ] Create / Edit users
+- [x] Create / Edit users
+- [x] Disable Users
 
 ## Both
 
