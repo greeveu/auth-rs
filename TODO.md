@@ -10,5 +10,10 @@
 - [ ] User roles dropdown
 - [ ] Create / Edit users
 
+## Both
+
+- [ ] Role descriptions
+- [ ] Limit registations (registration codes with limited uses and autoroles?)
+
 ## ???
 - [ ] OAuth Connection expiery date is not created or calculated correctly (look further into this)
