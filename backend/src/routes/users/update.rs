@@ -1,11 +1,3 @@
-use mongodb::bson::Uuid;
-use rocket::{
-    error, http::Status, patch, serde::{json::Json, Deserialize}
-};
-use rocket_db_pools::Connection;
-use std::collections::HashMap;
-use argon2::{Argon2, PasswordHasher};
-use argon2::password_hash::SaltString;
 use crate::models::user::UserDTO;
 use crate::utils::response::json_response;
 use crate::{
@@ -23,9 +15,10 @@ use crate::{
 use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHasher};
 use mongodb::bson::Uuid;
-use rocket::http::Status;
 use rocket::{
-    error, patch,
+    error,
+    http::Status,
+    patch,
     serde::{json::Json, Deserialize},
 };
 use rocket_db_pools::Connection;
@@ -112,7 +105,11 @@ impl UserUpdate {
         Ok(())
     }
 
-    fn update_name(&mut self, first_name: Option<String>, last_name: Option<String>) -> UserResult<()> {
+    fn update_name(
+        &mut self,
+        first_name: Option<String>,
+        last_name: Option<String>,
+    ) -> UserResult<()> {
         if let Some(first_name) = first_name {
             if self.user.first_name != first_name {
                 if first_name.len() < 1 {
