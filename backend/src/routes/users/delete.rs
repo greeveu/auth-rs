@@ -30,7 +30,7 @@ pub async fn delete_user(
         Err(err) => return json_response(err.into()),
     };
 
-    if req_entity.user_id != uuid && !req_entity.user.unwrap().is_system_admin() {
+    if req_entity.user_id != uuid && !req_entity.user.unwrap().is_admin() {
         return json_response(HttpResponse::forbidden("Missing permissions!"));
     }
 
