@@ -39,6 +39,15 @@ pub enum UserError {
 
     #[error("Internal server error: {0}")]
     InternalServerError(String),
+
+    #[error("First name is required")]
+    FirstNameRequired,
+
+    #[error("Password to short")]
+    PasswordToShort,
+
+    #[error("Invalid email")]
+    InvalidEmail,
 }
 
 // Implement conversion from UserError to HttpResponse
@@ -103,6 +112,21 @@ impl<T> From<UserError> for HttpResponse<T> {
             UserError::InternalServerError(msg) => HttpResponse {
                 status: 500,
                 message: format!("Internal server error: {}", msg),
+                data: None,
+            },
+            UserError::FirstNameRequired => HttpResponse {
+                status: 400,
+                message: "First name is required".to_string(),
+                data: None,
+            },
+            UserError::PasswordToShort => HttpResponse {
+                status: 400,
+                message: "Password to short".to_string(),
+                data: None,
+            },
+            UserError::InvalidEmail => HttpResponse {
+                status: 400,
+                message: "Invalid email".to_string(),
                 data: None,
             },
         }

@@ -63,7 +63,7 @@ pub async fn authorize_oauth_application(
 
     if !oauth_application.redirect_uris.contains(&data.redirect_uri) {
         eprintln!("Redirect uri is not allowed for this application");
-        return (Status::Unauthorized, None);
+        return (Status::Forbidden, None);
     }
 
     let mut codes = OAUTH_CODES.lock().await;

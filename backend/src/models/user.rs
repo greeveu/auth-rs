@@ -3,9 +3,9 @@ use crate::{
     ADMIN_ROLE_ID, DEFAULT_ROLE_ID, SYSTEM_USER_ID,
 };
 use anyhow::Result;
+use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use argon2::password_hash::rand_core::OsRng;
 use argon2::password_hash::SaltString;
-use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use base64::{engine::general_purpose, Engine as _};
 use mongodb::bson::{doc, DateTime, Uuid};
 use rand::Rng;
@@ -33,6 +33,7 @@ pub struct User {
     pub password_hash: String,
     pub salt: String,
     pub totp_secret: Option<String>,
+    pub passkeys: Option<String>, // replace this with the actual DTO, this is just a placeholder so the database can already generate the field. 
     pub token: String,
     pub roles: Vec<Uuid>,
     pub disabled: bool,
@@ -50,6 +51,7 @@ pub struct UserDTO {
     pub last_name: String,
     pub roles: Vec<Uuid>,
     pub mfa: bool,
+    pub passkeys: bool,
     pub disabled: bool,
     pub created_at: DateTime,
 }
@@ -83,6 +85,7 @@ impl User {
             last_name: self.last_name.clone(),
             roles: self.roles.clone(),
             mfa: self.totp_secret.is_some(),
+            passkeys: self.passkeys.is_some(),
             disabled: self.disabled,
             created_at: self.created_at,
         }
@@ -109,6 +112,7 @@ impl User {
             password_hash,
             salt: salt.as_str().to_string(),
             totp_secret: None,
+            passkeys: None,
             token: Self::generate_token(),
             roles: Vec::from([*DEFAULT_ROLE_ID]),
             disabled: false,
@@ -139,6 +143,7 @@ impl User {
             password_hash,
             salt: salt.as_str().to_string(),
             totp_secret: None,
+            passkeys: None,
             token: Self::generate_token(),
             roles: roles
                 .iter()
@@ -213,7 +218,7 @@ impl User {
         let db = Self::get_collection(connection);
 
         let filter = doc! {
-            "email": email
+            "email": email.to_lowercase()
         };
         match db.find_one(filter, None).await {
             Ok(Some(user)) => Ok(user),
