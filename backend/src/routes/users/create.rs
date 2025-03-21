@@ -55,7 +55,7 @@ async fn create_user_internal(
     }
 
     // Create new user
-    let user = User::new(data.email, data.password, data.first_name, data.last_name)?;
+    let user = User::new(data.email.to_lowercase(), data.password, data.first_name, data.last_name)?;
 
     // Insert user into database
     let inserted_user = user.insert(&db).await?;
