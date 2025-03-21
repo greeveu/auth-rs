@@ -5,7 +5,8 @@
 - [x] Emails are not unique???
 
 ## Frontend
-- [ ] Frontend missing auth flow id
+
+- [x] Frontend missing auth flow id
 - [ ] User roles dropdown
 - [ ] Create / Edit users
 
