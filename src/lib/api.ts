@@ -49,6 +49,7 @@ class AuthRsApi {
             this.token = data.data.token;
             return data.data;
         } else {
+            console.error((await response.json()));
             throw new Error(`(${response.status}): ${response.statusText}`);
         }
     }
@@ -75,6 +76,7 @@ class AuthRsApi {
             this.token = data.data.token;
             return data.data;
         } else {
+            console.error((await response.json()));
             throw new Error(`(${response.status}): ${response.statusText}`);
         }
     }
@@ -103,6 +105,7 @@ class AuthRsApi {
             }
             return data.data;
         } else {
+            console.error((await response.json()));
             throw new Error(`(${response.status}): ${response.statusText}`);
         }
     }
@@ -128,6 +131,7 @@ class AuthRsApi {
             }
             return data.data;
         } else {
+            console.error((await response.json()));
             throw new Error(`(${response.status}): ${response.statusText}`);
         }
     }
@@ -153,6 +157,7 @@ class AuthRsApi {
             }
             return data.data;
         } else {
+            console.error((await response.json()));
             throw new Error(`(${response.status}): ${response.statusText}`);
         }
     }
@@ -176,6 +181,7 @@ class AuthRsApi {
             }
             return data.data;
         } else {
+            console.error((await response.json()));
             throw new Error(`(${response.status}): ${response.statusText}`);
         }
     }
@@ -199,6 +205,7 @@ class AuthRsApi {
             }
             return data.data;
         } else {
+            console.error((await response.json()));
             throw new Error(`(${response.status}): ${response.statusText}`);
         }
     }
@@ -224,6 +231,7 @@ class AuthRsApi {
             }
             return data.data;
         } else {
+            console.error((await response.json()));
             throw new Error(`(${response.status}): ${response.statusText}`);
         }
     }
@@ -236,6 +244,7 @@ class AuthRsApi {
         const response = await fetch(`${AuthRsApi.baseUrl}/users/${user._id}`, {
             method: 'DELETE',
             headers: {
+                'Content-Type': 'application/json',
                 'Authorization': `Bearer ${this.token}`,
             },
         });
@@ -247,6 +256,7 @@ class AuthRsApi {
             }
             return data.data;
         } else {
+            console.error((await response.json()));
             throw new Error(`(${response.status}): ${response.statusText}`);
         }
     }
@@ -272,6 +282,7 @@ class AuthRsApi {
             }
             return data.data;
         } else {
+            console.error((await response.json()));
             throw new Error(`(${response.status}): ${response.statusText}`);
         }
     }
@@ -295,6 +306,7 @@ class AuthRsApi {
             }
             return data.data;
         } else {
+            console.error((await response.json()));
             throw new Error(`(${response.status}): ${response.statusText}`);
         }
     }
@@ -318,6 +330,7 @@ class AuthRsApi {
             }
             return data.data;
         } else {
+            console.error((await response.json()));
             throw new Error(`(${response.status}): ${response.statusText}`);
         }
     }
@@ -343,6 +356,7 @@ class AuthRsApi {
             }
             return data.data;
         } else {
+            console.error((await response.json()));
             throw new Error(`(${response.status}): ${response.statusText}`);
         }
     }
@@ -366,6 +380,7 @@ class AuthRsApi {
             }
             return data.data;
         } else {
+            console.error((await response.json()));
             throw new Error(`(${response.status}): ${response.statusText}`);
         }
     }
@@ -389,6 +404,7 @@ class AuthRsApi {
             }
             return data.data;
         } else {
+            console.error((await response.json()));
             throw new Error(`(${response.status}): ${response.statusText}`);
         }
     }
@@ -412,6 +428,7 @@ class AuthRsApi {
             }
             return data.data;
         } else {
+            console.error((await response.json()));
             throw new Error(`(${response.status}): ${response.statusText}`);
         }
     }
@@ -441,6 +458,7 @@ class AuthRsApi {
             }
             return data.data;
         } else {
+            console.error((await response.json()));
             throw new Error(`(${response.status}): ${response.statusText}`);
         }
     }
@@ -465,6 +483,7 @@ class AuthRsApi {
             }
             return data.data;
         } else {
+            console.error((await response.json()));
             throw new Error(`(${response.status}): ${response.statusText}`);
         }
     }
@@ -488,6 +507,7 @@ class AuthRsApi {
             }
             return data.data;
         } else {
+            console.error((await response.json()));
             throw new Error(`(${response.status}): ${response.statusText}`);
         }
     }
@@ -514,6 +534,7 @@ class AuthRsApi {
             const data = await response.json();
             return data;
         } else {
+            console.error((await response.json()));
             throw new Error(`(${response.status}): ${response.statusText}`);
         }
     }
@@ -539,6 +560,7 @@ class AuthRsApi {
             }
             return data.data;
         } else {
+            console.error((await response.json()));
             throw new Error(`(${response.status}): ${response.statusText}`);
         }
     }
@@ -563,6 +585,7 @@ class AuthRsApi {
             }
             return data.data;
         } else {
+            console.error((await response.json()));
             throw new Error(`(${response.status}): ${response.statusText}`);
         }
     }
@@ -586,6 +609,7 @@ class AuthRsApi {
             }
             return data.data;
         } else {
+            console.error((await response.json()));
             throw new Error(`(${response.status}): ${response.statusText}`);
         }
     }
@@ -609,6 +633,7 @@ class AuthRsApi {
             }
             return data.data;
         } else {
+            console.error((await response.json()));
             throw new Error(`(${response.status}): ${response.statusText}`);
         }
     }
