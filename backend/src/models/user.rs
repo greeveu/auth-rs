@@ -3,9 +3,9 @@ use crate::{
     ADMIN_ROLE_ID, DEFAULT_ROLE_ID, SYSTEM_USER_ID,
 };
 use anyhow::Result;
-use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use argon2::password_hash::rand_core::OsRng;
 use argon2::password_hash::SaltString;
+use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use base64::{engine::general_purpose, Engine as _};
 use mongodb::bson::{doc, DateTime, Uuid};
 use rand::Rng;
@@ -33,7 +33,7 @@ pub struct User {
     pub password_hash: String,
     pub salt: String,
     pub totp_secret: Option<String>,
-    pub passkeys: Option<String>, // replace this with the actual DTO, this is just a placeholder so the database can already generate the field. 
+    pub passkeys: Option<String>, // replace this with the actual DTO, this is just a placeholder so the database can already generate the field.
     pub token: String,
     pub roles: Vec<Uuid>,
     pub disabled: bool,

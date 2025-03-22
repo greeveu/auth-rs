@@ -1,11 +1,3 @@
-use mongodb::bson::Uuid;
-use rocket::{
-    error, http::Status, patch, serde::{json::Json, Deserialize}
-};
-use rocket_db_pools::Connection;
-use std::collections::HashMap;
-use argon2::{Argon2, PasswordHasher};
-use argon2::password_hash::SaltString;
 use crate::models::user::UserDTO;
 use crate::utils::response::json_response;
 use crate::{
@@ -20,6 +12,17 @@ use crate::{
     },
     ADMIN_ROLE_ID, DEFAULT_ROLE_ID, SYSTEM_USER_ID,
 };
+use argon2::password_hash::SaltString;
+use argon2::{Argon2, PasswordHasher};
+use mongodb::bson::Uuid;
+use rocket::{
+    error,
+    http::Status,
+    patch,
+    serde::{json::Json, Deserialize},
+};
+use rocket_db_pools::Connection;
+use std::collections::HashMap;
 
 #[derive(Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -102,7 +105,11 @@ impl UserUpdate {
         Ok(())
     }
 
-    fn update_name(&mut self, first_name: Option<String>, last_name: Option<String>) -> UserResult<()> {
+    fn update_name(
+        &mut self,
+        first_name: Option<String>,
+        last_name: Option<String>,
+    ) -> UserResult<()> {
         if let Some(first_name) = first_name {
             if self.user.first_name != first_name {
                 if first_name.len() < 1 {
@@ -270,11 +277,11 @@ async fn update_user_internal(
     update.update_name(data.first_name, data.last_name)?;
 
     if let Some(roles) = data.roles {
-        update.update_roles(roles, &db, &req_user).await?;
+        update.update_roles(roles, &db, req_user).await?;
     }
 
     if let Some(disabled) = data.disabled {
-        update.update_disabled(disabled, &req_user)?;
+        update.update_disabled(disabled, req_user)?;
     }
 
     // Save changes

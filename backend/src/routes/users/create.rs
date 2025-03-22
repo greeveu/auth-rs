@@ -58,14 +58,19 @@ async fn create_user_internal(
         return Err(UserError::InvalidEmail);
     }
     if data.first_name.len() < 1 {
-       return Err(UserError::FirstNameRequired);
+        return Err(UserError::FirstNameRequired);
     }
     if data.password.len() < 8 {
         return Err(UserError::PasswordToShort);
     }
 
     // Create new user
-    let user = User::new(data.email.to_lowercase(), data.password, data.first_name, data.last_name)?;
+    let user = User::new(
+        data.email.to_lowercase(),
+        data.password,
+        data.first_name,
+        data.last_name,
+    )?;
 
     // Insert user into database
     let inserted_user = user.insert(&db).await?;

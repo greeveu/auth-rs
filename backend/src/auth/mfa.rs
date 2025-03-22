@@ -146,7 +146,7 @@ impl MfaHandler {
     }
 
     pub async fn verify_totp(user: &User, secret: String, code: &str) -> bool {
-        let totp = TOTP::new(
+        let totp_result = TOTP::new(
             Algorithm::SHA1,
             6,
             1,
@@ -154,12 +154,13 @@ impl MfaHandler {
             Secret::Encoded(secret).to_bytes().unwrap(),
             Some("auth-rs".to_string()), /* CHANGE ME */
             user.email.to_string(),
-        )
-        .unwrap();
+        );
 
-        let current_code = totp.generate_current().unwrap();
+        if totp_result.is_err() {
+            return false;
+        }
 
-        current_code == *code
+        totp_result.unwrap().check_current(code).unwrap_or(false)
     }
 
     pub async fn disable_totp(
