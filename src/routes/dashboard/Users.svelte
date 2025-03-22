@@ -190,7 +190,7 @@
     </Popup>
 {/if}
 
-{#if users.length < 1}
+{#if users.filter(u => u._id != UserMinimal.DEFAULT_USER_ID).length < 1}
     <div class="flex flex-col items-center justify-center gap-[25px] h-full w-full">
         <PackageOpen size="75" class="opacity-40" />
             <p class="text-[20px] opacity-50">There are currently no users set up.</p>
