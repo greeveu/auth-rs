@@ -11,6 +11,7 @@
 - [ ] User roles dropdown
 - [x] Create / Edit users
 - [x] Disable Users
+- [ ] Registration
 
 ## Both
 
