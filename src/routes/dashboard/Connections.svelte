@@ -6,6 +6,7 @@
 	import { Unlink } from "lucide-svelte";
 	import { onMount } from "svelte";
 	import Popup from '$lib/components/global/Popup.svelte';
+	import DateUtils from '$lib/dateUtils';
 
     export let api: AuthRsApi;
     export let user: UserMinimal;
@@ -66,9 +67,9 @@
                         </div>
                     </div>
                 </div>
-                <p class="text-[12px] opacity-35 h-[10px]">Authorized at {OAuthConnection.getCreatedAt(connection).getDate()}.{OAuthConnection.getCreatedAt(connection).getMonth() + 1}.{OAuthConnection.getCreatedAt(connection).getFullYear()} {OAuthConnection.getCreatedAt(connection).getHours()}:{OAuthConnection.getCreatedAt(connection).getMinutes()}:{OAuthConnection.getCreatedAt(connection).getSeconds()}</p>
-                {#if OAuthConnection.getExpiresAt(connection).getTime() > Date.now()}
-                    <p class="text-[12px] opacity-75 h-[20px] text-green-600">Expires at {OAuthConnection.getExpiresAt(connection).getDate()}.{OAuthConnection.getExpiresAt(connection).getMonth() + 1}.{OAuthConnection.getExpiresAt(connection).getFullYear()} {OAuthConnection.getExpiresAt(connection).getHours()}:{OAuthConnection.getExpiresAt(connection).getMinutes()}:{OAuthConnection.getExpiresAt(connection).getSeconds()}</p>
+                <p class="text-[12px] opacity-35 h-[10px]">Authorized at {DateUtils.getFullDateString(OAuthConnection.getCreatedAt(connection))}</p>
+                {#if OAuthConnection.getExpiresAt(connection).getTime() > 0}
+                    <p class="text-[12px] opacity-75 h-[20px] text-green-600">Expires in {DateUtils.getDurationString(OAuthConnection.getExpiresAt(connection).getTime())}</p>
                 {:else}
                     <p class="text-[12px] opacity-75 h-[20px] text-red-600">Expired!</p>
                 {/if}
