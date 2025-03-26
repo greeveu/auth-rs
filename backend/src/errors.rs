@@ -9,6 +9,7 @@ use crate::models::role::RoleError;
 use crate::models::user_error::UserError;
 
 #[derive(Error, Debug)]
+#[allow(unused)]
 pub enum AppError {
     #[error("Invalid UUID: {0}")]
     InvalidUuid(String),

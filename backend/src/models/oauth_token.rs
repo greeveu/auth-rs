@@ -17,6 +17,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use thiserror::Error;
 
 #[derive(Error, Debug)]
+#[allow(unused)]
 pub enum OAuthTokenError {
     #[error("Token not found")]
     NotFound,
