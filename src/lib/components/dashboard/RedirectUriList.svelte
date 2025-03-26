@@ -18,14 +18,15 @@
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div class="name-input flex flex-col items-start gap-[10px]">
+        {#if redirectUris.length === 0}
+            <p class="text-[13px] opacity-50" style="margin-top: 5px;"><i>No redirect URI's added</i></p>
+        {/if}
         {#each redirectUris as redirectUri}
             <div class="flex flex-row items-center justify-between gap-[10px] text-[13px] bg-[#111] rounded-md" style="padding: 7.5px;">
                 <p style="color: white !important;">{redirectUri.split('?')[0]}</p>
-                {#if redirectUris.length > 1}
-                    <div on:click={() => onRemove(redirectUri)}>
-                        <X size="15" class="hover:text-red-500 cursor-pointer transition-all" />
-                    </div>
-                {/if}
+                <div on:click={() => onRemove(redirectUri)}>
+                    <X size="15" class="hover:text-red-500 cursor-pointer transition-all" />
+                </div>
             </div>
         {/each}
     </div>
