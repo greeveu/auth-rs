@@ -136,7 +136,7 @@
                 class="text-red-600 cursor-pointer rounded-md text-[18px] button red-button"
                 style="margin-top: 25px;"
                 on:click={() => {
-                    deleteUserPopup = false;
+                    disableUserPopup = false;
                     api.updateUser(disableUser!, new UserMinimalUpdates({ email: null, password: null, firstName: null, lastName: null, roles: null, disabled: true }))
                         .then(disabledUser => {
                             users[users.map(user => user._id).indexOf(disableUser!._id)] = disabledUser;
