@@ -369,6 +369,7 @@ class AuthRsApi {
         const response = await fetch(`${AuthRsApi.baseUrl}/roles/${role._id}`, {
             method: 'DELETE',
             headers: {
+                'Content-Type': 'application/json',
                 Authorization: `Bearer ${this.token}`,
             },
         });
@@ -417,6 +418,7 @@ class AuthRsApi {
         const response = await fetch(`${AuthRsApi.baseUrl}/connections/${connection.application._id}`, {
             method: 'DELETE',
             headers: {
+                'Content-Type': 'application/json',
                 Authorization: `Bearer ${this.token}`,
             },
         });
