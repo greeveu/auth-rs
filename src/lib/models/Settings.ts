@@ -1,11 +1,11 @@
 export default class Settings {
     _id: string;
-    allowRegistration: boolean;
+    openRegistration: boolean;
     allowOauthAppsForUsers: boolean;
 
-    constructor(_id: string, allowRegistration: boolean, allowOauthAppsForUsers: boolean) {
+    constructor(_id: string, openRegistration: boolean, allowOauthAppsForUsers: boolean) {
         this._id = _id;
-        this.allowRegistration = allowRegistration;
+        this.openRegistration = openRegistration;
         this.allowOauthAppsForUsers = allowOauthAppsForUsers;
     }
 }
