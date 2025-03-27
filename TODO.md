@@ -19,7 +19,7 @@
 
 - [ ] Role descriptions
 - [ ] Limit registations (registration codes with limited uses and autoroles?)
-- [ ] System admin settings (limited registrations, disable oauth application create for default users)
+- [x] System admin settings (limited registrations, disable oauth application create for default users)
 - [ ] Require at lease one oauth scope to authorize and render invalid ouath url errors
 
 ## ???
