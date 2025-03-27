@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { ClipboardList, CodeXml, Crown, Link, LogOut, ScrollText, Settings, Shield, User, Users } from "lucide-svelte";
+	import { ClipboardList, CodeXml, Crown, Link, LogOut, ScrollText, Settings, Shield, TicketCheck, User, Users } from "lucide-svelte";
 
     export let tab: {
         name: string;
@@ -34,6 +34,8 @@
         <Crown height="30" width="30" />
     {:else if tab.icon == 'scroll-text'}
         <ScrollText height="30" width="30" />
+    {:else if tab.icon == 'ticket-check'}
+        <TicketCheck height="30" width="30" />
     {:else if tab.icon == 'settings'}
         <Settings height="30" width="30" />
     {:else if tab.icon == 'log-out'}

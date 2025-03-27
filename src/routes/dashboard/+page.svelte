@@ -44,6 +44,7 @@
         { name: 'Users', icon: 'users', shouldShow: (user) => UserMinimal.isAdmin(user) },
         { name: 'Roles', icon: 'crown', shouldShow: (user) => UserMinimal.isAdmin(user) },
         { name: 'All OAuth Apps', icon: 'code-xml', shouldShow: (user) => UserMinimal.isAdmin(user) },
+        { name: 'Registration Codes', icon: 'ticket-check', shouldShow: (user, settings) => UserMinimal.isAdmin(user) && !settings.allowRegistration },
         { name: 'Global Logs', icon: 'scroll-text', shouldShow: (user) => UserMinimal.isAdmin(user) },
         { name: 'System Settings', icon: 'settings', shouldShow: (user) => UserMinimal.isSystemAdmin(user) },
     ];
