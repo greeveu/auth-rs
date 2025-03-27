@@ -287,6 +287,7 @@ impl From<UserError> for AppError {
             UserError::PasswordToShort => {
                 AppError::InvalidOrMissingFields("Password too short".to_string())
             }
+            UserError::RegistrationClosed => AppError::MissingPermissions
         }
     }
 }

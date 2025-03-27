@@ -48,6 +48,57 @@ impl AuthEntity {
     }
 }
 
+#[derive(Debug, Clone)]
+#[allow(unused)]
+pub struct OptionalAuthEntity {
+    pub user_id: Option<Uuid>,
+    pub user: Option<User>,
+    pub token: Option<OAuthToken>,
+}
+
+#[allow(unused)]
+impl OptionalAuthEntity {
+    pub fn from_user(user: User) -> Self {
+        Self {
+            user_id: Some(user.id),
+            user: Some(user),
+            token: None,
+        }
+    }
+
+    pub fn from_token(token: OAuthToken) -> Self {
+        Self {
+            user_id: Some(token.user_id),
+            user: None,
+            token: Some(token),
+        }
+    }
+
+    pub fn from_empty() -> Self {
+        Self {
+            user_id: None,
+            user: None,
+            token: None,
+        }
+    }
+
+    pub fn is_user(&self) -> bool {
+        self.user.is_some()
+    }
+
+    pub fn is_token(&self) -> bool {
+        self.token.is_some()
+    }
+
+    pub fn user(&self) -> AppResult<&User> {
+        self.user.as_ref().ok_or(AppError::MissingPermissions)
+    }
+
+    pub fn token(&self) -> AppResult<&OAuthToken> {
+        self.token.as_ref().ok_or(AppError::InvalidToken)
+    }
+}
+
 #[derive(Debug)]
 pub enum AuthError {
     DatabaseError,
@@ -125,6 +176,68 @@ impl<'r> FromRequest<'r> for AuthEntity {
                 }
             }
             None => Outcome::Error((Status::Unauthorized, AuthError::Unauthorized)),
+        }
+    }
+}
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for OptionalAuthEntity {
+    type Error = AuthError;
+
+    async fn from_request(
+        request: &'r Request<'_>,
+    ) -> Outcome<OptionalAuthEntity, (Status, AuthError), Status> {
+        let db = match request.guard::<&AuthRsDatabase>().await {
+            Outcome::Success(db) => db.database(get_main_db_name()),
+            _ => return Outcome::Error((Status::InternalServerError, AuthError::DatabaseError)),
+        };
+
+        let auth_header = request.headers().get_one("Authorization");
+
+        match auth_header {
+            Some(token) => {
+                let token_parts: Vec<&str> = token.split_whitespace().collect();
+
+                if token_parts.len() != 2 {
+                    return Outcome::Error((Status::Unauthorized, AuthError::InvalidToken));
+                }
+
+                let token_type = token_parts[0];
+                let token_value = token_parts[1];
+
+                if token_value.is_empty() {
+                    return Outcome::Error((Status::Unauthorized, AuthError::InvalidToken));
+                }
+
+                match token_type {
+                    "Bearer" => match User::get_full_by_token(token_value.to_owned(), &db).await {
+                        Ok(user) => {
+                            if user.disabled {
+                                return Outcome::Error((Status::Forbidden, AuthError::Forbidden));
+                            }
+
+                            Outcome::Success(OptionalAuthEntity::from_user(user))
+                        }
+                        Err(_) => match OAuthToken::get_by_token(token_value, &db).await {
+                            Ok(token) => {
+                                if token.is_expired() {
+                                    return Outcome::Error((
+                                        Status::Unauthorized,
+                                        AuthError::InvalidToken,
+                                    ));
+                                }
+
+                                Outcome::Success(OptionalAuthEntity::from_token(token))
+                            }
+                            Err(_) => {
+                                Outcome::Error((Status::Unauthorized, AuthError::Unauthorized))
+                            }
+                        },
+                    },
+                    _ => Outcome::Error((Status::Unauthorized, AuthError::InvalidToken)),
+                }
+            }
+            None => Outcome::Success(OptionalAuthEntity::from_empty()),
         }
     }
 }
