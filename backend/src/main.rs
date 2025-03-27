@@ -174,7 +174,15 @@ fn rocket() -> _ {
                 // Auth Routes
                 routes::auth::register::register,
                 routes::auth::login::login,
-                routes::auth::mfa::mfa
+                routes::auth::mfa::mfa,
+                // Passkey Routes
+                routes::auth::passkeys::register_start,
+                routes::auth::passkeys::register_finish,
+                routes::auth::passkeys::authenticate_start,
+                routes::auth::passkeys::authenticate_finish,
+                routes::auth::passkeys::list_passkeys,
+                routes::auth::passkeys::update_passkey,
+                routes::auth::passkeys::delete_passkey
             ],
         )
 }
