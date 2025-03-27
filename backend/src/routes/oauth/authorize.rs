@@ -1,4 +1,5 @@
 use mongodb::bson::Uuid;
+use rand::Rng;
 use rocket::http::Status;
 use rocket::{
     post,
@@ -7,6 +8,7 @@ use rocket::{
 };
 use rocket_db_pools::Connection;
 
+use crate::errors::ApiError;
 use crate::{
     auth::auth::AuthEntity,
     db::AuthRsDatabase,
@@ -51,7 +53,11 @@ pub async fn authorize_oauth_application(
         return (Status::Unauthorized, None);
     }
 
-    let code = rand::random::<u32>();
+    if data.scope.len() < 1 {
+        return (Status::BadRequest, None);
+    }
+
+    let code = rand::rng().random_range(10000000..99999999);
 
     let oauth_application = match OAuthApplication::get_full_by_id(data.client_id, &db).await {
         Ok(app) => app,
