@@ -15,12 +15,14 @@
 	import Roles from './Roles.svelte';
 	import type Role from '$lib/models/Role';
 	import Users from './Users.svelte';
+	import type Settings from '$lib/models/Settings';
 
     const authStateManager = new AuthStateManager();
     let api = new AuthRsApi();
 
     let currentTabIndex = 0;
 
+    let settings: Settings | null = null;
     let user: UserMinimal | null = null;
     let users: UserMinimal[] = [];
     let roles: Role[] = [];
@@ -31,19 +33,19 @@
     const TABS: {
         name: string;
         icon: string;
-        requiredRoleId: string | null;
-        allowSystemUser: boolean;
+        shouldShow: (user: UserMinimal, settings: Settings) => boolean;
     }[] = [
-        { name: 'Your Profile', icon: 'user', requiredRoleId: null, allowSystemUser: true },
-        { name: 'Security', icon: 'shield', requiredRoleId: null, allowSystemUser: true },
-        { name: 'Connections', icon: 'link', requiredRoleId: null, allowSystemUser: false },
-        { name: 'OAuth Applications', icon: 'code-xml', requiredRoleId: null, allowSystemUser: true },
-        { name: 'Logs', icon: 'clipboard-list', requiredRoleId: null, allowSystemUser: true },
-        { name: 'SPACER', icon: '', requiredRoleId: UserMinimal.ADMIN_ROLE_ID, allowSystemUser: true },
-        { name: 'Users', icon: 'users', requiredRoleId: UserMinimal.ADMIN_ROLE_ID, allowSystemUser: true },
-        { name: 'Roles', icon: 'crown', requiredRoleId: UserMinimal.ADMIN_ROLE_ID, allowSystemUser: true },
-        { name: 'All OAuth Apps', icon: 'code-xml', requiredRoleId: UserMinimal.ADMIN_ROLE_ID, allowSystemUser: true },
-        { name: 'Global Logs', icon: 'scroll-text', requiredRoleId: UserMinimal.ADMIN_ROLE_ID, allowSystemUser: true },
+        { name: 'Your Profile', icon: 'user', shouldShow: () => true },
+        { name: 'Security', icon: 'shield', shouldShow: () => true },
+        { name: 'Connections', icon: 'link', shouldShow: (user) => !UserMinimal.isSystemAdmin(user) },
+        { name: 'OAuth Applications', icon: 'code-xml', shouldShow: (user, settings) => settings.allowOauthAppsForUsers || UserMinimal.isAdmin(user) },
+        { name: 'Logs', icon: 'clipboard-list', shouldShow: () => true },
+        { name: 'SPACER', icon: '', shouldShow: (user) => UserMinimal.isAdmin(user) },
+        { name: 'Users', icon: 'users', shouldShow: (user) => UserMinimal.isAdmin(user) },
+        { name: 'Roles', icon: 'crown', shouldShow: (user) => UserMinimal.isAdmin(user) },
+        { name: 'All OAuth Apps', icon: 'code-xml', shouldShow: (user) => UserMinimal.isAdmin(user) },
+        { name: 'Global Logs', icon: 'scroll-text', shouldShow: (user) => UserMinimal.isAdmin(user) },
+        { name: 'System Settings', icon: 'settings', shouldShow: (user) => UserMinimal.isSystemAdmin(user) },
     ];
     
     onMount(async () => {
@@ -51,6 +53,7 @@
         if (loadData) {
             api = loadData[0];
             user = loadData[1];
+            settings = await api.getSettings();
         }
     })
 </script>
@@ -60,7 +63,7 @@
         <div class="flex flex-col justify-between h-[90%]">
             <div class="flex flex-col gap-[15px]">
                 {#each TABS as tab, index}
-                    {#if tab.requiredRoleId ? user?.roles?.includes(tab.requiredRoleId) : true && user && UserMinimal.isSystemAdmin(user) ? tab.allowSystemUser : true}
+                    {#if user && settings && tab.shouldShow(user, settings)}
                         {#if tab.name == 'SPACER'}
                             <!-- svelte-ignore element_invalid_self_closing_tag -->
                             <div class="flex items-center justify-center w-[275px] h-[2px] bg-[#333]" style="margin-top: 20px;">
@@ -72,14 +75,14 @@
                     {/if}
                 {/each}
             </div>
-            <SidebarButton tab={{ name: 'Logout', icon: 'log-out', requiredRoleId: null }} active={false} selectTab={() => authStateManager.logout()} isLogout={true} />
+            <SidebarButton tab={{ name: 'Logout', icon: 'log-out' }} active={false} selectTab={() => authStateManager.logout()} isLogout={true} />
         </div>
         <!-- svelte-ignore element_invalid_self_closing_tag -->
         <div class="w-[4px] h-[90%] bg-[#333] rounded-[2px]" style="margin: 0 15px;" />
         <div class="flex flex-col h-[90%] w-full">
             {#if user && roles}
                 <div class="flex items-center min-h-[75px]">
-                    <p class="text-[14px]">>{TABS[currentTabIndex].requiredRoleId == UserMinimal.ADMIN_ROLE_ID ? 'Admin' : ''} Dashboard > {TABS[currentTabIndex].name}</p>
+                    <p class="text-[14px]">>{currentTabIndex > 4 ? ' Admin' : ''} Dashboard > {TABS[currentTabIndex].name}</p>
                 </div>
                 {#if currentTabIndex == 0}
                     <Profile bind:api bind:user bind:roles />
