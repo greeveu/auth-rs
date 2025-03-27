@@ -28,6 +28,7 @@ lazy_static::lazy_static! {
     //TODO: Replace with Redis or other cache, so this application can be stateless
     static ref OAUTH_CODES: Mutex<HashMap<u32, TokenOAuthData>> = Mutex::new(HashMap::new());
     static ref MFA_SESSIONS: Mutex<HashMap<Uuid, MfaHandler>> = Mutex::new(HashMap::new());
+    static ref SETTINGS: Mutex<Settings> = Mutex::new(Settings::default());
 
     static ref SETTINGS_ID: Uuid = Uuid::parse_str("00000000-0000-0000-0000-000000000000")
         .expect("Failed to parse SETTINGS UUID");
@@ -51,13 +52,15 @@ async fn initialize_database(db: &AuthRsDatabase) -> AppResult<()> {
     let settings_filter = doc! {
         "_id": *SETTINGS_ID
     };
-    let settings_count = settings_collection
-        .count_documents(settings_filter, None)
+    let settings = settings_collection
+        .find_one(settings_filter, None)
         .await
         .map_err(AppError::RocketMongoError)?;
 
-    if settings_count < 1 {
+    if settings.is_none() {
         let _ = Settings::initialize(&settings_collection).await;
+    } else {
+        *SETTINGS.lock().await = settings.unwrap();
     }
 
     // Initialize default roles if they don't exist

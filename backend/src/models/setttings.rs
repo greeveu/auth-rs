@@ -91,15 +91,21 @@ pub struct Settings {
     pub allow_oauth_apps_for_users: bool,
 }
 
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            id: *SETTINGS_ID,
+            open_registration: true,
+            allow_oauth_apps_for_users: true,
+        }
+    }
+}
+
 impl Settings {
     pub const COLLECTION_NAME: &'static str = "settings";
 
     pub async fn initialize(db: &Collection<Settings>) -> SettingsResult<()> {
-        let settings = Settings {
-            id: *SETTINGS_ID,
-            open_registration: true,
-            allow_oauth_apps_for_users: true,
-        };
+        let settings = Settings::default();
 
         match db.insert_one(settings.clone(), None).await {
             Ok(_) => Ok(()),
