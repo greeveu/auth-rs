@@ -70,6 +70,7 @@ pub enum AuditLogEntityType {
     User,
     Role,
     OAuthApplication,
+    Settings,
     Unknown,
 }
 
@@ -80,6 +81,7 @@ impl AuditLogEntityType {
             "USER" => Ok(AuditLogEntityType::User),
             "ROLE" => Ok(AuditLogEntityType::Role),
             "OAUTH_APPLICATION" => Ok(AuditLogEntityType::OAuthApplication),
+            "SETTINGS" => Ok(AuditLogEntityType::Settings),
             _ => Err(AuditLogError::InvalidInput(format!(
                 "Unknown entity type: {}",
                 entity_type
@@ -94,6 +96,7 @@ impl fmt::Display for AuditLogEntityType {
             AuditLogEntityType::User => write!(f, "USER"),
             AuditLogEntityType::Role => write!(f, "ROLE"),
             AuditLogEntityType::OAuthApplication => write!(f, "OAUTH_APPLICATION"),
+            AuditLogEntityType::Settings => write!(f, "SETTINGS"),
             AuditLogEntityType::Unknown => write!(f, "UNKNOWN"),
         }
     }
@@ -103,6 +106,7 @@ impl AuditLog {
     pub const COLLECTION_NAME_USERS: &'static str = "user-logs";
     pub const COLLECTION_NAME_ROLES: &'static str = "role-logs";
     pub const COLLECTION_NAME_OAUTH_APPLICATIONS: &'static str = "oauth-application-logs";
+    pub const COLLECTION_NAME_SYSTEM: &'static str = "system-logs";
 
     #[allow(unused)]
     pub fn new(
@@ -231,6 +235,15 @@ impl AuditLog {
                 }
             };
 
+        let system_ = match Self::get_collection(&AuditLogEntityType::Settings, connection) {
+            Some(coll) => coll,
+            None => {
+                return Err(AuditLogError::InvalidEntityType(
+                    "System entity type invalid".to_string(),
+                ))
+            }
+        };
+
         let filter = doc! {
             "authorId": author_id
         };
@@ -307,9 +320,33 @@ impl AuditLog {
             }
         };
 
+        // Fetch system logs
+        let system_logs = match system_.find(filter.clone(), None).await {
+            Ok(cursor) => {
+                let mut logs = Vec::new();
+                let mut stream = cursor;
+
+                while let Some(result) = stream.next().await {
+                    match result {
+                        Ok(doc) => logs.push(doc),
+                        Err(err) => return Err(AuditLogError::DatabaseError(err.to_string())),
+                    }
+                }
+
+                logs
+            }
+            Err(err) => {
+                return Err(AuditLogError::DatabaseError(format!(
+                    "Error fetching system audit logs: {}",
+                    err
+                )))
+            }
+        };
+
         all_logs.extend(user_logs);
         all_logs.extend(role_logs);
         all_logs.extend(oauth_application_logs);
+        all_logs.extend(system_logs);
 
         all_logs.sort_by(|a, b| a.created_at.cmp(&b.created_at));
 
@@ -388,6 +425,7 @@ impl AuditLog {
             &AuditLogEntityType::OAuthApplication => {
                 Some(db.collection(Self::COLLECTION_NAME_OAUTH_APPLICATIONS))
             }
+            &AuditLogEntityType::Settings => Some(db.collection(Self::COLLECTION_NAME_SYSTEM)),
             &AuditLogEntityType::Unknown => None,
         }
     }
