@@ -4,9 +4,11 @@
 	import AuthStateManager from '$lib/auth';
 	import { onMount, tick } from "svelte";
     import { Eye, EyeOff } from 'lucide-svelte';
+	import type Settings from '$lib/models/Settings';
 
     const authStateManager = new AuthStateManager();
     const api = new AuthRsApi();
+    let settings: Settings | null = null;
     let step = 0;
 
     let email = '';
@@ -74,7 +76,7 @@
             });
     }
 
-    onMount(() => {
+    onMount(async () => {
         redirect = new URL(window.location.href).searchParams.get('redirect_uri');
 
         const token = authStateManager.getToken();
@@ -90,6 +92,7 @@
                     authStateManager.clearToken();
                 });
         }
+        settings = await api.getSettings();
         
         document.getElementById('form')?.addEventListener('submit', e => {
             e.preventDefault();
@@ -144,7 +147,7 @@
             on:click={step == 0 ? login : completeTotp}
         >{step < 2 ? loginText : verifyText}</button>
     </form>
-    {#if step < 2}
+    {#if settings?.allowRegistration && step < 2}
         <p class="text-[14px]" style="margin-top: 15px;">or</p>
         <a href="/register" class="text-[13px]" style="margin-top: 10px;">Don't have an account? <i>Register here!</i></a>
     {/if}
