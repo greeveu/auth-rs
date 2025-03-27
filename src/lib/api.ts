@@ -5,6 +5,8 @@ import type OAuthApplicationUpdates from "./models/OAuthApplicationUpdates";
 import type OAuthConnection from "./models/OAuthConnection";
 import type Role from "./models/Role";
 import type RoleUpdates from "./models/RoleUpdates";
+import type Settings from "./models/Settings";
+import type SettingsUpdates from "./models/SettingsUpdates";
 import type UserMinimal from "./models/User";
 import type UserUpdates from "./models/UserUpdates";
 
@@ -25,6 +27,43 @@ class AuthRsApi {
         return response.ok;
     }
 
+    async getSettings(): Promise<Settings> {
+        const response = await fetch(`${AuthRsApi.baseUrl}/settings`, {
+            method: 'GET'
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            return data.data;
+        } else {
+            console.error((await response.json()));
+            throw new Error(`(${response.status}): ${response.statusText}`);
+        }
+    }
+
+    async updateSettings(updates: SettingsUpdates): Promise<Settings> {
+        if (!this.token) {
+            throw new Error('No token');
+        }
+
+        const response = await fetch(`${AuthRsApi.baseUrl}/admin/settings`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${this.token}`,
+            },
+            body: JSON.stringify(updates),
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            return data.data;
+        } else {
+            console.error((await response.json()));
+            throw new Error(`(${response.status}): ${response.statusText}`);
+        }
+    }
+
     async login(email: string, password: string) {
         const response = await fetch(`${AuthRsApi.baseUrl}/auth/login`, {
             method: 'POST',
@@ -36,13 +75,9 @@ class AuthRsApi {
 
         if (response.ok) {
             const data = await response.json();
-
-            if (data.status != 200) {
-                throw new Error(data.message);
-            }
-
             if (data.data?.mfaRequired) {
                 this.currentMfaFlowId = data.data.mfaFlowId;
+
                 return data.data;
             }
             new AuthStateManager().setToken(data.data.token);
@@ -69,9 +104,6 @@ class AuthRsApi {
 
         if (response.ok) {
             const data = await response.json();
-            if (data.status != 200) {
-                throw new Error(data.message);
-            }
             new AuthStateManager().setToken(data.data.token);
             this.token = data.data.token;
             return data.data;
@@ -97,9 +129,6 @@ class AuthRsApi {
 
         if (response.ok) {
             const data = await response.json();
-            if (data.status != 200) {
-                throw new Error(data.message);
-            }
             if (data.data?.mfaRequired) {
                 this.currentMfaFlowId = data.data.mfaFlowId;
             }
@@ -126,9 +155,6 @@ class AuthRsApi {
 
         if (response.ok) {
             const data = await response.json();
-            if (data.status != 200) {
-                throw new Error(data.message);
-            }
             return data.data;
         } else {
             console.error((await response.json()));
@@ -152,9 +178,6 @@ class AuthRsApi {
 
         if (response.ok) {
             const data = await response.json();
-            if (data.status != 201) {
-                throw new Error(data.message);
-            }
             return data.data;
         } else {
             console.error((await response.json()));
@@ -176,9 +199,6 @@ class AuthRsApi {
 
         if (response.ok) {
             const data = await response.json();
-            if (data.status != 200) {
-                throw new Error(data.message);
-            }
             return data.data;
         } else {
             console.error((await response.json()));
@@ -200,9 +220,6 @@ class AuthRsApi {
 
         if (response.ok) {
             const data = await response.json();
-            if (data.status != 200) {
-                throw new Error(data.message);
-            }
             return data.data;
         } else {
             console.error((await response.json()));
@@ -226,9 +243,6 @@ class AuthRsApi {
 
         if (response.ok) {
             const data = await response.json();
-            if (data.status != 200) {
-                throw new Error(data.message);
-            }
             return data.data;
         } else {
             console.error((await response.json()));
@@ -251,9 +265,6 @@ class AuthRsApi {
 
         if (response.ok) {
             const data = await response.json();
-            if (data.status != 200) {
-                throw new Error(data.message);
-            }
             return data.data;
         } else {
             console.error((await response.json()));
@@ -277,9 +288,6 @@ class AuthRsApi {
 
         if (response.ok) {
             const data = await response.json();
-            if (data.status != 201) {
-                throw new Error(data.message);
-            }
             return data.data;
         } else {
             console.error((await response.json()));
@@ -301,9 +309,6 @@ class AuthRsApi {
 
         if (response.ok) {
             const data = await response.json();
-            if (data.status != 200) {
-                throw new Error(data.message);
-            }
             return data.data;
         } else {
             console.error((await response.json()));
@@ -325,9 +330,6 @@ class AuthRsApi {
 
         if (response.ok) {
             const data = await response.json();
-            if (data.status != 200) {
-                throw new Error(data.message);
-            }
             return data.data;
         } else {
             console.error((await response.json()));
@@ -351,9 +353,6 @@ class AuthRsApi {
 
         if (response.ok) {
             const data = await response.json();
-            if (data.status != 200) {
-                throw new Error(data.message);
-            }
             return data.data;
         } else {
             console.error((await response.json()));
@@ -376,9 +375,6 @@ class AuthRsApi {
 
         if (response.ok) {
             const data = await response.json();
-            if (data.status != 200) {
-                throw new Error(data.message);
-            }
             return data.data;
         } else {
             console.error((await response.json()));
@@ -400,9 +396,6 @@ class AuthRsApi {
 
         if (response.ok) {
             const data = await response.json();
-            if (data.status != 200) {
-                throw new Error(data.message);
-            }
             return data.data;
         } else {
             console.error((await response.json()));
@@ -425,9 +418,6 @@ class AuthRsApi {
 
         if (response.ok) {
             const data = await response.json();
-            if (data.status != 200) {
-                throw new Error(data.message);
-            }
             return data.data;
         } else {
             console.error((await response.json()));
@@ -455,9 +445,6 @@ class AuthRsApi {
 
         if (response.ok) {
             const data = await response.json();
-            if (data.status != 201) {
-                throw new Error(data.message);
-            }
             return data.data;
         } else {
             console.error((await response.json()));
@@ -480,9 +467,6 @@ class AuthRsApi {
 
         if (response.ok) {
             const data = await response.json();
-            if (data.status != 200) {
-                throw new Error(data.message);
-            }
             return data.data;
         } else {
             console.error((await response.json()));
@@ -504,9 +488,6 @@ class AuthRsApi {
 
         if (response.ok) {
             const data = await response.json();
-            if (data.status != 200) {
-                throw new Error(data.message);
-            }
             return data.data;
         } else {
             console.error((await response.json()));
@@ -557,9 +538,6 @@ class AuthRsApi {
 
         if (response.ok) {
             const data = await response.json();
-            if (data.status != 200) {
-                throw new Error(data.message);
-            }
             return data.data;
         } else {
             console.error((await response.json()));
@@ -582,9 +560,6 @@ class AuthRsApi {
 
         if (response.ok) {
             const data = await response.json();
-            if (data.status != 200) {
-                throw new Error(data.message);
-            }
             return data.data;
         } else {
             console.error((await response.json()));
@@ -606,9 +581,6 @@ class AuthRsApi {
 
         if (response.ok) {
             const data = await response.json();
-            if (data.status != 200) {
-                throw new Error(data.message);
-            }
             return data.data;
         } else {
             console.error((await response.json()));
@@ -630,9 +602,6 @@ class AuthRsApi {
 
         if (response.ok) {
             const data = await response.json();
-            if (data.status != 200) {
-                throw new Error(data.message);
-            }
             return data.data;
         } else {
             console.error((await response.json()));
