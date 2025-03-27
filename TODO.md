@@ -14,6 +14,7 @@
 - [x] Disable Users
 - [ ] Registration
 - [ ] New "Your Profile" page style + edit button
+- [ ] Tooltips
 
 ## Both
 
