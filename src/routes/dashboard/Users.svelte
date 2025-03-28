@@ -215,7 +215,10 @@
     </div>
     <div class="flex flex-wrap overflow-y-scroll gap-[25px]">
         {#each users.filter(u => u._id != UserMinimal.DEFAULT_USER_ID) as user}
-            <div class="flex flex-col items-start justify start gap-[10px] min-w-[300px] border-[2px] border-[#333] rounded-md" style="padding: 15px;">
+            <div
+                class="flex flex-col items-start justify start gap-[10px] min-w-[300px] border-[2px] border-[#333] rounded-md"
+                style="padding: 15px;"
+            >
                 <div class="flex flex-row justify-between w-full gap-[20px]">
                     <p class="text-[20px] font-bold h-[20px]">{user.firstName} {user.lastName}</p>
                     <div class="flex flex-row">
@@ -271,8 +274,12 @@
                         </div>
                     </div>
                 </div>
-                <p class="text-[12px] opacity-35 h-[20px]">Created at {DateUtils.getFullDateString(UserMinimal.getCreatedAt(user))}</p>
+                <p class="text-[12px] opacity-35 {user.disabled ? 'h-[10px]' : 'h-[20px]'}">Created at {DateUtils.getFullDateString(UserMinimal.getCreatedAt(user))}</p>
+                {#if user.disabled}
+                    <p class="text-[12px] h-[20px] text-red-600">Disabled!</p>
+                {/if}
                 <TextField label="Email" value={user.email} readonly />
+                <TextField label="MFA" value={user.mfa ? 'Enabled' : 'Disabled'} readonly />
                 <RoleList label="Roles" roles={roles.filter(r => user.roles.includes(r._id))} onAdd={() => {}} onRemove={() => {}} readOnly={false} isSystemAdmin={currentUser._id == UserMinimal.DEFAULT_USER_ID} disableOutline />
             </div>
         {/each}
