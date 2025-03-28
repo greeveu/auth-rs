@@ -1,5 +1,5 @@
 <script lang="ts">
-	import OnOffToggle from '../../lib/components/dashboard/OnOffToggle.svelte';
+	import OnOffToggle from '../../lib/components/global/OnOffToggle.svelte';
 	import type Settings from "$lib/models/Settings";
 	import type AuthRsApi from '$lib/api';
 	import SettingsUpdates from '$lib/models/SettingsUpdates';

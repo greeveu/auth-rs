@@ -5,7 +5,7 @@
 	import { onMount, tick } from "svelte";
     import { Eye, EyeOff } from 'lucide-svelte';
 	import type Settings from '$lib/models/Settings';
-	import TextInput from '$lib/components/dashboard/TextInput.svelte';
+	import TextInput from '$lib/components/global/TextInput.svelte';
 
     const authStateManager = new AuthStateManager();
     const api = new AuthRsApi();

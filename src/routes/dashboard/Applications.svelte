@@ -1,6 +1,6 @@
 <script lang="ts">
-	import TextInput from './../../lib/components/dashboard/TextInput.svelte';
-	import TextField from '$lib/components/dashboard/TextField.svelte';
+	import TextInput from '../../lib/components/global/TextInput.svelte';
+	import TextField from '$lib/components/global/TextField.svelte';
 	import Popup from './../../lib/components/global/Popup.svelte';
 	import RedirectUriList from './../../lib/components/dashboard/RedirectUriList.svelte';
 	import type AuthRsApi from "$lib/api";

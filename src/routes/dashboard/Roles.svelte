@@ -6,7 +6,7 @@
 	import RoleUpdates from '$lib/models/RoleUpdates';
 	import Role from '$lib/models/Role';
 	import DateUtils from '$lib/dateUtils';
-	import TextInput from '$lib/components/dashboard/TextInput.svelte';
+	import TextInput from '$lib/components/global/TextInput.svelte';
 
     export let api: AuthRsApi;
     export let roles: Role[];

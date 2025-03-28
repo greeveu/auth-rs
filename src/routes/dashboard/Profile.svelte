@@ -1,6 +1,6 @@
 <script lang="ts">
 	import RoleList from '../../lib/components/dashboard/RoleList.svelte';
-	import TextField from "$lib/components/dashboard/TextField.svelte";
+	import TextField from "$lib/components/global/TextField.svelte";
 	import { onMount } from 'svelte';
 	import type AuthRsApi from '$lib/api';
 	import UserMinimal from '$lib/models/User';

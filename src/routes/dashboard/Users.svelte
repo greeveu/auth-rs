@@ -1,12 +1,12 @@
 <script lang="ts">
-	import TextInput from './../../lib/components/dashboard/TextInput.svelte';
+	import TextInput from '../../lib/components/global/TextInput.svelte';
 	import Popup from '../../lib/components/global/Popup.svelte';
 	import type AuthRsApi from "$lib/api";
 	import { PackageOpen, Pen, Trash, UserCheck, UserX } from "lucide-svelte";
 	import { onMount } from "svelte";
 	import UserMinimalUpdates from '$lib/models/UserUpdates';
 	import UserMinimal from '$lib/models/User';
-	import TextField from '$lib/components/dashboard/TextField.svelte';
+	import TextField from '$lib/components/global/TextField.svelte';
 	import RoleList from '$lib/components/dashboard/RoleList.svelte';
 	import type Role from '$lib/models/Role';
 	import DateUtils from '$lib/dateUtils';

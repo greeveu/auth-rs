@@ -5,7 +5,7 @@
 	import type AuthRsApi from "$lib/api";
 	import type UserMinimal from "$lib/models/User";
 	import { goto } from '$app/navigation';
-	import TextInput from '$lib/components/dashboard/TextInput.svelte';
+	import TextInput from '$lib/components/global/TextInput.svelte';
 
     export let api: AuthRsApi;
     export let user: UserMinimal;
