@@ -1,7 +1,7 @@
 ## Backend
 
-- [ ] Recursivly remove roles from users when role is deleted
-- [ ] Recursivly delete user bound data on user deletion
+- [x] Recursivly remove roles from users when role is deleted
+- [x] Recursivly delete user bound data on user deletion
 - [x] Return http status code in base response
 - [x] Validate redirect URI (not sure if we already do this) -> Update: We did :3
 - [x] Emails are not unique??? -> Fixed

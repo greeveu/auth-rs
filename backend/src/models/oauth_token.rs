@@ -302,6 +302,25 @@ impl OAuthToken {
     }
 
     #[allow(unused)]
+    pub async fn delete_by_user_id(
+        user_id: Uuid,
+        connection: &Connection<AuthRsDatabase>,
+    ) -> Result<(), OAuthTokenError> {
+        let db = Self::get_collection(connection);
+
+        let filter = doc! {
+            "userId": user_id
+        };
+        match db.delete_many(filter, None).await {
+            Ok(_) => Ok(()),
+            Err(err) => Err(OAuthTokenError::DatabaseError(format!(
+                "Error deleting OAuth Tokens: {:?}",
+                err
+            ))),
+        }
+    }
+
+    #[allow(unused)]
     fn get_collection(connection: &Connection<AuthRsDatabase>) -> Collection<Self> {
         let db = get_main_db(connection);
         db.collection(Self::COLLECTION_NAME)

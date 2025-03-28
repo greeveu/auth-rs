@@ -8,7 +8,7 @@ use rocket::{
 use rocket_db_pools::{mongodb::Collection, Connection};
 use thiserror::Error;
 
-use super::http_response::HttpResponse;
+use super::{http_response::HttpResponse, user::User};
 
 #[derive(Error, Debug)]
 #[allow(unused)]
@@ -234,6 +234,11 @@ impl Role {
         if self.system {
             return Err(RoleError::SystemRoleModification);
         }
+
+        // Remove role from all users
+        User::remove_role_from_all(self.id.clone(), &connection)
+            .await
+            .map_err(|err| RoleError::DatabaseError(err.to_string()))?;
 
         let filter = doc! {
             "_id": self.id

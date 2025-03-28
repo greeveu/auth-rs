@@ -258,6 +258,25 @@ impl OAuthApplication {
     }
 
     #[allow(unused)]
+    pub async fn delete_by_owner_id(
+        owner_id: Uuid,
+        connection: &Connection<AuthRsDatabase>,
+    ) -> OAuthApplicationResult<()> {
+        let db = Self::get_collection(connection);
+
+        let filter = doc! {
+            "owner": owner_id
+        };
+        match db.delete_many(filter, None).await {
+            Ok(_) => Ok(()),
+            Err(err) => Err(OAuthApplicationError::DatabaseError(format!(
+                "Error deleting OAuth Applications: {:?}",
+                err
+            ))),
+        }
+    }
+
+    #[allow(unused)]
     fn get_collection(connection: &Connection<AuthRsDatabase>) -> Collection<Self> {
         let db = get_main_db(connection);
         db.collection(Self::COLLECTION_NAME)
