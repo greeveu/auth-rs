@@ -8,7 +8,6 @@ use rocket::{
 };
 use rocket_db_pools::Connection;
 
-use crate::errors::ApiError;
 use crate::{
     auth::auth::AuthEntity,
     db::AuthRsDatabase,
