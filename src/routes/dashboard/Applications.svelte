@@ -234,7 +234,10 @@
                         </div>
                     </div>
                 </div>
-                <p class="text-[12px] opacity-35 h-[20px]">Created at {DateUtils.getFullDateString(OAuthApplication.getCreatedAt(application))}</p>
+                <p class="text-[12px] opacity-35 {onlyShowOwned ? 'h-[20px]' : 'h-[10px]'}">Created at {DateUtils.getFullDateString(OAuthApplication.getCreatedAt(application))}</p>
+                {#if !onlyShowOwned}
+                    <p class="text-[12px] opacity-35 h-[20px]">Owner: <span class="text-[10px]">{application.owner}</span></p>
+                {/if}
                 <p class="text-[12px] opacity-50">{@html (application.description?.length ?? 0) > 1 ? application.description?.substring(0, 200) + ((application.description?.length ?? 0) > 200 ? '...' : '') : '<i>This application does not have a description.</i>'}</p>
                 <RedirectUriList bind:redirectUris={application.redirectUris} onAdd={() => openAddRedirectUriPopup(application)} onRemove={(redirectUri) => removeRedirectUri(application, redirectUri)} />
             </div>
