@@ -23,7 +23,7 @@
     }
 </script>
 
-<div class="flex flex-col items-start justify-start h-[100%] w-full gap-[10px]">
+<div class="flex flex-col items-start justify-start h-[100%] w-full gap-[20px]">
     <OnOffToggle label="Allow Registrations" bind:value={settings.openRegistration} onToggle={updateSettings} disabled={disabled} />
     <OnOffToggle label="Allow OAuth Applications for Users" bind:value={settings.allowOauthAppsForUsers} onToggle={updateSettings} disabled={disabled} />
 </div>
