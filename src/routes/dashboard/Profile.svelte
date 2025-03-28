@@ -28,6 +28,15 @@
 
         return emailValid && nameValid && passwordValid;
     }
+
+    function showEditUserPopup() {
+        editUserPopup = true;
+        editUserEmail = user.email;
+        editUserFirstName = user.firstName;
+        editUserLastName = user.lastName;
+        editUserPassword = '';
+        editUserPasswordConfirm = '';
+    }
     
     onMount(async () => {
         if (roles.length < 1) {
@@ -70,19 +79,12 @@
     <p
         class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md button"
         style="padding: 10px;"
-        on:click={() => {
-            editUserPopup = true;
-            editUserEmail = user.email;
-            editUserFirstName = user.firstName;
-            editUserLastName = user.lastName;
-            editUserPassword = '';
-            editUserPasswordConfirm = '';
-        }}
+        on:click={showEditUserPopup}
     >Edit Profile</p>
 </div>
 <div class="flex flex-col items-start justify-start h-[100%] w-full gap-[10px]">
-    <TextField label="Full Name" value={`${user.firstName} ${user.lastName}`} readonly={User.isSystemAdmin(user)} />
-    <TextField label="Email" value={user.email} readonly={User.isSystemAdmin(user)} />
+    <TextField label="Full Name" value={`${user.firstName} ${user.lastName}`} onClick={showEditUserPopup} readonly={User.isSystemAdmin(user)} />
+    <TextField label="Email" value={user.email} onClick={showEditUserPopup} readonly={User.isSystemAdmin(user)} />
     <RoleList label="Roles" roles={roles.filter(r => user.roles.includes(r._id))} onAdd={() => {}} onRemove={() => {}} readOnly isSystemAdmin={User.isSystemAdmin(user)} />
     <TextField label="Creation Date" value={DateUtils.getFullDateString(User.getCreatedAt(user))} readonly />
 </div>
