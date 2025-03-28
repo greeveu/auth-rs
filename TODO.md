@@ -14,7 +14,7 @@
 - [x] Create / Edit users
 - [x] Disable Users
 - [ ] Registration
-- [ ] ~~New "Your Profile" page style +~~ edit button
+- [x] ~~New "Your Profile" page style +~~ edit button
 - [ ] Tooltips
 - [ ] render invalid ouath url errors
 - [ ] raw json viewer -> debug mode???

@@ -6,10 +6,28 @@
 	import User from '$lib/models/User';
 	import type Role from '$lib/models/Role';
 	import DateUtils from '$lib/dateUtils';
+	import TextInput from '$lib/components/global/TextInput.svelte';
+	import Popup from '$lib/components/global/Popup.svelte';
+	import UserUpdates from '$lib/models/UserUpdates';
 
     export let api: AuthRsApi;
     export let user: User;
     export let roles: Role[];
+
+    let editUserPopup: boolean = false;
+    let editUserEmail: string = '';
+    let editUserFirstName: string = '';
+    let editUserLastName: string = '';
+    let editUserPassword: string = '';
+    let editUserPasswordConfirm: string = '';
+
+    $: editUserDataIsValid = () => {
+        const emailValid = editUserEmail.length >= 5 && editUserEmail.includes('@') && editUserEmail.includes('.');
+        const nameValid = editUserFirstName.length > 0;
+        const passwordValid = (editUserPassword.length < 1 && editUserPasswordConfirm.length < 1) || (editUserPassword.length > 7 && editUserPassword === editUserPasswordConfirm);
+
+        return emailValid && nameValid && passwordValid;
+    }
     
     onMount(async () => {
         if (roles.length < 1) {
@@ -20,6 +38,48 @@
     });
 </script>
 
+{#if editUserPopup}
+    <Popup title="Edit User" onClose={() => editUserPopup = false}>
+        <div class="flex flex-col items-center justify-center min-w-[350px]">
+            <TextInput type="email" label="Email" bind:value={editUserEmail} autofocus />
+            <TextInput label="First Name" bind:value={editUserFirstName} />
+            <TextInput label="Last Name" bind:value={editUserLastName} />
+            <TextInput type="password" label="Password" bind:value={editUserPassword} />
+            <TextInput type="password" label="Confirm Password" bind:value={editUserPasswordConfirm} />
+            <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <p
+                class="text-green-600 rounded-md {editUserDataIsValid() ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px] button green-button"
+                style="margin-top: 20px; margin-bottom: 10px;"
+                on:click={editUserDataIsValid() ? () => {
+                    editUserPopup = false;
+                    api.updateUser(user!, new UserUpdates({ email: editUserEmail, password: editUserPassword.length < 1 ? null : editUserPassword, firstName: editUserFirstName, lastName: editUserLastName, roles: null, disabled: null }))
+                        .then(editedUser => {
+                            user = editedUser;
+                        })
+                        .catch(e => console.error(e));
+                } : null}
+            >Save</p>
+        </div>
+    </Popup>
+{/if}
+
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+<div class="absolute flex flex-col min-h-[70px] items-center justify-center self-end" style="margin-right: 50px;">
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <p
+        class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md button"
+        style="padding: 10px;"
+        on:click={() => {
+            editUserPopup = true;
+            editUserEmail = user.email;
+            editUserFirstName = user.firstName;
+            editUserLastName = user.lastName;
+            editUserPassword = '';
+            editUserPasswordConfirm = '';
+        }}
+    >Edit Profile</p>
+</div>
 <div class="flex flex-col items-start justify-start h-[100%] w-full gap-[10px]">
     <TextField label="Full Name" value={`${user.firstName} ${user.lastName}`} readonly={User.isSystemAdmin(user)} />
     <TextField label="Email" value={user.email} readonly={User.isSystemAdmin(user)} />
