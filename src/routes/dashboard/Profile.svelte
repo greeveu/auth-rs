@@ -4,7 +4,6 @@
 	import { onMount } from 'svelte';
 	import type AuthRsApi from '$lib/api';
 	import User from '$lib/models/User';
-	import UserUpdates from '$lib/models/UserUpdates';
 	import type Role from '$lib/models/Role';
 	import DateUtils from '$lib/dateUtils';
 
