@@ -1,4 +1,4 @@
-export default class UserMinimal {
+export default class User {
     _id: string;
     email: string;
     firstName: string;
@@ -19,16 +19,16 @@ export default class UserMinimal {
         this.createdAt = createdAt;
     }
 
-    static getCreatedAt(user: UserMinimal): Date {
+    static getCreatedAt(user: User): Date {
         // @ts-ignore
         return new Date(parseInt(user.createdAt.$date.$numberLong) ?? 0);
     }
 
-    static isAdmin(user: UserMinimal): boolean {
+    static isAdmin(user: User): boolean {
         return user._id == this.DEFAULT_USER_ID || user.roles.includes(this.ADMIN_ROLE_ID);
     }
 
-    static isSystemAdmin(user: UserMinimal): boolean {
+    static isSystemAdmin(user: User): boolean {
         return user._id == this.DEFAULT_USER_ID;
     }
 

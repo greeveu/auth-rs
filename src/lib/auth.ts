@@ -1,6 +1,6 @@
 import { goto } from "$app/navigation";
 import AuthRsApi from "./api";
-import type UserMinimal from "./models/User";
+import type User from "./models/User";
 
 class AuthStateManager {
     constructor() {}
@@ -17,7 +17,7 @@ class AuthStateManager {
         localStorage.removeItem('token');
     }
 
-    async handlePageLoad(params: string[] | null = null): Promise<[AuthRsApi, UserMinimal] | null> {
+    async handlePageLoad(params: string[] | null = null): Promise<[AuthRsApi, User] | null> {
         const token = this.getToken();
         if (token) {
             const api = new AuthRsApi();

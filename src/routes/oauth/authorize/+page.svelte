@@ -12,11 +12,11 @@
         Lock
     } from "lucide-svelte";
 	import { INVALID_SCOPES } from "$lib/models/OAuthScopes";
-	import type UserMinimal from "$lib/models/User";
+	import type User from "$lib/models/User";
 	import OAuthApplication from "$lib/models/OAuthApplication";
 
     let api: AuthRsApi | null = null;
-    let user: UserMinimal | null = null;
+    let user: User | null = null;
 
     let currentPath: string | null = null;
 

@@ -8,11 +8,11 @@
 	import { BotOff, Pen, Trash } from "lucide-svelte";
 	import { onMount } from "svelte";
 	import OAuthApplicationUpdates from '$lib/models/OAuthApplicationUpdates';
-	import type UserMinimal from '$lib/models/User';
+	import type User from '$lib/models/User';
 	import DateUtils from '$lib/dateUtils';
 
     export let api: AuthRsApi;
-    export let user: UserMinimal;
+    export let user: User;
     export let applications: OAuthApplication[];
     export let onlyShowOwned: boolean = true;
 

@@ -5,7 +5,7 @@
 	import AuthRsApi from "$lib/api";
 	import AuthStateManager from "$lib/auth";
 	import { onMount } from "svelte";
-	import UserMinimal from '$lib/models/User';
+	import User from '$lib/models/User';
 	import type OAuthApplication from '$lib/models/OAuthApplication';
 	import Connections from './Connections.svelte';
 	import type OAuthConnection from '$lib/models/OAuthConnection';
@@ -24,8 +24,8 @@
     let currentTabIndex = 0;
 
     let settings: Settings | null = null;
-    let user: UserMinimal | null = null;
-    let users: UserMinimal[] = [];
+    let user: User | null = null;
+    let users: User[] = [];
     let roles: Role[] = [];
     let connections: OAuthConnection[] = [];
     let applications: OAuthApplication[] = [];
@@ -35,20 +35,20 @@
         slug: string,
         name: string;
         icon: string;
-        shouldShow: (user: UserMinimal, settings: Settings) => boolean;
+        shouldShow: (user: User, settings: Settings) => boolean;
     }[] = [
         { slug: 'your-profile', name: 'Your Profile', icon: 'user', shouldShow: () => true },
         { slug: 'security', name: 'Security', icon: 'shield', shouldShow: () => true },
-        { slug: 'connections', name: 'Connections', icon: 'link', shouldShow: (user) => !UserMinimal.isSystemAdmin(user) },
-        { slug: 'oauth-applications', name: 'OAuth Applications', icon: 'code-xml', shouldShow: (user, settings) => settings.allowOauthAppsForUsers || UserMinimal.isAdmin(user) },
+        { slug: 'connections', name: 'Connections', icon: 'link', shouldShow: (user) => !User.isSystemAdmin(user) },
+        { slug: 'oauth-applications', name: 'OAuth Applications', icon: 'code-xml', shouldShow: (user, settings) => settings.allowOauthAppsForUsers || User.isAdmin(user) },
         { slug: 'logs', name: 'Logs', icon: 'clipboard-list', shouldShow: () => true },
-        { slug: 'spacer', name: 'SPACER', icon: '', shouldShow: (user) => UserMinimal.isAdmin(user) },
-        { slug: 'users', name: 'Users', icon: 'users', shouldShow: (user) => UserMinimal.isAdmin(user) },
-        { slug: 'roles', name: 'Roles', icon: 'crown', shouldShow: (user) => UserMinimal.isAdmin(user) },
-        { slug: 'all-oauth-applications', name: 'All OAuth Apps', icon: 'code-xml', shouldShow: (user) => UserMinimal.isAdmin(user) },
-        { slug: 'registration-codes', name: 'Registration Codes', icon: 'ticket-check', shouldShow: (user, settings) => UserMinimal.isAdmin(user) && !settings.openRegistration },
-        { slug: 'global-logs', name: 'Global Logs', icon: 'scroll-text', shouldShow: (user) => UserMinimal.isAdmin(user) },
-        { slug: 'system-settings', name: 'System Settings', icon: 'settings', shouldShow: (user) => UserMinimal.isSystemAdmin(user) },
+        { slug: 'spacer', name: 'SPACER', icon: '', shouldShow: (user) => User.isAdmin(user) },
+        { slug: 'users', name: 'Users', icon: 'users', shouldShow: (user) => User.isAdmin(user) },
+        { slug: 'roles', name: 'Roles', icon: 'crown', shouldShow: (user) => User.isAdmin(user) },
+        { slug: 'all-oauth-applications', name: 'All OAuth Apps', icon: 'code-xml', shouldShow: (user) => User.isAdmin(user) },
+        { slug: 'registration-codes', name: 'Registration Codes', icon: 'ticket-check', shouldShow: (user, settings) => User.isAdmin(user) && !settings.openRegistration },
+        { slug: 'global-logs', name: 'Global Logs', icon: 'scroll-text', shouldShow: (user) => User.isAdmin(user) },
+        { slug: 'system-settings', name: 'System Settings', icon: 'settings', shouldShow: (user) => User.isSystemAdmin(user) },
     ];
     
     onMount(async () => {
@@ -63,7 +63,7 @@
 
 <div class="flex w-screen h-screen items-center justify-center">
     <div class="flex flex-row items-center h-[80%] w-[70%] border-[2.5px] border-[#333] rounded-md" style="padding: 10px;">
-        <div class="flex flex-col justify-between {user && UserMinimal.isSystemAdmin(user) ? 'h-[95%]' : 'h-[90%]'}">
+        <div class="flex flex-col justify-between {user && User.isSystemAdmin(user) ? 'h-[95%]' : 'h-[90%]'}">
             <div class="flex flex-col gap-[15px] overflow-y-scroll" style="padding-right: 7.5px;">
                 {#each TABS as tab, index}
                     {#if user && settings && tab.shouldShow(user, settings)}

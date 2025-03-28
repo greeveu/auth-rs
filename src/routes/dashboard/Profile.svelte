@@ -3,13 +3,13 @@
 	import TextField from "$lib/components/global/TextField.svelte";
 	import { onMount } from 'svelte';
 	import type AuthRsApi from '$lib/api';
-	import UserMinimal from '$lib/models/User';
+	import User from '$lib/models/User';
 	import UserUpdates from '$lib/models/UserUpdates';
 	import type Role from '$lib/models/Role';
 	import DateUtils from '$lib/dateUtils';
 
     export let api: AuthRsApi;
-    export let user: UserMinimal;
+    export let user: User;
     export let roles: Role[];
     
     function addRole() {
@@ -57,8 +57,8 @@
 </script>
 
 <div class="flex flex-col items-start justify-start h-[100%] w-full gap-[10px]">
-    <TextField label="Full Name" value={`${user.firstName} ${user.lastName}`} readonly={UserMinimal.isSystemAdmin(user)} />
-    <TextField label="Email" value={user.email} readonly={UserMinimal.isSystemAdmin(user)} />
-    <RoleList label="Roles" roles={roles.filter(r => user.roles.includes(r._id))} onAdd={addRole} onRemove={removeRole} readOnly={!UserMinimal.isAdmin(user) || UserMinimal.isSystemAdmin(user)} isSystemAdmin={UserMinimal.isSystemAdmin(user)} />
-    <TextField label="Creation Date" value={DateUtils.getFullDateString(UserMinimal.getCreatedAt(user))} readonly />
+    <TextField label="Full Name" value={`${user.firstName} ${user.lastName}`} readonly={User.isSystemAdmin(user)} />
+    <TextField label="Email" value={user.email} readonly={User.isSystemAdmin(user)} />
+    <RoleList label="Roles" roles={roles.filter(r => user.roles.includes(r._id))} onAdd={addRole} onRemove={removeRole} readOnly={!User.isAdmin(user) || User.isSystemAdmin(user)} isSystemAdmin={User.isSystemAdmin(user)} />
+    <TextField label="Creation Date" value={DateUtils.getFullDateString(User.getCreatedAt(user))} readonly />
 </div>

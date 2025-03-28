@@ -3,12 +3,12 @@
 	import Popup from '../../lib/components/global/Popup.svelte';
 	import { Eye, EyeOff, ShieldCheck, ShieldX } from 'lucide-svelte';
 	import type AuthRsApi from "$lib/api";
-	import type UserMinimal from "$lib/models/User";
+	import type User from "$lib/models/User";
 	import { goto } from '$app/navigation';
 	import TextInput from '$lib/components/global/TextInput.svelte';
 
     export let api: AuthRsApi;
-    export let user: UserMinimal;
+    export let user: User;
 
     let startEnable2FAPopup = false;
     let completeEnable2FAPopup = false;
@@ -33,7 +33,7 @@
     async function enableMFA() {
         if (enableTotpQR) {
             const totp = enableTotp.map(n => n === null ? 0 : n).join('');
-            api.mfa(totp).then((newUser: UserMinimal) => {
+            api.mfa(totp).then((newUser: User) => {
                 completeEnable2FAPopup = false;
                 user = newUser;
                 goto('/logout');

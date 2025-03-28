@@ -4,12 +4,12 @@
 	import { AuditLog, AuditLogAction, AuditLogEntityType } from "$lib/models/AuditLog";
 	import type OAuthApplication from "$lib/models/OAuthApplication";
 	import type Role from "$lib/models/Role";
-	import UserMinimal from "$lib/models/User";
+	import User from "$lib/models/User";
 	import { onMount } from "svelte";
 
     export let api: AuthRsApi;
-    export let user: UserMinimal;
-    export let users: UserMinimal[];
+    export let user: User;
+    export let users: User[];
     export let roles: Role[];
     export let applications: OAuthApplication[];
     export let auditLogs: AuditLog[];
@@ -41,7 +41,7 @@
             }).catch((err) => {
                 console.error(err);
             });
-            if (UserMinimal.isAdmin(user)) {
+            if (User.isAdmin(user)) {
                 api.getUsers().then((newUsers) => {
                     users = newUsers;
                 }).catch((err) => {

@@ -7,7 +7,7 @@ import type Role from "./models/Role";
 import type RoleUpdates from "./models/RoleUpdates";
 import type Settings from "./models/Settings";
 import type SettingsUpdates from "./models/SettingsUpdates";
-import type UserMinimal from "./models/User";
+import type User from "./models/User";
 import type UserUpdates from "./models/UserUpdates";
 
 class AuthRsApi {
@@ -113,7 +113,7 @@ class AuthRsApi {
         }
     }
 
-    async enableMfa(user: UserMinimal, password: string) {
+    async enableMfa(user: User, password: string) {
         if (!this.token) {
             throw new Error('No token');
         }
@@ -139,7 +139,7 @@ class AuthRsApi {
         }
     }
 
-    async disableMfa(user: UserMinimal, code: string | null, password: string | null): Promise<UserMinimal> {
+    async disableMfa(user: User, code: string | null, password: string | null): Promise<User> {
         if (!this.token) {
             throw new Error('No token');
         }
@@ -162,7 +162,7 @@ class AuthRsApi {
         }
     }
 
-    async createUser(email: string, password: string, firstName: string, lastName: string): Promise<UserMinimal> {
+    async createUser(email: string, password: string, firstName: string, lastName: string): Promise<User> {
         if (!this.token) {
             throw new Error('No token');
         }
@@ -185,7 +185,7 @@ class AuthRsApi {
         }
     }
 
-    async getCurrentUser(): Promise<UserMinimal> {
+    async getCurrentUser(): Promise<User> {
         if (!this.token) {
             throw new Error('No token');
         }
@@ -206,7 +206,7 @@ class AuthRsApi {
         }
     }
 
-    async getAllUsers(): Promise<UserMinimal[]> {
+    async getAllUsers(): Promise<User[]> {
         if (!this.token) {
             throw new Error('No token');
         }
@@ -227,7 +227,7 @@ class AuthRsApi {
         }
     }
 
-    async updateUser(user: UserMinimal, updates: UserUpdates): Promise<UserMinimal> {
+    async updateUser(user: User, updates: UserUpdates): Promise<User> {
         if (!this.token) {
             throw new Error('No token');
         }
@@ -250,7 +250,7 @@ class AuthRsApi {
         }
     }
 
-    async deleteUser(user: UserMinimal): Promise<UserMinimal> {
+    async deleteUser(user: User): Promise<User> {
         if (!this.token) {
             throw new Error('No token');
         }
@@ -382,7 +382,7 @@ class AuthRsApi {
         }
     }
 
-    async getConnections(user: UserMinimal): Promise<OAuthConnection[]> {
+    async getConnections(user: User): Promise<OAuthConnection[]> {
         if (!this.token) {
             throw new Error('No token');
         }
@@ -567,7 +567,7 @@ class AuthRsApi {
         }
     }
 
-    async getAuditLogs(user: UserMinimal): Promise<AuditLog[]> {
+    async getAuditLogs(user: User): Promise<AuditLog[]> {
         if (!this.token) {
             throw new Error('No token');
         }
@@ -588,7 +588,7 @@ class AuthRsApi {
         }
     }
 
-    async getUsers(): Promise<UserMinimal[]> {
+    async getUsers(): Promise<User[]> {
         if (!this.token) {
             throw new Error('No token');
         }

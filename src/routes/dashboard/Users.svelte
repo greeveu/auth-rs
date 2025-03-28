@@ -4,20 +4,20 @@
 	import type AuthRsApi from "$lib/api";
 	import { PackageOpen, Pen, Trash, UserCheck, UserX } from "lucide-svelte";
 	import { onMount } from "svelte";
-	import UserMinimalUpdates from '$lib/models/UserUpdates';
-	import UserMinimal from '$lib/models/User';
+	import UserUpdates from '$lib/models/UserUpdates';
+	import User from '$lib/models/User';
 	import TextField from '$lib/components/global/TextField.svelte';
 	import RoleList from '$lib/components/dashboard/RoleList.svelte';
 	import type Role from '$lib/models/Role';
 	import DateUtils from '$lib/dateUtils';
 
     export let api: AuthRsApi;
-    export let currentUser: UserMinimal;
-    export let users: UserMinimal[];
+    export let currentUser: User;
+    export let users: User[];
     export let roles: Role[];
 
     let showNewUserPopup: boolean = false;
-    let newUser: UserMinimal | null = null;
+    let newUser: User | null = null;
     let newUserEmail: string = '';
     let newUserFirstName: string = '';
     let newUserLastName: string = '';
@@ -25,7 +25,7 @@
     let newUserPasswordConfirm: string = '';
 
     let editUserPopup: boolean = false;
-    let editUser: UserMinimal | null = null;
+    let editUser: User | null = null;
     let editUserEmail: string = '';
     let editUserFirstName: string = '';
     let editUserLastName: string = '';
@@ -33,13 +33,13 @@
     let editUserPasswordConfirm: string = '';
 
     let disableUserPopup: boolean = false;
-    let disableUser: UserMinimal | null = null;
+    let disableUser: User | null = null;
 
     let enableUserPopup: boolean = false;
-    let enableUser: UserMinimal | null = null;
+    let enableUser: User | null = null;
 
     let deleteUserPopup: boolean = false;
-    let deleteUser: UserMinimal | null = null;
+    let deleteUser: User | null = null;
 
     function openCreateUserPopup() {
         newUser = null;
@@ -116,7 +116,7 @@
                 style="margin-top: 20px; margin-bottom: 10px;"
                 on:click={editUserDataIsValid() ? () => {
                     editUserPopup = false;
-                    api.updateUser(editUser!, new UserMinimalUpdates({ email: editUserEmail, password: editUserPassword.length < 1 ? null : editUserPassword, firstName: editUserFirstName, lastName: editUserLastName, roles: null, disabled: null }))
+                    api.updateUser(editUser!, new UserUpdates({ email: editUserEmail, password: editUserPassword.length < 1 ? null : editUserPassword, firstName: editUserFirstName, lastName: editUserLastName, roles: null, disabled: null }))
                         .then(editedUser => {
                             users[users.map(user => user._id).indexOf(editUser!._id)] = editedUser;
                         })
@@ -138,7 +138,7 @@
                 style="margin-top: 25px;"
                 on:click={() => {
                     disableUserPopup = false;
-                    api.updateUser(disableUser!, new UserMinimalUpdates({ email: null, password: null, firstName: null, lastName: null, roles: null, disabled: true }))
+                    api.updateUser(disableUser!, new UserUpdates({ email: null, password: null, firstName: null, lastName: null, roles: null, disabled: true }))
                         .then(disabledUser => {
                             users[users.map(user => user._id).indexOf(disableUser!._id)] = disabledUser;
                         })
@@ -160,7 +160,7 @@
                 style="margin-top: 25px;"
                 on:click={() => {
                     enableUserPopup = false;
-                    api.updateUser(enableUser!, new UserMinimalUpdates({ email: null, password: null, firstName: null, lastName: null, roles: null, disabled: false }))
+                    api.updateUser(enableUser!, new UserUpdates({ email: null, password: null, firstName: null, lastName: null, roles: null, disabled: false }))
                         .then(enabledUser => {
                             users[users.map(user => user._id).indexOf(enableUser!._id)] = enabledUser;
                         })
@@ -191,7 +191,7 @@
     </Popup>
 {/if}
 
-{#if users.filter(u => u._id != UserMinimal.DEFAULT_USER_ID).length < 1}
+{#if users.filter(u => u._id != User.DEFAULT_USER_ID).length < 1}
     <div class="flex flex-col items-center justify-center gap-[25px] h-full w-full">
         <PackageOpen size="75" class="opacity-40" />
             <p class="text-[20px] opacity-50">There are currently no users set up.</p>
@@ -214,7 +214,7 @@
         >Create User</p>
     </div>
     <div class="flex flex-wrap overflow-y-scroll gap-[25px]">
-        {#each users.filter(u => u._id != UserMinimal.DEFAULT_USER_ID) as user}
+        {#each users.filter(u => u._id != User.DEFAULT_USER_ID) as user}
             <div
                 class="flex flex-col items-start justify start gap-[10px] min-w-[300px] border-[2px] border-[#333] rounded-md"
                 style="padding: 15px;"
@@ -274,13 +274,13 @@
                         </div>
                     </div>
                 </div>
-                <p class="text-[12px] opacity-35 {user.disabled ? 'h-[10px]' : 'h-[20px]'}">Created at {DateUtils.getFullDateString(UserMinimal.getCreatedAt(user))}</p>
+                <p class="text-[12px] opacity-35 {user.disabled ? 'h-[10px]' : 'h-[20px]'}">Created at {DateUtils.getFullDateString(User.getCreatedAt(user))}</p>
                 {#if user.disabled}
                     <p class="text-[12px] h-[20px] text-red-600">Disabled!</p>
                 {/if}
                 <TextField label="Email" value={user.email} readonly />
                 <TextField label="MFA" value={user.mfa ? 'Enabled' : 'Disabled'} readonly />
-                <RoleList label="Roles" roles={roles.filter(r => user.roles.includes(r._id))} onAdd={() => {}} onRemove={() => {}} readOnly={false} isSystemAdmin={currentUser._id == UserMinimal.DEFAULT_USER_ID} disableOutline />
+                <RoleList label="Roles" roles={roles.filter(r => user.roles.includes(r._id))} onAdd={() => {}} onRemove={() => {}} readOnly={false} isSystemAdmin={currentUser._id == User.DEFAULT_USER_ID} disableOutline />
             </div>
         {/each}
     </div>

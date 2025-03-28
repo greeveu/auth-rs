@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type Role from "$lib/models/Role";
-	import UserMinimal from "$lib/models/User";
+	import User from "$lib/models/User";
 	import { PlusCircle, X } from "lucide-svelte";
 
     export let label: string;
@@ -29,7 +29,7 @@
         {#each roles as role}
             <div class="flex flex-row items-center justify-between gap-[10px] text-[13px] h-[40px] bg-[#111] rounded-md" style="padding: 10px; {disableOutline ? 'margin: 0 2.5px;' : ''}">
                 <p style="color: white !important;">{role.name}</p>
-                {#if role._id != UserMinimal.DEFAULT_ROLE_ID && !(role._id == UserMinimal.ADMIN_ROLE_ID && !isSystemAdmin) && !readOnly}
+                {#if role._id != User.DEFAULT_ROLE_ID && !(role._id == User.ADMIN_ROLE_ID && !isSystemAdmin) && !readOnly}
                     <div on:click={() => onRemove(role)}>
                         <X size="15" class="hover:text-red-500 cursor-pointer transition-all" />
                     </div>
