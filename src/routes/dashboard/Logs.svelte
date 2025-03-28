@@ -88,13 +88,4 @@
         padding: 10px;
         text-align: center;
     }
-
-    ::-webkit-scrollbar {
-        width: 5px;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background-color: var(--color-blue-500);
-        border-radius: 10px;
-    }
 </style>
