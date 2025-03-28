@@ -1,9 +1,9 @@
 export default class SettingsUpdates {
-    public allowRegistration: boolean;
-    public allowOauthAppsForUsers: boolean;
+    public openRegistration: boolean | null;
+    public allowOauthAppsForUsers: boolean | null;
 
-    constructor({ allowRegistration, allowOauthAppsForUsers }: { allowRegistration: boolean, allowOauthAppsForUsers: boolean }) {
-        this.allowRegistration = allowRegistration;
+    constructor({ openRegistration, allowOauthAppsForUsers }: { openRegistration: boolean | null, allowOauthAppsForUsers: boolean | null }) {
+        this.openRegistration = openRegistration;
         this.allowOauthAppsForUsers = allowOauthAppsForUsers;
     }
 }

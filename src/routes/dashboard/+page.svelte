@@ -16,6 +16,7 @@
 	import type Role from '$lib/models/Role';
 	import Users from './Users.svelte';
 	import type Settings from '$lib/models/Settings';
+	import SystemSettings from './SystemSettings.svelte';
 
     const authStateManager = new AuthStateManager();
     let api = new AuthRsApi();
@@ -104,6 +105,8 @@
                     <Applications bind:api bind:user bind:applications onlyShowOwned={false} />
                 {:else if TABS[currentTabIndex].slug == 'global-logs'}
                     <Logs bind:api bind:user bind:users bind:roles bind:applications bind:auditLogs />
+                {:else if TABS[currentTabIndex].slug == 'system-settings'}
+                    <SystemSettings bind:api bind:settings={settings!} />
                 {/if}
             {/if}
         </div>
