@@ -12,41 +12,6 @@
     export let user: User;
     export let roles: Role[];
     
-    function addRole() {
-        // FIXME: This is a temporary solution. The user should be able to select a role from a dropdown.
-        const id = prompt('Enter the role ID:');
-        if (id) {
-            const role = roles.find(r => r._id == id);
-            if (role) {
-                const updates = new UserUpdates({ 
-                    email: null, 
-                    password: null, 
-                    firstName: null, 
-                    lastName: null, 
-                    roles: [...user.roles, role._id], 
-                    disabled: null 
-                });
-                api.updateUser(user, updates)
-                    .then(u => user = u)
-                    .catch(e => console.error(e));
-            }
-        }
-    }
-
-    function removeRole(role: Role) {
-        const updates = new UserUpdates({ 
-            email: null, 
-            password: null, 
-            firstName: null, 
-            lastName: null, 
-            roles: roles.filter(r => r._id != role._id).map(r => r._id), 
-            disabled: null 
-        });
-        api.updateUser(user, updates)
-            .then(u => user = u)
-            .catch(e => console.error(e));
-    }
-
     onMount(async () => {
         if (roles.length < 1) {
             api.getAllRoles()
@@ -59,6 +24,6 @@
 <div class="flex flex-col items-start justify-start h-[100%] w-full gap-[10px]">
     <TextField label="Full Name" value={`${user.firstName} ${user.lastName}`} readonly={User.isSystemAdmin(user)} />
     <TextField label="Email" value={user.email} readonly={User.isSystemAdmin(user)} />
-    <RoleList label="Roles" roles={roles.filter(r => user.roles.includes(r._id))} onAdd={addRole} onRemove={removeRole} readOnly={!User.isAdmin(user) || User.isSystemAdmin(user)} isSystemAdmin={User.isSystemAdmin(user)} />
+    <RoleList label="Roles" roles={roles.filter(r => user.roles.includes(r._id))} onAdd={() => {}} onRemove={() => {}} readOnly isSystemAdmin={User.isSystemAdmin(user)} />
     <TextField label="Creation Date" value={DateUtils.getFullDateString(User.getCreatedAt(user))} readonly />
 </div>
