@@ -10,11 +10,11 @@
 ## Frontend
 
 - [x] Frontend missing auth flow id
-- [ ] User roles dropdown
+- [x] User roles ~~dropdown~~ -> Selection Popup
 - [x] Create / Edit users
 - [x] Disable Users
 - [ ] Registration
-- [ ] New "Your Profile" page style + edit button
+- [ ] ~~New "Your Profile" page style +~~ edit button
 - [ ] Tooltips
 - [ ] render invalid ouath url errors
 - [ ] raw json viewer -> debug mode???
