@@ -5,6 +5,7 @@
 	import { onMount, tick } from "svelte";
     import { Eye, EyeOff } from 'lucide-svelte';
 	import type Settings from '$lib/models/Settings';
+	import TextInput from '$lib/components/dashboard/TextInput.svelte';
 
     const authStateManager = new AuthStateManager();
     const api = new AuthRsApi();
@@ -34,8 +35,8 @@
 
         api.login(email, password)
             .then(async (data) => {
-                loginText = 'Login';
                 if (data.mfaRequired) {
+                    loginText = 'Login';
                     step = 2;
                     await tick();
                     document.getElementById('totp-0')?.focus();
@@ -107,35 +108,8 @@
     >{step < 2 ? 'Login' : 'Verify Login'}</h1>
     <form id="form" class="flex flex-col items-center justify-center mt-4">
         {#if step < 2}
-            <!-- svelte-ignore a11y_autofocus -->
-            <input
-                type="email"
-                placeholder="Email"
-                class="border-[1.5px] border-gray-300 rounded-md opacity-75"
-                style="padding: 5px 10px; width: 300px; margin: 15px;"
-                autofocus={true}
-                bind:value={email}
-            >
-            <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                class="border-[1.5px] border-gray-300 rounded-md opacity-75"
-                style="padding: 5px 10px; width: 300px; margin-bottom: 15px;"
-                bind:value={password}
-            >
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <span
-                class="absolute cursor-pointer"
-                style="margin-left: 260px; margin-top: 5px;"
-                on:click={() => showPassword = !showPassword}
-            >
-                {#if showPassword}
-                    <Eye class="size-[18px]" />
-                {:else}
-                    <EyeOff class="size-[18px]" />
-                {/if}
-            </span>
+            <TextInput type="email" label="Email" bind:value={email} autofocus />
+            <TextInput type="password" label="Password" bind:value={password} />
         {:else if step == 2}
             <TotpInput bind:totp disabled={step != 2} completeTotp={completeTotp} />
         {/if}
@@ -145,20 +119,15 @@
             style="padding: 7.5px; width: {step < 2 ? 300 : 250}px; margin-top: {step < 2 ? 5 : 20}px;"
             class:enabled={step == 0 ? email != '' && password != '' : totp.map(c => c?.toString()).join('').length >= 6 && (step == 0 || step == 2)}
             on:click={step == 0 ? login : completeTotp}
-        >{step < 2 ? loginText : verifyText}</button>
+        >{step < 2 || step >= 4 ? loginText : verifyText}</button>
     </form>
-    {#if settings?.allowRegistration && step < 2}
+    {#if settings?.openRegistration && step < 2}
         <p class="text-[14px]" style="margin-top: 15px;">or</p>
         <a href="/register" class="text-[13px]" style="margin-top: 10px;">Don't have an account? <i>Register here!</i></a>
     {/if}
 </div>
 
 <style>
-    input:focus {
-        outline: none;
-        border: solid 1.5px var(--color-blue-500);
-    }
-
     .button {
         transition-duration: .2s;
         opacity: 0.5;

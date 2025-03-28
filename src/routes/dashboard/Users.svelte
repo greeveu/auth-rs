@@ -77,11 +77,11 @@
 {#if showNewUserPopup}
     <Popup title="Create User" onClose={() => showNewUserPopup = false}>
         <div class="flex flex-col items-center justify-center min-w-[350px] max-w-[400px]">
-            <TextInput label="Email" bind:value={newUserEmail} />
+            <TextInput type="email" label="Email" bind:value={newUserEmail} autofocus />
             <TextInput label="First Name" bind:value={newUserFirstName} />
             <TextInput label="Last Name" bind:value={newUserLastName} />
-            <TextInput label="Password" bind:value={newUserPassword} type="password" />
-            <TextInput label="Confirm Password" bind:value={newUserPasswordConfirm} type="password" />
+            <TextInput type="password" label="Password" bind:value={newUserPassword} />
+            <TextInput type="password" label="Confirm Password" bind:value={newUserPasswordConfirm} />
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
@@ -104,11 +104,11 @@
 {#if editUserPopup}
     <Popup title="Edit User" onClose={() => editUserPopup = false}>
         <div class="flex flex-col items-center justify-center min-w-[350px]">
-            <TextInput label="Email" bind:value={editUserEmail}  />
-            <TextInput label="First Name" bind:value={editUserFirstName}  />
-            <TextInput label="Last Name" bind:value={editUserLastName}  />
-            <TextInput label="Password" bind:value={editUserPassword}  />
-            <TextInput label="Confirm Password" bind:value={editUserPasswordConfirm}  />
+            <TextInput type="email" label="Email" bind:value={editUserEmail} autofocus />
+            <TextInput label="First Name" bind:value={editUserFirstName} />
+            <TextInput label="Last Name" bind:value={editUserLastName} />
+            <TextInput type="password" label="Password" bind:value={editUserPassword} />
+            <TextInput type="password" label="Confirm Password" bind:value={editUserPasswordConfirm} />
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p

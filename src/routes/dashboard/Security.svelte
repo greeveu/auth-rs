@@ -5,6 +5,7 @@
 	import type AuthRsApi from "$lib/api";
 	import type UserMinimal from "$lib/models/User";
 	import { goto } from '$app/navigation';
+	import TextInput from '$lib/components/dashboard/TextInput.svelte';
 
     export let api: AuthRsApi;
     export let user: UserMinimal;
@@ -71,27 +72,8 @@
 
 {#if startEnable2FAPopup}
     <Popup title="Enable MFA" onClose={() => startEnable2FAPopup = false}>
-        <div class="flex flex-col items-center justify-center w-full" style="margin-top: 20px; margin-bottom: 20px;">
-            <input
-                type={showEnablePassword ? "text" : "password"}
-                placeholder="Confirm Password"
-                class="border-[1.5px] border-gray-300 rounded-md opacity-75 w-full"
-                style="padding: 5px 10px; margin-top: 5px;"
-                bind:value={enablePassword}
-            >
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <span
-                class="absolute cursor-pointer self-end"
-                style="margin-right: 10px; margin-bottom: 48px;"
-                on:click={() => showEnablePassword = !showEnablePassword}
-            >
-                {#if showEnablePassword}
-                    <Eye class="size-[18px]" />
-                {:else}
-                    <EyeOff class="size-[18px]" />
-                {/if}
-            </span>
+        <div class="flex flex-col items-center justify-center w-full" style="margin-top: 10px; margin-bottom: 10px;">
+            <TextInput type="password" label="" placeholder="Confirm Password" bind:value={enablePassword} autofocus />
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
@@ -133,27 +115,8 @@
 
 {#if disable2FAPopup}
     <Popup title="Disable MFA" onClose={() => disable2FAPopup = false}>
-        <div class="flex flex-col items-center justify-center w-full" style="margin-top: 20px; margin-bottom: 20px;">
-            <input
-                type={showDisablePassword ? "text" : "password"}
-                placeholder="Confirm Password"
-                class="border-[1.5px] border-gray-300 rounded-md opacity-75 w-full"
-                style="padding: 5px 10px; margin-top: 5px;"
-                bind:value={disablePassword}
-            >
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <!-- svelte-ignore a11y_no_static_element_interactions -->
-            <span
-                class="absolute cursor-pointer self-end"
-                style="margin-right: 10px; margin-bottom: 48px;"
-                on:click={() => showDisablePassword = !showDisablePassword}
-            >
-                {#if showDisablePassword}
-                    <Eye class="size-[18px]" />
-                {:else}
-                    <EyeOff class="size-[18px]" />
-                {/if}
-            </span>
+        <div class="flex flex-col items-center justify-center w-full" style="margin-top: 10px; margin-bottom: 10px;">
+            <TextInput type="password" label="" placeholder="Confirm Password" bind:value={disablePassword} autofocus />
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
@@ -167,11 +130,6 @@
 {/if}
 
 <style>
-    input:focus {
-        outline: none;
-        border: solid 1.5px var(--color-blue-500);
-    }
-
     .button {
         transition-duration: .2s;
         opacity: 0.5;
