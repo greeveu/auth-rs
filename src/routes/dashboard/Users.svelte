@@ -17,7 +17,6 @@
     export let roles: Role[];
 
     let showNewUserPopup: boolean = false;
-    let newUser: User | null = null;
     let newUserEmail: string = '';
     let newUserFirstName: string = '';
     let newUserLastName: string = '';
@@ -31,6 +30,8 @@
     let editUserLastName: string = '';
     let editUserPassword: string = '';
     let editUserPasswordConfirm: string = '';
+    let showAddUserRolesPopup: User | null = null;
+    let addUserRoles: Role[] = [];
 
     let disableUserPopup: boolean = false;
     let disableUser: User | null = null;
@@ -42,7 +43,6 @@
     let deleteUser: User | null = null;
 
     function openCreateUserPopup() {
-        newUser = null;
         newUserEmail = '';
         newUserFirstName = '';
         newUserLastName = '';
@@ -66,6 +66,20 @@
 
         return emailValid && nameValid && passwordValid;
     }
+
+    function removeRole(role: Role, user: User) {
+        const updates = new UserUpdates({ 
+            email: null, 
+            password: null, 
+            firstName: null, 
+            lastName: null, 
+            roles: roles.filter(r => r._id != role._id).map(r => r._id), 
+            disabled: null 
+        });
+        api.updateUser(user, updates)
+            .then(u => users[users.map(u => u._id).indexOf(user._id)] = u)
+            .catch(e => console.error(e));
+        }
 
     onMount(() => {
         api.getAllUsers()
@@ -91,7 +105,6 @@
                     showNewUserPopup = false;
                     api.createUser(newUserEmail, newUserPassword, newUserFirstName, newUserLastName)
                         .then(createdUser => {
-                            newUser = createdUser;
                             users = [...users, createdUser]
                         })
                         .catch(console.error);
@@ -126,6 +139,61 @@
         </div>
     </Popup>
 {/if}
+
+{#if showAddUserRolesPopup}
+    <Popup title="Add Roles" onClose={() => {showAddUserRolesPopup = null; addUserRoles = [];}}>
+        <div class="flex flex-col items-center justify-center">
+            {#if roles.filter(r => !users.find(u => u._id == showAddUserRolesPopup?._id)?.roles.includes(r._id)).length < 1}
+                <i>User already has every role.</i>
+                <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <p
+                    class="text-red-600 rounded-md cursor-pointer text-[18px] button red-button"
+                    style="margin-top: 20px; margin-bottom: 10px;"
+                    on:click={() => showAddUserRolesPopup = null}
+                >Close</p>
+            {:else} 
+                <div class="flex flex-wrap items-center justify-center overflow-y-scroll w-max-[400px] h-max-[400px] gap-[25px]">
+                    {#each roles.filter(r => !users.find(u => u._id == showAddUserRolesPopup?._id)?.roles.includes(r._id)) as role}
+                        <!-- svelte-ignore a11y_no_static_element_interactions -->
+                        <!-- svelte-ignore a11y_click_events_have_key_events -->
+                        <div
+                            class="cursor-pointer {addUserRoles.map(r => r._id).includes(role._id) ? 'border-green-600' : 'border-[#333]'} border-[1px] rounded-md" on:click={addUserRoles.map(r => r._id).includes(role._id) ? () => addUserRoles.slice(addUserRoles.map(r => r._id).indexOf(role._id), 1) : () => addUserRoles = [...addUserRoles, role]}
+                            style="padding: 10px;"
+                        >
+                            <p>{role.name}</p>
+                        </div>
+                    {/each}
+                </div>
+                <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <p
+                    class="text-green-600 rounded-md {addUserRoles.length > 0 ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px] button green-button"
+                    style="margin-top: 20px; margin-bottom: 10px;"
+                    on:click={addUserRoles.length > 0 ? () => {
+                        api.updateUser(showAddUserRolesPopup!, new UserUpdates({
+                            email: null,
+                            password : null,
+                            firstName: null,
+                            lastName: null,
+                            roles: users.find(u => u._id == showAddUserRolesPopup?._id)?.roles.concat(addUserRoles.map(r => r._id)) ?? null,
+                            disabled: null
+                        })).then(editedUser => {
+                            users[users.map(u => u._id).indexOf(showAddUserRolesPopup!._id)] = editedUser;
+                            showAddUserRolesPopup = null;
+                            addUserRoles = [];
+                        }).catch(e => {
+                            console.error(e);
+                            showAddUserRolesPopup = null;
+                            addUserRoles = [];
+                        });
+                    } : null}
+                >Add</p>
+            {/if}
+        </div>
+    </Popup>
+{/if}
+
 
 {#if disableUserPopup}
     <Popup title="Disable User" onClose={() => disableUserPopup = false}>
@@ -278,9 +346,25 @@
                 {#if user.disabled}
                     <p class="text-[12px] h-[20px] text-red-600">Disabled!</p>
                 {/if}
-                <TextField label="Email" value={user.email} readonly />
-                <TextField label="MFA" value={user.mfa ? 'Enabled' : 'Disabled'} readonly />
-                <RoleList label="Roles" roles={roles.filter(r => user.roles.includes(r._id))} onAdd={() => {}} onRemove={() => {}} readOnly={false} isSystemAdmin={currentUser._id == User.DEFAULT_USER_ID} disableOutline />
+                <TextField
+                    label="Email"
+                    value={user.email}
+                    readonly
+                />
+                <TextField
+                    label="MFA"
+                    value={user.mfa ? 'Enabled' : 'Disabled'}
+                    readonly
+                />
+                <RoleList
+                    label="Roles"
+                    roles={roles.filter(r => user.roles.includes(r._id))}
+                    onAdd={() => showAddUserRolesPopup = user}
+                    onRemove={(role: Role) => removeRole(role, user)}
+                    readOnly={false}
+                    isSystemAdmin={currentUser._id == User.DEFAULT_USER_ID}
+                    disableOutline
+                />
             </div>
         {/each}
     </div>
