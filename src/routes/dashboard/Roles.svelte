@@ -5,6 +5,7 @@
 	import { onMount } from "svelte";
 	import RoleUpdates from '$lib/models/RoleUpdates';
 	import Role from '$lib/models/Role';
+	import DateUtils from '$lib/dateUtils';
 
     export let api: AuthRsApi;
     export let roles: Role[];
@@ -172,7 +173,7 @@
                         </div>
                     {/if}
                 </div>
-                <p class="text-[12px] opacity-35 h-[20px]">Created at {Role.getCreatedAt(role).getDate()}.{Role.getCreatedAt(role).getMonth()}.{Role.getCreatedAt(role).getFullYear()}</p>
+                <p class="text-[12px] opacity-35 h-[20px]">Created at {DateUtils.getDateString(Role.getCreatedAt(role))}</p>
                 {#if role.system}
                     <p class="text-[12px] opacity-35 h-[20px]">This is a system role and cannot be edited or deleted.</p>
                 {/if}

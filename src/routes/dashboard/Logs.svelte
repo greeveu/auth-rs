@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type AuthRsApi from "$lib/api";
+	import DateUtils from "$lib/dateUtils";
 	import { AuditLog, AuditLogAction, AuditLogEntityType } from "$lib/models/AuditLog";
 	import type OAuthApplication from "$lib/models/OAuthApplication";
 	import type Role from "$lib/models/Role";
@@ -71,7 +72,7 @@
                     <td>{log.entityType}</td>
                     <td>{log.action}</td>
                     <td>{log.reason}</td>
-                    <td>{AuditLog.getCreatedAt(log).getDate()}.{AuditLog.getCreatedAt(log).getMonth() + 1}.{AuditLog.getCreatedAt(log).getFullYear()} {AuditLog.getCreatedAt(log).getHours()}:{AuditLog.getCreatedAt(log).getMinutes()}:{AuditLog.getCreatedAt(log).getSeconds()}</td>
+                    <td>{DateUtils.getFullDateString(AuditLog.getCreatedAt(log))}</td>
                 </tr>
             {/each}
         </tbody>

@@ -9,6 +9,7 @@
 	import TextField from '$lib/components/dashboard/TextField.svelte';
 	import RoleList from '$lib/components/dashboard/RoleList.svelte';
 	import type Role from '$lib/models/Role';
+	import DateUtils from '$lib/dateUtils';
 
     export let api: AuthRsApi;
     export let currentUser: UserMinimal;
@@ -270,7 +271,7 @@
                         </div>
                     </div>
                 </div>
-                <p class="text-[12px] opacity-35 h-[20px]">Created at {UserMinimal.getCreatedAt(user).getDate()}.{UserMinimal.getCreatedAt(user).getMonth()}.{UserMinimal.getCreatedAt(user).getFullYear()}</p>
+                <p class="text-[12px] opacity-35 h-[20px]">Created at {DateUtils.getFullDateString(UserMinimal.getCreatedAt(user))}</p>
                 <TextField label="Email" value={user.email} readonly />
                 <RoleList label="Roles" roles={roles.filter(r => user.roles.includes(r._id))} onAdd={() => {}} onRemove={() => {}} readOnly={false} isSystemAdmin={currentUser._id == UserMinimal.DEFAULT_USER_ID} disableOutline />
             </div>
