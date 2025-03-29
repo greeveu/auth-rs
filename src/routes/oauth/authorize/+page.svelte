@@ -6,7 +6,7 @@
     import {
         Bot,
         Link,
-        User,
+        User as UserIcon,
         SquareArrowOutUpRight,
         Clock,
         Lock
@@ -113,7 +113,7 @@
                 <p class="opacity-50" style="letter-spacing: 3.5px;">....</p>
                 <Link class="size-[20px] opacity-75" style="margin-top: 5px;" />
                 <p class="opacity-50" style="letter-spacing: 3.5px;">....</p>
-                <User class="size-[80px]" />
+                <UserIcon class="size-[80px]" />
             </div>
             <h1 class="font-extrabold text-2xl" style="margin-bottom: 5px;">{oAuthApplication?.name}</h1>
             <h2 class="opacity-50 text-[14px]">wants to access your Account.</h2>
