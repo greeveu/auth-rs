@@ -15,7 +15,7 @@
 - [x] Disable Users
 - [ ] Registration
 - [x] ~~New "Your Profile" page style +~~ edit button
-- [ ] Tooltips
+- [ ] Tooltips -> "sv-tooltip"
 - [ ] render invalid ouath url errors
 - [ ] raw json viewer -> debug mode???
 
