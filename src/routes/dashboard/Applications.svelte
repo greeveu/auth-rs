@@ -104,7 +104,7 @@
                 class="text-green-600 rounded-md {newApplicationName.length > 3 ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px] button green-button"
                 style="margin-top: 25px; margin-bottom: 10px;"
                 on:click={newApplicationName.length > 3 ? () => {
-                    if (newApplicationRedirectUris.length > 0 && newApplicationRedirectUris.split(',').filter(uri => uri.includes('http') && uri.includes('://') && uri.includes('.')).length != newApplicationRedirectUris.split(',').length) {
+                    if (newApplicationRedirectUris.length > 0 && newApplicationRedirectUris.split(',').filter(uri => (uri.includes('http') || uri.includes(':///')) && uri.includes('://') && uri.includes('.')).length != newApplicationRedirectUris.split(',').length) {
                         newApplicationRedirectUrisError = true;
                         return;
                     }
@@ -171,7 +171,7 @@
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
-                class="text-green-600 rounded-md text-[18px] {newRedirectUri.includes('http') && newRedirectUri.includes('://') && newRedirectUri.includes('.') ? 'cursor-pointer' : 'cursor-default opacity-50'} button green-button"
+                class="text-green-600 rounded-md text-[18px] {(newRedirectUri.includes('http') || newRedirectUri.includes(':///')) && newRedirectUri.includes('://') && newRedirectUri.includes('.') ? 'cursor-pointer' : 'cursor-default opacity-50'} button green-button"
                 style="margin-top: 25px;"
                 class:enabled={newRedirectUri.includes('http') && newRedirectUri.includes('://') && newRedirectUri.includes('.')}
                 on:click={newRedirectUri.includes('http') && newRedirectUri.includes('://') && newRedirectUri.includes('.') ? () => addRedirectUri(newRedirectUriApplication!) : null}
