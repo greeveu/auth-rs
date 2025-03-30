@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { MinusCircle, Pencil, PlusCircle, ShieldCheck, ShieldX } from 'lucide-svelte';
+	import { LogIn, MinusCircle, Pencil, PlusCircle, ShieldCheck, ShieldX } from 'lucide-svelte';
 	import DateUtils from "$lib/dateUtils";
 	import { AuditLog, AuditLogEntityType } from "$lib/models/AuditLog";
 	import type OAuthApplication from "$lib/models/OAuthApplication";
@@ -16,7 +16,7 @@
 
     function getEntityName(entityType: AuditLogEntityType, entityId: string): string {
         if (entityType == AuditLogEntityType.User) {
-            if (entityId == user._id) {                
+            if (entityId == user._id) {
                 return "You";
             } else if (users.find(u => u._id == entityId) != null) {;
                 const u = users.find(u => u._id == entityId)!;
@@ -44,6 +44,8 @@
             return `${target} enabled 2FA.`;
         } else if (auditLog.reason.toUpperCase().includes('DISABLE TOTP')) {
             return `${target} disabled 2FA.`;
+        } else if (auditLog.reason.toUpperCase().includes("LOGIN SUCCESSFUL")) {
+            return `New login on ${target.toUpperCase() == 'YOU' ? 'your' : `${target}\'s`} account.`;
         } else if (target.toUpperCase() == 'YOU') {
             return `${author} ${action} your profile.`;
         } else if (target == 'SETTINGS') {
@@ -114,6 +116,8 @@
                 <PlusCircle height="30" width="30" class="text-green-500" />
             {:else if auditLog.reason.toUpperCase().includes('DELETE')}
                 <MinusCircle height="30" width="30" class="text-red-500" />
+            {:else if auditLog.reason.toUpperCase().includes("LOGIN SUCCESSFUL")}
+                <LogIn height="30" width="30" class="text-blue-500" />
             {:else if auditLog.reason.toUpperCase().includes('ENABLE TOTP')}
                 <ShieldCheck height="30" width="30" class="text-green-500" />
             {:else if auditLog.reason.toUpperCase().includes('DISABLE TOTP')}

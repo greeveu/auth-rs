@@ -61,6 +61,7 @@ pub struct AuditLog {
 pub enum AuditLogAction {
     Create,
     Update,
+    Login,
     Delete,
 }
 

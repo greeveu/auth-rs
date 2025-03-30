@@ -119,7 +119,24 @@ pub async fn mfa(
     let mfa_data = data.into_inner();
 
     match process_mfa(&db, mfa_data).await {
-        Ok((message, response)) => json_response(HttpResponse::success(&message, response)),
+        Ok((message, response)) => {
+            if message == "MFA complete" {
+                AuditLog::new(
+                    response.user.clone().unwrap().id,
+                    AuditLogEntityType::User,
+                    AuditLogAction::Login,
+                    "MFA login successful.".to_string(),
+                    response.user.clone().unwrap().id,
+                    None,
+                    None,
+                )
+                .insert(&db)
+                .await
+                .ok();
+            }
+
+            json_response(HttpResponse::success(&message, response))
+        },
         Err(err) => json_response(err.into()),
     }
 }
