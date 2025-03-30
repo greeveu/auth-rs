@@ -6,6 +6,7 @@
 - [x] Validate redirect URI (not sure if we already do this) -> Update: We did :3
 - [x] Emails are not unique??? -> Fixed
 - [x] Require at lease one oauth scope to authorize
+- [ ] Add openid well_known page
 
 ## Frontend
 
