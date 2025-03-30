@@ -13,6 +13,7 @@ pub struct AuthEntity {
     pub token: Option<OAuthToken>,
 }
 
+#[allow(unused)]
 impl AuthEntity {
     pub fn from_user(user: User) -> Self {
         Self {

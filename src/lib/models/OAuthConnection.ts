@@ -23,6 +23,6 @@ export default class OAuthConnection {
     }
 
     static getExpiresAt(connection: OAuthConnection): Date {
-        return new Date(parseInt(connection.createdAt.$date.$numberLong) + connection.expiresIn * 1000);
+        return new Date((parseInt(connection.createdAt.$date.$numberLong) + connection.expiresIn) - Date.now());
     }
 }

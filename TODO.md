@@ -1,6 +1,7 @@
 ## Backend
+
 - [ ] Recursivly remove roles from users when role is deleted
-- [ ] Recursivly delete user bound data on user deletion
+- [ ] Recursivly delete user bound data on user deletion
 - [x] Return http status code in base response
 - [x] Validate redirect URI (not sure if we already do this) -> Update: We did :3
 - [x] Emails are not unique??? -> Fixed
@@ -12,12 +13,15 @@
 - [x] Create / Edit users
 - [x] Disable Users
 - [ ] Registration
+- [ ] New "Your Profile" page style + edit button
 
 ## Both
 
 - [ ] Role descriptions
 - [ ] Limit registations (registration codes with limited uses and autoroles?)
-- [ ] System admin settings (limited registrations, disable oauth application create for default users)
+- [ ] System admin settings (limited registrations, disable oauth application create for default users)
+- [ ] Require at lease one oauth scope to authorize and render invalid ouath url errors
 
 ## ???
-- [ ] OAuth Connection expiery date is not created or calculated correctly (look further into this)
+
+- [x] OAuth Connection expiery date is not created or calculated correctly (look further into this)

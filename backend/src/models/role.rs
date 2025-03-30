@@ -11,6 +11,7 @@ use thiserror::Error;
 use super::http_response::HttpResponse;
 
 #[derive(Error, Debug)]
+#[allow(unused)]
 pub enum RoleError {
     #[error("Role not found: {0}")]
     NotFound(Uuid),
