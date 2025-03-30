@@ -2,7 +2,7 @@ use super::{http_response::HttpResponse, oauth_scope::OAuthScope};
 use crate::db::{get_main_db, AuthRsDatabase};
 use crate::errors::AppError;
 use anyhow::Result;
-use mongodb::bson::{doc, DateTime, Uuid};
+use mongodb::bson::{doc, DateTime, Document, Uuid};
 use rand::Rng;
 use rocket::form::validate::Contains;
 use rocket::{
@@ -272,6 +272,7 @@ impl OAuthToken {
 
         self.scope = scope;
         self.expires_in = 30 * 24 * 60 * 60;
+        self.created_at = DateTime::now();
 
         match db.replace_one(filter, self.clone(), None).await {
             Ok(_) => Ok(self.clone()),
@@ -296,6 +297,22 @@ impl OAuthToken {
             Ok(_) => Ok(self.clone()),
             Err(err) => Err(OAuthTokenError::DatabaseError(format!(
                 "Error deleting oauth token: {:?}",
+                err
+            ))),
+        }
+    }
+
+    #[allow(unused)]
+    pub async fn delete_all_matching(
+        filter: Document,
+        connection: &Connection<AuthRsDatabase>,
+    ) -> Result<(), OAuthTokenError> {
+        let db = Self::get_collection(connection);
+
+        match db.delete_many(filter, None).await {
+            Ok(_) => Ok(()),
+            Err(err) => Err(OAuthTokenError::DatabaseError(format!(
+                "Error deleting OAuth Tokens: {:?}",
                 err
             ))),
         }

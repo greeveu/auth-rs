@@ -18,7 +18,7 @@ use rocket_db_pools::{
     Connection,
 };
 
-use super::http_response::HttpResponse;
+use super::{http_response::HttpResponse, oauth_application::OAuthApplication, oauth_token::OAuthToken};
 use super::user_error::{UserError, UserResult};
 use super::passkey::{Passkey, PasskeyDTO};
 
@@ -277,6 +277,32 @@ impl User {
     }
 
     #[allow(unused)]
+    pub async fn remove_role_from_all(
+        role_id: Uuid,
+        connection: &Connection<AuthRsDatabase>,
+    ) -> Result<(), UserError> {
+        let db = Self::get_collection(connection);
+
+        let filter = doc! {
+            "roles": {
+                "$in": [role_id]
+            }
+        };
+        let update = doc! {
+            "$pull": {
+                "roles": role_id
+            }
+        };
+        match db.update_many(filter, update, None).await {
+            Ok(_) => Ok(()),
+            Err(err) => Err(UserError::DatabaseError(format!(
+                "Error removing role from all users: {}",
+                err
+            ))),
+        }
+    }
+
+    #[allow(unused)]
     pub async fn disable(
         &self,
         connection: &Connection<AuthRsDatabase>,
@@ -332,6 +358,16 @@ impl User {
         connection: &Connection<AuthRsDatabase>,
     ) -> Result<User, HttpResponse<()>> {
         let db = Self::get_collection(connection);
+
+        // Delete all owned OAuth applications
+        OAuthApplication::delete_all_matching(doc! { "owner": self.id.clone() }, &connection)
+            .await
+            .map_err(|err| UserError::DatabaseError(format!("Error deleting owned oauth apps data: {:?}", err)))?;
+
+        // Delete all OAuth tokens that belong to this user
+        OAuthToken::delete_all_matching(doc! { "userId": self.id.clone() }, &connection)
+            .await
+            .map_err(|err| UserError::DatabaseError(err.to_string()))?;
 
         let filter = doc! {
             "_id": self.id

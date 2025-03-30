@@ -100,7 +100,7 @@ impl UserUpdate {
             .hash_password(password.as_bytes(), &salt)
             .map_err(|_| UserError::PasswordHashingError)?
             .to_string();
-        self.update_field("password", "HIDDEN", "HIDDEN");
+        self.update_field("password", "***********", "***********");
         self.user.password_hash = password_hash;
         Ok(())
     }
@@ -116,7 +116,7 @@ impl UserUpdate {
                     return Err(UserError::FirstNameRequired);
                 }
                 let old_first_name = self.user.first_name.clone();
-                self.update_field("firstName", old_first_name, first_name.clone());
+                self.update_field("first_name", old_first_name, first_name.clone());
                 self.user.first_name = first_name;
             }
         }
@@ -124,7 +124,7 @@ impl UserUpdate {
         if let Some(last_name) = last_name {
             if self.user.last_name != last_name {
                 let old_last_name = self.user.last_name.clone();
-                self.update_field("lastName", old_last_name, last_name.clone());
+                self.update_field("last_name", old_last_name, last_name.clone());
                 self.user.last_name = last_name;
             }
         }

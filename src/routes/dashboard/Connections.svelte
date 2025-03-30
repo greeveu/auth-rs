@@ -2,14 +2,14 @@
 	import ScopeList from '../../lib/components/global/ScopeList.svelte';
 	import type AuthRsApi from "$lib/api";
 	import OAuthConnection from "$lib/models/OAuthConnection";
-	import type UserMinimal from "$lib/models/User";
+	import type User from "$lib/models/User";
 	import { Trash, Unlink } from "lucide-svelte";
 	import { onMount } from "svelte";
 	import Popup from '$lib/components/global/Popup.svelte';
 	import DateUtils from '$lib/dateUtils';
 
     export let api: AuthRsApi;
-    export let user: UserMinimal;
+    export let user: User;
     export let connections: OAuthConnection[];
 
     let unlinkConnectionPopup: boolean = false;
@@ -89,14 +89,3 @@
         {/each}
     </div>
 {/if}
-
-<style>
-    ::-webkit-scrollbar {
-        width: 5px;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background-color: var(--color-blue-500);
-        border-radius: 10px;
-    }
-</style>

@@ -1,50 +1,43 @@
 <script lang="ts">
 	import RoleList from '../../lib/components/dashboard/RoleList.svelte';
-	import TextField from "$lib/components/dashboard/TextField.svelte";
+	import TextField from "$lib/components/global/TextField.svelte";
 	import { onMount } from 'svelte';
 	import type AuthRsApi from '$lib/api';
-	import UserMinimal from '$lib/models/User';
+	import User from '$lib/models/User';
+	import type Role from '$lib/models/Role';
+	import DateUtils from '$lib/dateUtils';
+	import TextInput from '$lib/components/global/TextInput.svelte';
+	import Popup from '$lib/components/global/Popup.svelte';
 	import UserUpdates from '$lib/models/UserUpdates';
 
     export let api: AuthRsApi;
-    export let user: UserMinimal;
+    export let user: User;
     export let roles: Role[];
 
-    function addRole() {
-        // FIXME: This is a temporary solution. The user should be able to select a role from a dropdown.
-        const id = prompt('Enter the role ID:');
-        if (id) {
-            const role = roles.find(r => r._id == id);
-            if (role) {
-                const updates = new UserUpdates({ 
-                    email: null, 
-                    password: null, 
-                    firstName: null, 
-                    lastName: null, 
-                    roles: [...user.roles, role._id], 
-                    disabled: null 
-                });
-                api.updateUser(user, updates)
-                    .then(u => user = u)
-                    .catch(e => console.error(e));
-            }
-        }
+    let editUserPopup: boolean = false;
+    let editUserEmail: string = '';
+    let editUserFirstName: string = '';
+    let editUserLastName: string = '';
+    let editUserPassword: string = '';
+    let editUserPasswordConfirm: string = '';
+
+    $: editUserDataIsValid = () => {
+        const emailValid = editUserEmail.length >= 5 && editUserEmail.includes('@') && editUserEmail.includes('.');
+        const nameValid = editUserFirstName.length > 0;
+        const passwordValid = (editUserPassword.length < 1 && editUserPasswordConfirm.length < 1) || (editUserPassword.length > 7 && editUserPassword === editUserPasswordConfirm);
+
+        return emailValid && nameValid && passwordValid;
     }
 
-    function removeRole(role: Role) {
-        const updates = new UserUpdates({ 
-            email: null, 
-            password: null, 
-            firstName: null, 
-            lastName: null, 
-            roles: roles.filter(r => r._id != role._id).map(r => r._id), 
-            disabled: null 
-        });
-        api.updateUser(user, updates)
-            .then(u => user = u)
-            .catch(e => console.error(e));
+    function showEditUserPopup() {
+        editUserPopup = true;
+        editUserEmail = user.email;
+        editUserFirstName = user.firstName;
+        editUserLastName = user.lastName;
+        editUserPassword = '';
+        editUserPasswordConfirm = '';
     }
-
+    
     onMount(async () => {
         if (roles.length < 1) {
             api.getAllRoles()
@@ -54,9 +47,44 @@
     });
 </script>
 
+{#if editUserPopup}
+    <Popup title="Edit User" onClose={() => editUserPopup = false}>
+        <div class="flex flex-col items-center justify-center min-w-[350px]">
+            <TextInput type="email" label="Email" bind:value={editUserEmail} autofocus />
+            <TextInput label="First Name" bind:value={editUserFirstName} />
+            <TextInput label="Last Name" bind:value={editUserLastName} />
+            <TextInput type="password" label="Password" bind:value={editUserPassword} />
+            <TextInput type="password" label="Confirm Password" bind:value={editUserPasswordConfirm} />
+            <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <p
+                class="text-green-600 rounded-md {editUserDataIsValid() ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px] button green-button"
+                style="margin-top: 20px; margin-bottom: 10px;"
+                on:click={editUserDataIsValid() ? () => {
+                    editUserPopup = false;
+                    api.updateUser(user!, new UserUpdates({ email: editUserEmail, password: editUserPassword.length < 1 ? null : editUserPassword, firstName: editUserFirstName, lastName: editUserLastName, roles: null, disabled: null }))
+                        .then(editedUser => {
+                            user = editedUser;
+                        })
+                        .catch(e => console.error(e));
+                } : null}
+            >Save</p>
+        </div>
+    </Popup>
+{/if}
+
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+<div class="absolute flex flex-col min-h-[70px] items-center justify-center self-end" style="margin-right: 50px;">
+    <!-- svelte-ignore a11y_click_events_have_key_events -->
+    <p
+        class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md button"
+        style="padding: 10px;"
+        on:click={showEditUserPopup}
+    >Edit Profile</p>
+</div>
 <div class="flex flex-col items-start justify-start h-[100%] w-full gap-[10px]">
-    <TextField label="Full Name" value={`${user.firstName} ${user.lastName}`} readonly={UserMinimal.isSystemAdmin(user)} />
-    <TextField label="Email" value={user.email} readonly={UserMinimal.isSystemAdmin(user)} />
-    <RoleList label="Roles" roles={roles.filter(r => user.roles.includes(r._id))} onAdd={addRole} onRemove={removeRole} readOnly={!UserMinimal.isAdmin(user)} isSystemAdmin={UserMinimal.isSystemAdmin(user)} />
-    <TextField label="Creation Date" value={`${UserMinimal.getCreatedAt(user).getDate()}.${UserMinimal.getCreatedAt(user).getMonth() + 1}.${UserMinimal.getCreatedAt(user).getFullYear()} ${UserMinimal.getCreatedAt(user).getHours()}:${UserMinimal.getCreatedAt(user).getMinutes()}:${UserMinimal.getCreatedAt(user).getSeconds()}`} readonly />
+    <TextField label="Full Name" value={`${user.firstName} ${user.lastName}`} onClick={showEditUserPopup} readonly={User.isSystemAdmin(user)} />
+    <TextField label="Email" value={user.email} onClick={showEditUserPopup} readonly={User.isSystemAdmin(user)} />
+    <RoleList label="Roles" roles={roles.filter(r => user.roles.includes(r._id))} onAdd={() => {}} onRemove={() => {}} readOnly isSystemAdmin={User.isSystemAdmin(user)} />
+    <TextField label="Creation Date" value={DateUtils.getFullDateString(User.getCreatedAt(user))} readonly />
 </div>

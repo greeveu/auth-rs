@@ -6,17 +6,17 @@
     import {
         Bot,
         Link,
-        User,
+        User as UserIcon,
         SquareArrowOutUpRight,
         Clock,
         Lock
     } from "lucide-svelte";
 	import { INVALID_SCOPES } from "$lib/models/OAuthScopes";
-	import type UserMinimal from "$lib/models/User";
+	import type User from "$lib/models/User";
 	import OAuthApplication from "$lib/models/OAuthApplication";
 
     let api: AuthRsApi | null = null;
-    let user: UserMinimal | null = null;
+    let user: User | null = null;
 
     let currentPath: string | null = null;
 
@@ -113,7 +113,7 @@
                 <p class="opacity-50" style="letter-spacing: 3.5px;">....</p>
                 <Link class="size-[20px] opacity-75" style="margin-top: 5px;" />
                 <p class="opacity-50" style="letter-spacing: 3.5px;">....</p>
-                <User class="size-[80px]" />
+                <UserIcon class="size-[80px]" />
             </div>
             <h1 class="font-extrabold text-2xl" style="margin-bottom: 5px;">{oAuthApplication?.name}</h1>
             <h2 class="opacity-50 text-[14px]">wants to access your Account.</h2>

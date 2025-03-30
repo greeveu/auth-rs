@@ -7,6 +7,7 @@ use webauthn_rs::error::WebauthnError;
 use crate::models::http_response::HttpResponse;
 use crate::models::oauth_application::OAuthApplicationError;
 use crate::models::role::RoleError;
+use crate::models::setttings::SettingsError;
 use crate::models::user_error::UserError;
 
 #[derive(Error, Debug)]
@@ -334,6 +335,7 @@ impl From<UserError> for AppError {
             UserError::PasswordToShort => {
                 AppError::InvalidOrMissingFields("Password too short".to_string())
             }
+            UserError::RegistrationClosed => AppError::MissingPermissions
         }
     }
 }
@@ -412,5 +414,19 @@ impl From<String> for AppError {
 impl From<WebauthnError> for ApiError {
     fn from(error: WebauthnError) -> Self {
         ApiError::AppError(AppError::WebauthnError(error))
+    }
+}
+
+// Add From<ApiError> implementations for domain-specific errors
+impl From<ApiError> for SettingsError {
+    fn from(error: ApiError) -> Self {
+        match error {
+            ApiError::NotFound(_) => SettingsError::DatabaseError("Not found".to_string()),
+            ApiError::BadRequest(msg) => SettingsError::DatabaseError(msg),
+            ApiError::Forbidden(_) => SettingsError::Forbidden("Forbidden".to_string()),
+            ApiError::Unauthorized(_) => SettingsError::Unauthorized("Unauthorized".to_string()),
+            ApiError::InternalError(msg) => SettingsError::InternalServerError(msg),
+            ApiError::AppError(err) => err.into(),
+        }
     }
 }

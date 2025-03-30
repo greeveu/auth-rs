@@ -48,6 +48,9 @@ pub enum UserError {
 
     #[error("Invalid email")]
     InvalidEmail,
+
+    #[error("Registrations are closed")]
+    RegistrationClosed,
 }
 
 // Implement conversion from UserError to HttpResponse
@@ -127,6 +130,11 @@ impl<T> From<UserError> for HttpResponse<T> {
             UserError::InvalidEmail => HttpResponse {
                 status: 400,
                 message: "Invalid email".to_string(),
+                data: None,
+            },
+            UserError::RegistrationClosed => HttpResponse {
+                status: 403,
+                message: "Registrations are closed".to_string(),
                 data: None,
             },
         }

@@ -104,8 +104,8 @@ impl OAuthApplicationUpdate {
 
     fn update_redirect_uris(&mut self, new_uris: Vec<String>) {
         if self.app.redirect_uris != new_uris {
-            let old_uris = self.app.redirect_uris.join(", ");
-            let new_uris_str = new_uris.join(", ");
+            let old_uris = self.app.redirect_uris.join(",");
+            let new_uris_str = new_uris.join(",");
             self.update_field("redirect_uris", old_uris, new_uris_str);
             self.app.redirect_uris = new_uris;
         }

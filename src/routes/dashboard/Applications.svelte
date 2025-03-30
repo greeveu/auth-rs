@@ -1,5 +1,6 @@
 <script lang="ts">
-	import TextField from '$lib/components/dashboard/TextField.svelte';
+	import TextInput from '../../lib/components/global/TextInput.svelte';
+	import TextField from '$lib/components/global/TextField.svelte';
 	import Popup from './../../lib/components/global/Popup.svelte';
 	import RedirectUriList from './../../lib/components/dashboard/RedirectUriList.svelte';
 	import type AuthRsApi from "$lib/api";
@@ -7,10 +8,11 @@
 	import { BotOff, Pen, Trash } from "lucide-svelte";
 	import { onMount } from "svelte";
 	import OAuthApplicationUpdates from '$lib/models/OAuthApplicationUpdates';
-	import type UserMinimal from '$lib/models/User';
+	import type User from '$lib/models/User';
+	import DateUtils from '$lib/dateUtils';
 
     export let api: AuthRsApi;
-    export let user: UserMinimal;
+    export let user: User;
     export let applications: OAuthApplication[];
     export let onlyShowOwned: boolean = true;
 
@@ -76,7 +78,7 @@
 {#if newApplication != null}
     <Popup title="Copy Application Secret" onClose={() => newApplication = null}>
         <div class="flex flex-col items-center justify-center min-w-[350px]">
-            <p class="text-[14px] opacity-50 text-center" style="margin-bottom: 10px;">This is your applications ID and secret.<br>Copy it now, you will never be able to get it again!</p>
+            <p class="text-[14px] opacity-50 text-center" style="margin-bottom: 10px;">This is your applications ID and secret.<br>Copy it now, you will never be able to get it again!xw</p>
             <TextField label="ID" value={newApplication._id} fullWidth readonly />
             <TextField label="Secret" value={newApplication.secret!} readonly />
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
@@ -89,32 +91,10 @@
 {#if showNewApplicationPopup}
     <Popup title="Create Application" onClose={() => showNewApplicationPopup = false}>
         <div class="flex flex-col items-center justify-center min-w-[350px] max-w-[400px]">
-            <p class="text-[14px] self-start h-[17.5px] opacity-50">Name</p>
             <!-- svelte-ignore a11y_autofocus -->
-            <input
-                type="text"
-                placeholder="Name"
-                bind:value={newApplicationName}
-                class="border-[1.5px] border-gray-300 rounded-md opacity-75 w-full"
-                style="padding: 5px 10px; margin-top: 5px; margin-bottom: 10px;"
-                autofocus
-            >
-            <p class="text-[14px] self-start h-[17.5px] opacity-50">Description</p>
-            <input
-                type="text"
-                placeholder="Description"
-                bind:value={newApplicationDescription}
-                class="border-[1.5px] border-gray-300 rounded-md opacity-75 w-full"
-                style="padding: 5px 10px; margin-top: 5px; margin-bottom: 10px;"
-            >
-            <p class="text-[14px] self-start h-[17.5px] opacity-50">Redirect URI's</p>
-            <input
-            type="text"
-            placeholder="https://test.com/callback,https://test2.com/callback"
-            bind:value={newApplicationRedirectUris}
-            class="border-[1.5px] border-gray-300 rounded-md opacity-75 w-full"
-            style="padding: 5px 10px; margin-top: 5px;"
-            >
+            <TextInput label="Name" bind:value={newApplicationName} autofocus />
+            <TextInput label="Description" bind:value={newApplicationDescription} />
+            <TextInput label="Redirect URI's" placeholder="https://test.com/callback,https://test2.com/callback" bind:value={newApplicationRedirectUris} />
             {#if newApplicationRedirectUrisError}
                 <p class="text-[14px] text-red-600 self-start h-[10px] opacity-75" style="margin-bottom: 20px;">Invalid redirect URI's. Make sure you use the following format: '[url1],[url2],[url3]'.</p>
             {/if}
@@ -144,24 +124,8 @@
 {#if editApplicationPopup}
     <Popup title="Edit Application" onClose={() => editApplicationPopup = false}>
         <div class="flex flex-col items-center justify-center min-w-[350px]">
-            <p class="text-[14px] self-start h-[17.5px] opacity-50">Name</p>
-            <!-- svelte-ignore a11y_autofocus -->
-            <input
-                type="text"
-                placeholder="Name"
-                bind:value={editApplicationName}
-                class="border-[1.5px] border-gray-300 rounded-md opacity-75 w-full"
-                style="padding: 5px 10px; margin-top: 5px; margin-bottom: 10px;"
-                autofocus
-            >
-            <p class="text-[14px] self-start h-[17.5px] opacity-50">Description</p>
-            <input
-                type="text"
-                placeholder="Description"
-                bind:value={editApplicationDescription}
-                class="border-[1.5px] border-gray-300 rounded-md opacity-75 w-full"
-                style="padding: 5px 10px; margin-top: 5px;"
-            >
+            <TextInput label="Name" bind:value={editApplicationName} autofocus />
+            <TextInput label="Description" bind:value={editApplicationDescription} />
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
@@ -202,16 +166,8 @@
 
 {#if addRedirectUriPopup}
     <Popup title="Add Redirect URI" onClose={() => addRedirectUriPopup = false}>
-        <div class="flex flex-col items-center justify-center w-full" style="margin-top: 20px; margin-bottom: 20px;">
-            <!-- svelte-ignore a11y_autofocus -->
-            <input
-                type="text"
-                placeholder="https://example.com/callback"
-                class="border-[1.5px] border-gray-300 rounded-md opacity-75 min-w-[350px]"
-                style="padding: 5px 10px; margin-top: 5px;"
-                bind:value={newRedirectUri}
-                autofocus
-            >
+        <div class="flex flex-col items-center justify-center w-full" style="margin-top: 10px; margin-bottom: 10px;">
+            <TextInput label="" placeholder="https://example.com/callback" bind:value={newRedirectUri} autofocus />
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
@@ -278,26 +234,13 @@
                         </div>
                     </div>
                 </div>
-                <p class="text-[12px] opacity-35 h-[20px]">Created at {OAuthApplication.getCreatedAt(application).getDate()}.{OAuthApplication.getCreatedAt(application).getMonth()}.{OAuthApplication.getCreatedAt(application).getFullYear()}</p>
+                <p class="text-[12px] opacity-35 {onlyShowOwned ? 'h-[20px]' : 'h-[10px]'}">Created at {DateUtils.getFullDateString(OAuthApplication.getCreatedAt(application))}</p>
+                {#if !onlyShowOwned}
+                    <p class="text-[12px] opacity-35 h-[20px]">Owner: <span class="text-[10px]">{application.owner}</span></p>
+                {/if}
                 <p class="text-[12px] opacity-50">{@html (application.description?.length ?? 0) > 1 ? application.description?.substring(0, 200) + ((application.description?.length ?? 0) > 200 ? '...' : '') : '<i>This application does not have a description.</i>'}</p>
                 <RedirectUriList bind:redirectUris={application.redirectUris} onAdd={() => openAddRedirectUriPopup(application)} onRemove={(redirectUri) => removeRedirectUri(application, redirectUri)} />
             </div>
         {/each}
     </div>
 {/if}
-
-<style>
-    input:focus {
-        outline: none;
-        border: solid 1.5px var(--color-blue-500);
-    }
-
-    ::-webkit-scrollbar {
-        width: 5px;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background-color: var(--color-blue-500);
-        border-radius: 10px;
-    }
-</style>

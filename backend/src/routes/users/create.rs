@@ -1,3 +1,4 @@
+use rocket::form::validate::Len;
 use rocket::http::Status;
 use rocket::{
     error, post,
@@ -5,8 +6,10 @@ use rocket::{
 };
 use rocket_db_pools::Connection;
 
+use crate::auth::auth::OptionalAuthEntity;
 use crate::models::user::UserDTO;
 use crate::utils::response::json_response;
+use crate::SETTINGS;
 use crate::{
     db::AuthRsDatabase,
     models::{
@@ -25,15 +28,17 @@ pub struct CreateUserData {
     password: String,
     first_name: String,
     last_name: String,
+    registration_code: Option<String>,
 }
 
 #[allow(unused)]
 #[post("/users", format = "json", data = "<data>")]
 pub async fn create_user(
     db: Connection<AuthRsDatabase>,
+    auth_entity: Option<OptionalAuthEntity>,
     data: Json<CreateUserData>,
 ) -> (Status, Json<HttpResponse<UserDTO>>) {
-    let result = create_user_internal(db, data.into_inner()).await;
+    let result = create_user_internal(db, auth_entity, data.into_inner()).await;
 
     match result {
         Ok(user) => json_response(HttpResponse {
@@ -47,8 +52,25 @@ pub async fn create_user(
 
 async fn create_user_internal(
     db: Connection<AuthRsDatabase>,
+    auth_entity: Option<OptionalAuthEntity>,
     data: CreateUserData,
 ) -> UserResult<User> {
+    let req_user = if auth_entity.as_ref().is_some() && auth_entity.as_ref().unwrap().user.is_some() {
+        Some(auth_entity.unwrap().user.unwrap())
+    } else {
+        None
+    };
+
+    // Handle closed registration
+    let settings = (*SETTINGS).lock().await;
+    if !settings.open_registration && (!req_user.is_some() || !req_user.as_ref().unwrap().is_admin()) {
+        if data.registration_code.is_none() || data.registration_code.len() < 1 {
+            return Err(UserError::RegistrationClosed);
+        }
+
+        // TODO: Implement registration code check here
+    }
+
     // Check if user with email already exists
     if User::get_by_email(&data.email, &db).await.is_ok() {
         return Err(UserError::EmailAlreadyExists(data.email));
@@ -81,7 +103,7 @@ async fn create_user_internal(
         AuditLogEntityType::User,
         AuditLogAction::Create,
         "User created.".to_string(),
-        inserted_user.id,
+        if req_user.is_some() { req_user.unwrap().id } else { inserted_user.id },
         None,
         None,
     )

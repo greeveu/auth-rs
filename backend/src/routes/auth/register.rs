@@ -18,5 +18,5 @@ pub async fn register(
     db: Connection<AuthRsDatabase>,
     data: Json<CreateUserData>,
 ) -> (Status, Json<HttpResponse<UserDTO>>) {
-    create_user(db, data).await
+    create_user(db, None, data).await
 }

@@ -67,13 +67,10 @@ async fn process_mfa(
             .map_err(|err| ApiError::InternalError(format!("Failed to enable TOTP: {:?}", err)))?;
 
         let new_values = HashMap::from([(
-            "totpSecret".to_string(),
-            user.totp_secret
-                .as_ref()
-                .unwrap_or(&"".to_string())
-                .to_string(),
+            "totp_secret".to_string(),
+            "*************".to_string(),
         )]);
-        let old_values = HashMap::from([("totpSecret".to_string(), "".to_string())]);
+        let old_values = HashMap::from([("totp_secret".to_string(), "".to_string())]);
 
         if let Err(err) = AuditLog::new(
             user.id,

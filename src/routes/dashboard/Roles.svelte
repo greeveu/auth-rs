@@ -5,6 +5,8 @@
 	import { onMount } from "svelte";
 	import RoleUpdates from '$lib/models/RoleUpdates';
 	import Role from '$lib/models/Role';
+	import DateUtils from '$lib/dateUtils';
+	import TextInput from '$lib/components/global/TextInput.svelte';
 
     export let api: AuthRsApi;
     export let roles: Role[];
@@ -37,16 +39,7 @@
 {#if showNewRolePopup}
     <Popup title="Create Role" onClose={() => showNewRolePopup = false}>
         <div class="flex flex-col items-center justify-center min-w-[350px] max-w-[400px]">
-            <p class="text-[14px] self-start h-[17.5px] opacity-50">Name</p>
-            <!-- svelte-ignore a11y_autofocus -->
-            <input
-                type="text"
-                placeholder="Name"
-                bind:value={newRoleName}
-                class="border-[1.5px] border-gray-300 rounded-md opacity-75 w-full"
-                style="padding: 5px 10px; margin-top: 5px; margin-bottom: 10px;"
-                autofocus
-            >
+            <TextInput label="Name" bind:value={newRoleName} autofocus />
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
@@ -69,16 +62,7 @@
 {#if editRolePopup}
     <Popup title="Edit Role" onClose={() => editRolePopup = false}>
         <div class="flex flex-col items-center justify-center min-w-[350px]">
-            <p class="text-[14px] self-start h-[17.5px] opacity-50">Name</p>
-            <!-- svelte-ignore a11y_autofocus -->
-            <input
-                type="text"
-                placeholder="Name"
-                bind:value={editRoleName}
-                class="border-[1.5px] border-gray-300 rounded-md opacity-75 w-full"
-                style="padding: 5px 10px; margin-top: 5px; margin-bottom: 10px;"
-                autofocus
-            >
+            <TextInput label="Name" bind:value={editRoleName} autofocus />
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
@@ -172,7 +156,7 @@
                         </div>
                     {/if}
                 </div>
-                <p class="text-[12px] opacity-35 h-[20px]">Created at {Role.getCreatedAt(role).getDate()}.{Role.getCreatedAt(role).getMonth()}.{Role.getCreatedAt(role).getFullYear()}</p>
+                <p class="text-[12px] opacity-35 h-[20px]">Created at {DateUtils.getDateString(Role.getCreatedAt(role))}</p>
                 {#if role.system}
                     <p class="text-[12px] opacity-35 h-[20px]">This is a system role and cannot be edited or deleted.</p>
                 {/if}
@@ -180,19 +164,3 @@
         {/each}
     </div>
 {/if}
-
-<style>
-    input:focus {
-        outline: none;
-        border: solid 1.5px var(--color-blue-500);
-    }
-
-    ::-webkit-scrollbar {
-        width: 5px;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background-color: var(--color-blue-500);
-        border-radius: 10px;
-    }
-</style>

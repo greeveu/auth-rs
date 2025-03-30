@@ -1,0 +1,138 @@
+<script lang="ts">
+	import { MinusCircle, Pencil, PlusCircle, ShieldCheck, ShieldX } from 'lucide-svelte';
+	import DateUtils from "$lib/dateUtils";
+	import { AuditLog, AuditLogEntityType } from "$lib/models/AuditLog";
+	import type OAuthApplication from "$lib/models/OAuthApplication";
+	import type Role from "$lib/models/Role";
+	import type User from "$lib/models/User";
+
+    export let user: User;
+    export let auditLog: AuditLog;
+    export let users: User[];
+    export let roles: Role[];
+    export let applications: OAuthApplication[];
+
+    $: isOpen = false;
+
+    function getEntityName(entityType: AuditLogEntityType, entityId: string): string {
+        if (entityType == AuditLogEntityType.User) {
+            if (entityId == user._id) {                
+                return "You";
+            } else if (users.find(u => u._id == entityId) != null) {;
+                const u = users.find(u => u._id == entityId)!;
+                return `${u.firstName} ${u.lastName}`;
+            } else {
+                return entityId;
+            }
+        } else if (entityType == AuditLogEntityType.Role) {
+            return roles.find(r => r._id == entityId)?.name ?? entityId;
+        } else if (entityType == AuditLogEntityType.OAuthApplication) {
+            return applications.find(a => a._id == entityId)?.name ?? entityId;
+        } else if (entityType == AuditLogEntityType.Settings) {
+            return "SETTINGS";
+        } else {
+            return "Unknown";
+        }
+    }
+
+    function getAuditLogString(log: AuditLog): string {
+        const author = getEntityName(AuditLogEntityType.User, log.authorId);
+        const target = getEntityName(log.entityType, log.entityId);
+        const action = log.action.toLowerCase() + 'd';
+
+        if (auditLog.reason.toUpperCase().includes('ENABLE TOTP')) {
+            return `${target} enabled 2FA.`;
+        } else if (auditLog.reason.toUpperCase().includes('DISABLE TOTP')) {
+            return `${target} disabled 2FA.`;
+        } else if (target.toUpperCase() == 'YOU') {
+            return `${author} ${action} your profile.`;
+        } else if (target == 'SETTINGS') {
+            return `${author} ${action} the settings.`;
+        } else {
+            return `${author} ${action} the ${log.entityType == AuditLogEntityType.OAuthApplication ? 'OAuth Application' : log.entityType.toLowerCase()} ${target.length == 36 && target.includes('-') ? `<span class="text-[14px] opacity-75">${target}</span>` : target}`;
+        }
+    }
+
+    function getChangeLogString(key: string, oldValue: string, newValue: string): string {
+        let result: string;
+        let color: string;
+        const getContainer = () => `<p class="opacity-80 text-${color}-600">{{VALUE}}</p>`;
+
+        if (key == 'roles') {
+            const oldRoles = oldValue.split(',');
+            const newRoles = newValue.split(',');
+            
+            let action = oldRoles.length > newRoles.length ? 'Removed' : 'Added';
+            let roleId: string;
+            
+            if (action.toUpperCase() == 'REMOVED') {
+                roleId = oldRoles.filter(r => !newRoles.includes(r))[0];
+            } else {
+                roleId = newRoles.filter(r => !oldRoles.includes(r))[0];
+            }
+
+            color = action.toUpperCase() == 'ADDED' ? 'green' : 'red';
+            result = `${action} role <i>${getEntityName(AuditLogEntityType.Role, roleId)}</i>`;
+        } else if (key == 'redirect_uris') {
+            const oldURIs = oldValue.split(',');
+            const newURIs = newValue.split(',');
+            
+            let action = oldURIs.length > newURIs.length ? 'Removed' : 'Added';
+            let uris: string[];
+            
+            if (action.toUpperCase() == 'REMOVED') {
+                uris = oldURIs.filter(uri => !newURIs.includes(uri));
+            } else {
+                uris = newURIs.filter(uri => !oldURIs.includes(uri));
+            }
+
+            color = action.toUpperCase() == 'ADDED' ? 'green' : 'red';
+            result = `${action} redirect URI${uris.length > 1 ? '\'s' : ''} <i>${uris.join(', ')}</i>`;
+        } else if (key == 'password') {
+            color = 'yellow';
+            result = `Changed password`;
+        } else {
+            color = 'yellow';
+            result = `${AuditLog.auditLogChangeLogKeys[key] ?? key.replaceAll('_', ' ')}: <i>${oldValue}</i> -> <i>${newValue}</i>`;
+        }
+
+        // Don't  question this, is doesnt work the 'normal' way ok?
+        return getContainer().replace('{{VALUE}}', result);
+    }
+</script>
+
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<div
+    class="flex flex-col items-start border-[1px] border-[#333] rounded-md {auditLog.oldValues && auditLog.newValues && !auditLog.reason.toUpperCase().includes('TOTP') ? 'cursor-pointer' : ''}"
+    style="padding: 15px;"
+    on:click={auditLog.oldValues && auditLog.newValues && !auditLog.reason.toUpperCase().includes('TOTP') ? () => isOpen = !isOpen : () => {}}
+>
+    <div class="flex flex-row justify-between w-full">
+        <div class="flex flex-row gap-[15px]">
+            {#if auditLog.reason.toUpperCase().includes('CREATE')}
+                <PlusCircle height="30" width="30" class="text-green-500" />
+            {:else if auditLog.reason.toUpperCase().includes('DELETE')}
+                <MinusCircle height="30" width="30" class="text-red-500" />
+            {:else if auditLog.reason.toUpperCase().includes('ENABLE TOTP')}
+                <ShieldCheck height="30" width="30" class="text-green-500" />
+            {:else if auditLog.reason.toUpperCase().includes('DISABLE TOTP')}
+                <ShieldX height="30" width="30" class="text-red-500" />
+            {:else}
+                <Pencil height="30" width="30" class="text-yellow-400" />
+            {/if}
+            <p class="text-[16px]">{@html getAuditLogString(auditLog)}</p>
+        </div>
+        <p class="text-[16px] opacity-35 text-nowrap">{DateUtils.getFullDateString(AuditLog.getCreatedAt(auditLog))}</p>
+    </div>
+    {#if isOpen}
+        <div style="margin-top: 10px; padding: 5px;">
+            {#each Object.keys(auditLog.oldValues) as oldValueKey, i}
+                <div class="flex flex-row gap-[10px]">
+                    <p>{Object.keys(auditLog.oldValues).length < 2 ? '-> ' : `${i + 1}.`}</p>
+                    <p>{@html getChangeLogString(oldValueKey, auditLog.oldValues[oldValueKey] ?? '', auditLog.newValues[oldValueKey] ?? '')}</p>
+                </div>
+            {/each}
+        </div>
+    {/if}
+</div>

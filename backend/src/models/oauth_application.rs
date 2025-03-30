@@ -9,7 +9,7 @@ use rocket::{
 use rocket_db_pools::{mongodb::Collection, Connection};
 use thiserror::Error;
 
-use super::http_response::HttpResponse;
+use super::{http_response::HttpResponse, oauth_token::OAuthToken};
 
 #[derive(Error, Debug)]
 pub enum OAuthApplicationError {
@@ -245,6 +245,10 @@ impl OAuthApplication {
     ) -> OAuthApplicationResult<OAuthApplication> {
         let db = Self::get_collection(connection);
 
+        OAuthToken::delete_all_matching(doc! { "applicationId": self.id.clone() }, connection)
+            .await
+            .map_err(|err| OAuthApplicationError::DatabaseError(err.to_string()))?;
+
         let filter = doc! {
             "_id": self.id
         };
@@ -252,6 +256,22 @@ impl OAuthApplication {
             Ok(_) => Ok(self.clone()),
             Err(err) => Err(OAuthApplicationError::DatabaseError(format!(
                 "Error deleting OAuth Application: {:?}",
+                err
+            ))),
+        }
+    }
+
+    #[allow(unused)]
+    pub async fn delete_all_matching(
+        filter: Document,
+        connection: &Connection<AuthRsDatabase>,
+    ) -> OAuthApplicationResult<()> {
+        let db = Self::get_collection(connection);
+
+        match db.delete_many(filter, None).await {
+            Ok(_) => Ok(()),
+            Err(err) => Err(OAuthApplicationError::DatabaseError(format!(
+                "Error deleting OAuth Applications: {:?}",
                 err
             ))),
         }

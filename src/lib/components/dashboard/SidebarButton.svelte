@@ -1,10 +1,9 @@
 <script lang="ts">
-	import { ClipboardList, CodeXml, Crown, Link, LogOut, ScrollText, Shield, User, Users } from "lucide-svelte";
+	import { ClipboardList, CodeXml, Crown, Link, LogOut, ScrollText, Settings, Shield, TicketCheck, User, Users } from "lucide-svelte";
 
     export let tab: {
         name: string;
         icon: string;
-        requiredRoleId: string | null;
     };
     export let active: boolean;
     export let selectTab: () => void;
@@ -16,7 +15,7 @@
 <div
     class="flex flex-row items-center justify-start gap-[15px] w-[275px] border-[2px] border-[#222] rounded-md cursor-pointer {isLogout ? 'hover:text-red-500' : 'hover:text-blue-500'} {isLogout ? 'hover:border-red-500' : 'hover:border-blue-500'} transition-all"
     class:active={active}
-    style="padding: 10px 15px;"
+    style="padding: 10px 15px; margin-top: {isLogout ? '25' : '0'}px;"
     on:click={selectTab}
 >
     {#if tab.icon == 'user'}
@@ -35,6 +34,10 @@
         <Crown height="30" width="30" />
     {:else if tab.icon == 'scroll-text'}
         <ScrollText height="30" width="30" />
+    {:else if tab.icon == 'ticket-check'}
+        <TicketCheck height="30" width="30" />
+    {:else if tab.icon == 'settings'}
+        <Settings height="30" width="30" />
     {:else if tab.icon == 'log-out'}
         <LogOut height="30" width="30" />
     {/if}
