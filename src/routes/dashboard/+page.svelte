@@ -104,7 +104,7 @@
                 {:else if TABS[currentTabIndex].slug == 'all-oauth-applications'}
                     <Applications bind:api bind:user bind:applications onlyShowOwned={false} />
                 {:else if TABS[currentTabIndex].slug == 'global-logs'}
-                    <Logs bind:api bind:user bind:users bind:roles bind:applications bind:auditLogs />
+                    <Logs bind:api bind:user bind:users bind:roles bind:applications bind:auditLogs isGlobalLogs />
                 {:else if TABS[currentTabIndex].slug == 'system-settings'}
                     <SystemSettings bind:api bind:settings={settings!} />
                 {/if}

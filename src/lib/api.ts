@@ -567,12 +567,19 @@ class AuthRsApi {
         }
     }
 
-    async getAuditLogs(user: User): Promise<AuditLog[]> {
+    async getAuditLogs(user: User | null): Promise<AuditLog[]> {
         if (!this.token) {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/users/${user._id}/audit-logs`, {
+        let url: string;
+        if (user) {
+            url = `${AuthRsApi.baseUrl}/users/${user._id}/audit-logs`;
+        } else {
+            url = `${AuthRsApi.baseUrl}/audit-logs`;
+        }
+
+        const response = await fetch(url, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${this.token}`,

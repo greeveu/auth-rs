@@ -163,6 +163,7 @@ fn rocket() -> _ {
                 routes::audit_logs::get_by_id::get_audit_log_by_id,
                 routes::audit_logs::get_by_entity_id::get_audit_log_by_entity_id,
                 routes::audit_logs::get_by_user_id::get_audit_logs_by_user_id,
+                routes::audit_logs::get_all::get_all_audit_logs,
                 // User Routes
                 routes::users::create::create_user,
                 routes::users::get_all::get_all_users,

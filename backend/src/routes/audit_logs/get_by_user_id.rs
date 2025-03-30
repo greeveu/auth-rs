@@ -37,7 +37,7 @@ pub async fn get_audit_logs_by_user_id(
         return json_response(HttpResponse::forbidden("Missing permissions!"));
     }
 
-    match AuditLog::get_by_user_id(user_uuid, &db).await {
+    match AuditLog::get_by_user_id(Some(user_uuid), &db).await {
         Ok(audit_logs) => json_response(HttpResponse::success(
             "Audit Logs found by user id",
             audit_logs,

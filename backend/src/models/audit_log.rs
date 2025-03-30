@@ -199,7 +199,7 @@ impl AuditLog {
 
     #[allow(unused)]
     pub async fn get_by_user_id(
-        author_id: Uuid,
+        author_id: Option<Uuid>,
         connection: &Connection<AuthRsDatabase>,
     ) -> Result<Vec<Self>, AuditLogError> {
         let mut all_logs = vec![];
@@ -244,8 +244,12 @@ impl AuditLog {
             }
         };
 
-        let filter = doc! {
-            "authorId": author_id
+        let filter = if author_id.is_some() {
+            Some(doc! {
+                "authorId": author_id.unwrap()
+            })
+        } else {
+            None
         };
 
         // Fetch user logs
