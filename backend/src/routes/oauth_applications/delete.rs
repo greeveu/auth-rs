@@ -30,7 +30,7 @@ pub async fn delete_oauth_application(
         Err(err) => return json_response(err.into()),
     };
 
-    let oauth_application = match OAuthApplication::get_full_by_id(uuid, &db).await {
+    let oauth_application = match OAuthApplication::get_by_id(uuid, &db).await {
         Ok(oauth_application) => oauth_application,
         Err(err) => return json_response(err.into()),
     };
