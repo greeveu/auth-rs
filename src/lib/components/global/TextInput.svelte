@@ -21,7 +21,7 @@
         bind:value
         class="border-[1.5px] border-gray-300 rounded-md opacity-75 w-full"
         style="padding: 5px 10px; margin-top: 5px; margin-bottom: 10px;"
-        on:input={(e) => (e.target as HTMLInputElement).value = Math.floor(Number((e.target as HTMLInputElement).value)).toString()}
+        on:input={type != 'number' ? null : (e) => (e.target as HTMLInputElement).value = Math.floor(Number((e.target as HTMLInputElement).value)).toString()}
         autofocus={autofocus}
     >   
     {#if type == 'password'}
