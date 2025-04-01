@@ -19,6 +19,10 @@ export default class RegistrationToken {
         this.createdAt = createdAt;
     }
 
+    static getUrl(token: RegistrationToken): string {
+        return `${document.location.origin}/register?registrationCode=${token.code}`;
+    }
+
     static getCreatedAt(token: RegistrationToken): Date {
         // @ts-ignore
         return new Date(parseInt(token.createdAt.$date.$numberLong) ?? 0);

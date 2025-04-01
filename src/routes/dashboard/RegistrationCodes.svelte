@@ -2,7 +2,7 @@
 	import TextInput from '../../lib/components/global/TextInput.svelte';
 	import Popup from '../../lib/components/global/Popup.svelte';
 	import type AuthRsApi from "$lib/api";
-	import { Pen, TicketX, Trash } from "lucide-svelte";
+	import { Pen, Share, TicketX, Trash } from "lucide-svelte";
 	import { onMount } from "svelte";
 	import RegistrationTokenUpdates from '$lib/models/RegistrationTokenUpdates';
 	import RegistrationToken from '$lib/models/RegistrationToken';
@@ -295,6 +295,19 @@
                 <div class="flex flex-row justify-between w-full gap-[20px]">
                     <p class="text-[20px] font-bold h-[20px]">{token.code}</p>
                     <div class="flex flex-row">
+                        <!-- svelte-ignore a11y_click_events_have_key_events -->
+                        <!-- svelte-ignore a11y_no_static_element_interactions -->
+                        <div class="flex self-end" style="margin-right: 15px;" on:click={() => {
+                            (document.getElementById(`copy-url-${token._id}`) as HTMLInputElement)!.focus();
+                            (document.getElementById(`copy-url-${token._id}`) as HTMLInputElement)!.select();
+                            document.execCommand('copy');
+                        }}>
+                            <Share
+                                class="cursor-pointer hover:text-blue-600 transition-all"
+                                size=20
+                            />
+                        </div>
+                        <input type="text" id={`copy-url-${token._id}`} value={RegistrationToken.getUrl(token)} class="w-[1px] opacity-0" />
                         <!-- svelte-ignore a11y_click_events_have_key_events -->
                         <!-- svelte-ignore a11y_no_static_element_interactions -->
                         <div class="flex self-end" style="margin-right: 15px;" on:click={() => {

@@ -21,7 +21,7 @@
 - [ ] raw json viewer -> debug mode???
 - [x] show code users used to join in logs
 - [x] show code full warning
-- [ ] add copy join url button to registration codes
+- [x] add copy join url button to registration codes
 
 ## Both
 
