@@ -20,8 +20,8 @@ pub async fn get_registration_token_by_id(
     req_entity: AuthEntity,
     id: &str,
 ) -> (Status, Json<HttpResponse<RegistrationToken>>) {
-    if !req_entity.is_user() || !req_entity.user.unwrap().is_system_admin() {
-        return json_response(HttpResponse::forbidden("Only system admins can get registration tokens"));
+    if !req_entity.is_user() || !req_entity.user.unwrap().is_admin() {
+        return json_response(HttpResponse::forbidden("Only admins can get registration tokens"));
     }
 
     let uuid = match parse_uuid(id) {

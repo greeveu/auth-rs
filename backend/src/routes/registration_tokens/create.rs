@@ -37,8 +37,8 @@ pub async fn create_registration_token(
 ) -> (Status, Json<HttpResponse<RegistrationToken>>) {
     let data = data.into_inner();
 
-    if !req_entity.is_user() || !req_entity.user.unwrap().is_system_admin() {
-        return json_response(HttpResponse::forbidden("Only system admins can create registration tokens"));
+    if !req_entity.is_user() || !req_entity.user.unwrap().is_admin() {
+        return json_response(HttpResponse::forbidden("Only admins can create registration tokens"));
     }
 
     if data.auto_roles.is_some() {

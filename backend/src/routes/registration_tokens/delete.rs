@@ -21,8 +21,8 @@ pub async fn delete_registration_token(
     req_entity: AuthEntity,
     id: &str,
 ) -> (Status, Json<HttpResponse<()>>) {
-    if !req_entity.is_user() || !req_entity.user.unwrap().is_system_admin() {
-        return json_response(HttpResponse::forbidden("Only system admins can delete registration tokens"));
+    if !req_entity.is_user() || !req_entity.user.unwrap().is_admin() {
+        return json_response(HttpResponse::forbidden("Only admins can delete registration tokens"));
     }
 
     let uuid = match parse_uuid(id) {

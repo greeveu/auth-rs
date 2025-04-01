@@ -18,8 +18,8 @@ pub async fn get_all_registration_tokens(
     db: Connection<AuthRsDatabase>,
     req_entity: AuthEntity,
 ) -> (Status, Json<HttpResponse<Vec<RegistrationToken>>>) {
-    if !req_entity.is_user() || !req_entity.user.unwrap().is_system_admin() {
-        return json_response(HttpResponse::forbidden("Forbidden"));
+    if !req_entity.is_user() || !req_entity.user.unwrap().is_admin() {
+        return json_response(HttpResponse::forbidden("Only admins can view registration tokens"));
     }
 
     let registration_tokens = match RegistrationToken::get_all(&db, None).await {

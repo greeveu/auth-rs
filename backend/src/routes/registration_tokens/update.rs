@@ -185,8 +185,8 @@ async fn update_registration_token_internal(
     data: UpdateRegistrationTokenData,
 ) -> RegistrationTokenResult<RegistrationToken> {
     // Basic permission checks
-    if !req_entity.is_user() || !req_entity.user.clone().unwrap().is_system_admin() {
-        return Err(ApiError::Forbidden("Only system admins can update registration tokens".to_string()).into());
+    if !req_entity.is_user() || !req_entity.user.clone().unwrap().is_admin() {
+        return Err(ApiError::Forbidden("Only admins can update registration tokens".to_string()).into());
     }
     
     let uuid = parse_uuid(id).map_err(|e| ApiError::BadRequest(e.to_string()))?;
