@@ -326,11 +326,14 @@
                 </div>
                 <p class="text-[12px] opacity-35 h-[10px]">Created at {DateUtils.getFullDateString(RegistrationToken.getCreatedAt(token))}</p>
                 {#if token.expiresIn == null}
-                    <p class="text-[12px] opacity-75 h-[20px] text-green-600">Never expires!</p>
+                    <p class="text-[12px] opacity-75 {token.uses.length >= token.maxUses ? 'h-[10px]' : 'h-[20px]'} text-green-600">Never expires!</p>
                 {:else if RegistrationToken.getExpiresAt(token)!.getTime() >= 0}
-                    <p class="text-[12px] opacity-75 h-[20px] text-green-600">Expires in {DateUtils.getDurationString(RegistrationToken.getExpiresAt(token)!.getTime())}</p>
+                    <p class="text-[12px] opacity-75 {token.uses.length >= token.maxUses ? 'h-[10px]' : 'h-[20px]'} text-green-600">Expires in {DateUtils.getDurationString(RegistrationToken.getExpiresAt(token)!.getTime())}</p>
                 {:else}
-                    <p class="text-[12px] opacity-75 h-[20px] text-red-600">Expired!</p>
+                    <p class="text-[12px] opacity-75 {token.uses.length >= token.maxUses ? 'h-[10px]' : 'h-[20px]'} text-red-600">Expired!</p>
+                {/if}
+                {#if token.uses.length >= token.maxUses}
+                    <p class="text-[12px] opacity-75 h-[20px] text-red-600">Max uses reached!</p>
                 {/if}
                 <TextField
                     label="Maximum Uses"
