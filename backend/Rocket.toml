@@ -1,15 +1,7 @@
 [default.databases.auth-rs-db] 
-url = "${MONGODB_URI}"
+url = "mongodb://localhost:27017" # Only used in development
 
-[default]
+[global]
 address = "0.0.0.0"
-port = 8000
+port = 80
 limits = { json = "10MiB" }
-
-[release]
-address = "0.0.0.0"
-port = 8000
-
-[debug]
-address = "0.0.0.0"
-port = 8000
