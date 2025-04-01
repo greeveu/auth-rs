@@ -11,6 +11,7 @@
 	import Role from '$lib/models/Role';
 	import DateUtils from '$lib/dateUtils';
 	import User from '$lib/models/User';
+	import Tooltip from 'sv-tooltip';
 
     export let api: AuthRsApi;
     export let currentUser: User;
@@ -295,46 +296,52 @@
                 <div class="flex flex-row justify-between w-full gap-[20px]">
                     <p class="text-[20px] font-bold h-[20px]">{token.code}</p>
                     <div class="flex flex-row">
-                        <!-- svelte-ignore a11y_click_events_have_key_events -->
-                        <!-- svelte-ignore a11y_no_static_element_interactions -->
-                        <div class="flex self-end" style="margin-right: 15px;" on:click={() => {
-                            (document.getElementById(`copy-url-${token._id}`) as HTMLInputElement)!.focus();
-                            (document.getElementById(`copy-url-${token._id}`) as HTMLInputElement)!.select();
-                            document.execCommand('copy');
-                        }}>
-                            <Share
-                                class="cursor-pointer hover:text-blue-600 transition-all"
-                                size=20
-                            />
-                        </div>
-                        <input type="text" id={`copy-url-${token._id}`} value={RegistrationToken.getUrl(token)} class="w-[1px] opacity-0" />
-                        <!-- svelte-ignore a11y_click_events_have_key_events -->
-                        <!-- svelte-ignore a11y_no_static_element_interactions -->
-                        <div class="flex self-end" style="margin-right: 15px;" on:click={() => {
-                            const [input, index] = getInputAndIndexFromExpiresIn(token.expiresIn);
-                            editRegistrationToken = token;
-                            editRegistrationTokenMaxUses = token.maxUses;
-                            editRegistrationTokenExpiresInInput = input;
-                            editRegistrationTokenExpiresInIndex = index;
-                            editRegistrationTokenExpiresIn = token.expiresIn ?? 0;
-                            editRegistrationTokenPopup = true;
-                        }}>
-                            <Pen
-                                class="cursor-pointer hover:text-blue-500 transition-all"
-                                size=20
-                            />
-                        </div>
-                        <!-- svelte-ignore a11y_click_events_have_key_events -->
-                        <!-- svelte-ignore a11y_no_static_element_interactions -->
-                        <div class="flex self-end" on:click={() => {
-                            deleteRegistrationToken = token;
-                            deleteRegistrationTokenPopup = true;
-                        }}>
-                            <Trash
-                                class="cursor-pointer hover:text-red-600 transition-all"
-                                size=20
-                            />
-                        </div>
+                        <Tooltip tip="Copy Link" bottom color="var(--color-green-600)">
+                            <!-- svelte-ignore a11y_click_events_have_key_events -->
+                            <!-- svelte-ignore a11y_no_static_element_interactions -->
+                            <div class="flex self-end" style="margin-right: 15px;" on:click={() => {
+                                (document.getElementById(`copy-url-${token._id}`) as HTMLInputElement)!.focus();
+                                (document.getElementById(`copy-url-${token._id}`) as HTMLInputElement)!.select();
+                                document.execCommand('copy');
+                            }}>
+                                <Share
+                                    class="cursor-pointer hover:text-green-600 transition-all"
+                                    size=20
+                                />
+                            </div>
+                            <input type="text" id={`copy-url-${token._id}`} value={RegistrationToken.getUrl(token)} class="w-[1px] h-[1px] absolute opacity-0" />
+                        </Tooltip>
+                        <Tooltip tip="Edit Registartion Code" bottom>
+                            <!-- svelte-ignore a11y_click_events_have_key_events -->
+                            <!-- svelte-ignore a11y_no_static_element_interactions -->
+                            <div class="flex self-end" style="margin-right: 15px;" on:click={() => {
+                                const [input, index] = getInputAndIndexFromExpiresIn(token.expiresIn);
+                                editRegistrationToken = token;
+                                editRegistrationTokenMaxUses = token.maxUses;
+                                editRegistrationTokenExpiresInInput = input;
+                                editRegistrationTokenExpiresInIndex = index;
+                                editRegistrationTokenExpiresIn = token.expiresIn ?? 0;
+                                editRegistrationTokenPopup = true;
+                            }}>
+                                <Pen
+                                    class="cursor-pointer hover:text-blue-500 transition-all"
+                                    size=20
+                                />
+                            </div>
+                        </Tooltip>
+                        <Tooltip tip="Delete Registration Code" bottom color="var(--color-red-600)">
+                            <!-- svelte-ignore a11y_click_events_have_key_events -->
+                            <!-- svelte-ignore a11y_no_static_element_interactions -->
+                            <div class="flex self-end" on:click={() => {
+                                deleteRegistrationToken = token;
+                                deleteRegistrationTokenPopup = true;
+                            }}>
+                                <Trash
+                                    class="cursor-pointer hover:text-red-600 transition-all"
+                                    size=20
+                                />
+                            </div>
+                        </Tooltip>
                     </div>
                 </div>
                 <p class="text-[12px] opacity-35 h-[10px]">Created at {DateUtils.getFullDateString(RegistrationToken.getCreatedAt(token))}</p>

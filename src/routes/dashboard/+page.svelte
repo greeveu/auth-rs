@@ -49,7 +49,7 @@
         { slug: 'users', name: 'Users', icon: 'users', shouldShow: (user) => User.isAdmin(user) },
         { slug: 'roles', name: 'Roles', icon: 'crown', shouldShow: (user) => User.isAdmin(user) },
         { slug: 'all-oauth-applications', name: 'All OAuth Apps', icon: 'code-xml', shouldShow: (user) => User.isAdmin(user) },
-        { slug: 'registration-codes', name: 'Registration Codes', icon: 'ticket-check', shouldShow: (user, settings) => User.isAdmin(user) && !settings.openRegistration },
+        { slug: 'registration-codes', name: 'Registration Codes', icon: 'ticket-check', shouldShow: (user) => User.isAdmin(user) },
         { slug: 'global-logs', name: 'Global Logs', icon: 'scroll-text', shouldShow: (user) => User.isAdmin(user) },
         { slug: 'system-settings', name: 'System Settings', icon: 'settings', shouldShow: (user) => User.isSystemAdmin(user) },
     ];

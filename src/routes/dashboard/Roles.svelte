@@ -7,6 +7,7 @@
 	import Role from '$lib/models/Role';
 	import DateUtils from '$lib/dateUtils';
 	import TextInput from '$lib/components/global/TextInput.svelte';
+	import Tooltip from 'sv-tooltip';
 
     export let api: AuthRsApi;
     export let roles: Role[];
@@ -130,35 +131,39 @@
                     <p class="text-[20px] font-bold h-[20px]">{role.name}</p>
                     {#if !role.system}
                         <div class="flex flex-row">
-                            <!-- svelte-ignore a11y_click_events_have_key_events -->
-                            <!-- svelte-ignore a11y_no_static_element_interactions -->
-                            <div class="flex self-end" style="margin-right: 12.5px;" on:click={() => {
-                                editRole = role;
-                                editRoleName = role.name;
-                                editRolePopup = true;
-                            }}>
-                                <Pen
-                                    class="cursor-pointer hover:text-blue-500 transition-all"
-                                    size=20
-                                />
-                            </div>
-                            <!-- svelte-ignore a11y_click_events_have_key_events -->
-                            <!-- svelte-ignore a11y_no_static_element_interactions -->
-                            <div class="flex self-end" on:click={() => {
-                                deleteRole = role;
-                                deleteRolePopup = true;
-                            }}>
-                                <Trash
-                                    class="cursor-pointer hover:text-red-600 transition-all"
-                                    size=20
-                                />
-                            </div>
+                            <Tooltip tip="Edit Role" bottom>
+                                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                                <!-- svelte-ignore a11y_no_static_element_interactions -->
+                                <div class="flex self-end" style="margin-right: 12.5px;" on:click={() => {
+                                    editRole = role;
+                                    editRoleName = role.name;
+                                    editRolePopup = true;
+                                }}>
+                                    <Pen
+                                        class="cursor-pointer hover:text-blue-500 transition-all"
+                                        size=20
+                                    />
+                                </div>
+                            </Tooltip>
+                            <Tooltip tip="Delete Role" bottom color="var(--color-red-600)">
+                                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                                <!-- svelte-ignore a11y_no_static_element_interactions -->
+                                <div class="flex self-end" on:click={() => {
+                                    deleteRole = role;
+                                    deleteRolePopup = true;
+                                }}>
+                                    <Trash
+                                        class="cursor-pointer hover:text-red-600 transition-all"
+                                        size=20
+                                    />
+                                </div>
+                            </Tooltip>
                         </div>
                     {/if}
                 </div>
                 <p class="text-[12px] opacity-35 h-[20px]">Created at {DateUtils.getDateString(Role.getCreatedAt(role))}</p>
                 {#if role.system}
-                    <p class="text-[12px] opacity-35 h-[20px]">This is a system role and cannot be edited or deleted.</p>
+                    <p class="text-[12px] opacity-35 h-[20px]">This is a system role wich cannot be edited or deleted.</p>
                 {/if}
             </div>
         {/each}

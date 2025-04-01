@@ -29,6 +29,7 @@
 		"vite": "^6.2.3"
 	},
 	"dependencies": {
-		"lucide-svelte": "^0.475.0"
+		"lucide-svelte": "^0.475.0",
+		"sv-tooltip": "^0.2.5"
 	}
 }

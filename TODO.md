@@ -16,7 +16,7 @@
 - [x] Disable Users
 - [x] Registration
 - [x] ~~New "Your Profile" page style +~~ edit button
-- [ ] Tooltips -> "sv-tooltip"
+- [x] Tooltips -> "sv-tooltip"
 - [x] render invalid ouath url errors -> auto redirect, fine for now
 - [ ] raw json viewer -> debug mode???
 - [x] show code users used to join in logs
