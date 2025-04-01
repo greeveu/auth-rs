@@ -18,7 +18,7 @@ This project uses Docker and Docker Compose to run the entire application stack,
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/alex1607/auth-rs.git
+   git clone https://github.com/TimLohrer/auth-rs.git
    cd auth-rs
    ```
 
