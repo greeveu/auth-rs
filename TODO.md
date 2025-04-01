@@ -20,6 +20,7 @@
 - [ ] render invalid ouath url errors
 - [ ] raw json viewer -> debug mode???
 - [ ] show code users used to join in logs
+- [ ] show code full warning
 - [ ] add copy join url button to registration codes
 
 ## Both
