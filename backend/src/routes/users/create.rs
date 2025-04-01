@@ -7,6 +7,7 @@ use rocket::{
 use rocket_db_pools::Connection;
 
 use crate::auth::auth::OptionalAuthEntity;
+use crate::models::registration_token::RegistrationToken;
 use crate::models::user::UserDTO;
 use crate::utils::response::json_response;
 use crate::SETTINGS;
@@ -61,6 +62,8 @@ async fn create_user_internal(
         None
     };
 
+    let mut registration_token: Option<RegistrationToken> = None;
+
     // Handle closed registration
     let settings = (*SETTINGS).lock().await;
     if !settings.open_registration && (!req_user.is_some() || !req_user.as_ref().unwrap().is_admin()) {
@@ -68,7 +71,12 @@ async fn create_user_internal(
             return Err(UserError::RegistrationClosed);
         }
 
-        // TODO: Implement registration code check here
+        registration_token = match RegistrationToken::get_by_code(data.registration_code.unwrap(), &db).await {
+            Ok(token) => Some(token),
+            Err(_) => {
+                return Err(UserError::RegistrationCodeInvalid);
+            }
+        }
     }
 
     // Check if user with email already exists
@@ -87,12 +95,24 @@ async fn create_user_internal(
     }
 
     // Create new user
-    let user = User::new(
+    let mut user = User::new(
         data.email.to_lowercase(),
         data.password,
         data.first_name,
         data.last_name,
     )?;
+
+    // Handle registration token
+    if registration_token.is_some() {
+        let token = registration_token.clone().unwrap();
+        token.use_token(&db, user.id)
+            .await
+            .map_err(|_| UserError::RegistrationCodeInvalid)?;
+
+        for role_id in token.auto_roles {
+            user.roles.push(role_id);
+        }
+    }
 
     // Insert user into database
     let inserted_user = user.insert(&db).await?;
@@ -102,8 +122,26 @@ async fn create_user_internal(
         inserted_user.id,
         AuditLogEntityType::User,
         AuditLogAction::Create,
-        "User created.".to_string(),
-        if req_user.is_some() { req_user.unwrap().id } else { inserted_user.id },
+        format!(
+            "User created.|{}|{}",
+            if registration_token.is_some() {
+                AuditLogEntityType::RegistrationToken
+            } else {
+                AuditLogEntityType::User
+            },
+            if registration_token.is_some() {
+                registration_token.as_ref().unwrap().id
+            } else if req_user.is_some() {
+                req_user.as_ref().unwrap().id
+            } else {
+                inserted_user.id
+            }
+        ),
+        if req_user.is_some() {
+            req_user.as_ref().unwrap().id
+        } else {
+            inserted_user.id
+        },
         None,
         None,
     )

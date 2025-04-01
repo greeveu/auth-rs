@@ -6,6 +6,7 @@ use rocket::{
 };
 use rocket_db_pools::Connection;
 
+use crate::models::audit_log::{AuditLog, AuditLogAction, AuditLogEntityType};
 use crate::models::user::UserDTO;
 use crate::utils::response::json_response;
 use crate::{
@@ -83,6 +84,13 @@ pub async fn login(
 
     match process_login(&db, login_data).await {
         Ok(response) => {
+            if response.user.is_some() {
+                AuditLog::new(response.user.clone().unwrap().id, AuditLogEntityType::User, AuditLogAction::Login, "Login successful.".to_string(), response.user.clone().unwrap().id, None, None)
+                    .insert(&db)
+                    .await
+                    .ok();
+            }
+
             let message = if response.mfa_required {
                 "MFA required"
             } else {

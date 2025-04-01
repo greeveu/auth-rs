@@ -10,6 +10,7 @@
 	import RoleList from '$lib/components/dashboard/RoleList.svelte';
 	import type Role from '$lib/models/Role';
 	import DateUtils from '$lib/dateUtils';
+	import Tooltip from 'sv-tooltip';
 
     export let api: AuthRsApi;
     export let currentUser: User;
@@ -103,7 +104,7 @@
                 style="margin-top: 25px; margin-bottom: 10px;"
                 on:click={newUserDataIsValid() ? () => {
                     showNewUserPopup = false;
-                    api.createUser(newUserEmail, newUserPassword, newUserFirstName, newUserLastName)
+                    api.createUser(newUserEmail, newUserPassword, newUserFirstName, newUserLastName, null)
                         .then(createdUser => {
                             users = [...users, createdUser]
                         })
@@ -158,7 +159,16 @@
                         <!-- svelte-ignore a11y_no_static_element_interactions -->
                         <!-- svelte-ignore a11y_click_events_have_key_events -->
                         <div
-                            class="cursor-pointer {addUserRoles.map(r => r._id).includes(role._id) ? 'border-green-600' : 'border-[#333]'} border-[1px] rounded-md" on:click={addUserRoles.map(r => r._id).includes(role._id) ? () => addUserRoles.slice(addUserRoles.map(r => r._id).indexOf(role._id), 1) : () => addUserRoles = [...addUserRoles, role]}
+                            class="cursor-pointer {addUserRoles.map(r => r._id).includes(role._id) ? 'border-green-600' : 'border-[#333]'} border-[1px] rounded-md"
+                            on:click={() => {
+                                const roleIds = addUserRoles.map(r => r._id);
+                                
+                                if (roleIds.includes(role._id)) {
+                                    addUserRoles = addUserRoles.filter(r => r._id != role._id);
+                                } else {
+                                    addUserRoles = [...addUserRoles, role];
+                                }
+                            }}
                             style="padding: 10px;"
                         >
                             <p>{role.name}</p>
@@ -290,56 +300,62 @@
                 <div class="flex flex-row justify-between w-full gap-[20px]">
                     <p class="text-[20px] font-bold h-[20px]">{user.firstName} {user.lastName}</p>
                     <div class="flex flex-row">
-                        <!-- svelte-ignore a11y_click_events_have_key_events -->
-                        <!-- svelte-ignore a11y_no_static_element_interactions -->
-                        <div class="flex self-end" style="margin-right: 15px;" on:click={() => {
-                            editUser = user;
-                            editUserEmail = user.email;
-                            editUserFirstName = user.firstName;
-                            editUserLastName = user.lastName;
-                            editUserPopup = true;
-                        }}>
-                            <Pen
-                                class="cursor-pointer hover:text-blue-500 transition-all"
-                                size=20
-                            />
-                        </div>
-                        {#if user._id != currentUser._id}
+                        <Tooltip tip="Edit User" bottom>
                             <!-- svelte-ignore a11y_click_events_have_key_events -->
                             <!-- svelte-ignore a11y_no_static_element_interactions -->
-                            <div class="flex self-end" style="margin-right: 12.5px;" on:click={() => {
-                                if (user.disabled) {
-                                    enableUser = user;
-                                    enableUserPopup = true;
-                                } else {
-                                    disableUser = user;
-                                    disableUserPopup = true;
-                                }
+                            <div class="flex self-end" style="margin-right: 15px;" on:click={() => {
+                                editUser = user;
+                                editUserEmail = user.email;
+                                editUserFirstName = user.firstName;
+                                editUserLastName = user.lastName;
+                                editUserPopup = true;
                             }}>
-                                {#if user.disabled}
-                                    <UserCheck
-                                        class="cursor-pointer hover:text-green-600 transition-all"
-                                        size=20
-                                    />
-                                {:else}
-                                    <UserX
-                                        class="cursor-pointer hover:text-red-600 transition-all"
-                                        size=20
-                                    />
-                                {/if}
+                                <Pen
+                                    class="cursor-pointer hover:text-blue-500 transition-all"
+                                    size=20
+                                />
                             </div>
+                        </Tooltip>
+                        {#if user._id != currentUser._id}
+                            <Tooltip tip={user.disabled ? 'Enable User' : 'Disable User'} bottom color={user.disabled ? undefined : "var(--color-red-600)"}>
+                                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                                <!-- svelte-ignore a11y_no_static_element_interactions -->
+                                <div class="flex self-end" style="margin-right: 12.5px;" on:click={() => {
+                                    if (user.disabled) {
+                                        enableUser = user;
+                                        enableUserPopup = true;
+                                    } else {
+                                        disableUser = user;
+                                        disableUserPopup = true;
+                                    }
+                                }}>
+                                    {#if user.disabled}
+                                        <UserCheck
+                                            class="cursor-pointer hover:text-green-600 transition-all"
+                                            size=20
+                                        />
+                                    {:else}
+                                        <UserX
+                                            class="cursor-pointer hover:text-red-600 transition-all"
+                                            size=20
+                                        />
+                                    {/if}
+                                </div>
+                            </Tooltip>
                         {/if}
-                        <!-- svelte-ignore a11y_click_events_have_key_events -->
-                        <!-- svelte-ignore a11y_no_static_element_interactions -->
-                        <div class="flex self-end" on:click={() => {
-                            deleteUser = user;
-                            deleteUserPopup = true;
-                        }}>
-                            <Trash
-                                class="cursor-pointer hover:text-red-600 transition-all"
-                                size=20
-                            />
-                        </div>
+                        <Tooltip tip="Delete User" bottom color="var(--color-red-600)">
+                            <!-- svelte-ignore a11y_click_events_have_key_events -->
+                            <!-- svelte-ignore a11y_no_static_element_interactions -->
+                            <div class="flex self-end" on:click={() => {
+                                deleteUser = user;
+                                deleteUserPopup = true;
+                            }}>
+                                <Trash
+                                    class="cursor-pointer hover:text-red-600 transition-all"
+                                    size=20
+                                />
+                            </div>
+                        </Tooltip>
                     </div>
                 </div>
                 <p class="text-[12px] opacity-35 {user.disabled ? 'h-[10px]' : 'h-[20px]'}">Created at {DateUtils.getFullDateString(User.getCreatedAt(user))}</p>

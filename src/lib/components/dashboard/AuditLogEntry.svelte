@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { MinusCircle, Pencil, PlusCircle, ShieldCheck, ShieldX } from 'lucide-svelte';
+    import { LogIn, MinusCircle, Pencil, PlusCircle, ShieldCheck, ShieldX } from 'lucide-svelte';
 	import DateUtils from "$lib/dateUtils";
-	import { AuditLog, AuditLogEntityType } from "$lib/models/AuditLog";
+	import { AuditLog, AuditLogAction, AuditLogEntityType } from "$lib/models/AuditLog";
 	import type OAuthApplication from "$lib/models/OAuthApplication";
+	import type RegistrationToken from '$lib/models/RegistrationToken';
 	import type Role from "$lib/models/Role";
 	import type User from "$lib/models/User";
 
@@ -11,12 +12,13 @@
     export let users: User[];
     export let roles: Role[];
     export let applications: OAuthApplication[];
+    export let registrationTokens: RegistrationToken[];
 
     $: isOpen = false;
 
     function getEntityName(entityType: AuditLogEntityType, entityId: string): string {
         if (entityType == AuditLogEntityType.User) {
-            if (entityId == user._id) {                
+            if (entityId == user._id) {
                 return "You";
             } else if (users.find(u => u._id == entityId) != null) {;
                 const u = users.find(u => u._id == entityId)!;
@@ -28,6 +30,8 @@
             return roles.find(r => r._id == entityId)?.name ?? entityId;
         } else if (entityType == AuditLogEntityType.OAuthApplication) {
             return applications.find(a => a._id == entityId)?.name ?? entityId;
+        } else if (entityType == AuditLogEntityType.RegistrationToken) {
+            return registrationTokens.find(t => t._id == entityId)?.code ?? entityId;
         } else if (entityType == AuditLogEntityType.Settings) {
             return "SETTINGS";
         } else {
@@ -44,12 +48,17 @@
             return `${target} enabled 2FA.`;
         } else if (auditLog.reason.toUpperCase().includes('DISABLE TOTP')) {
             return `${target} disabled 2FA.`;
+        } else if (auditLog.reason.toUpperCase().includes("LOGIN SUCCESSFUL")) {
+            return `New login on ${target.toUpperCase() == 'YOU' ? 'your' : `${target}\'s`} account.`;
+        } if (auditLog.entityType == AuditLogEntityType.User && auditLog.action == AuditLogAction.Create && auditLog.reason.split('|').length >= 3 && auditLog.reason.split('|')[1].toUpperCase() == 'REGISTRATION_TOKEN') {
+            const tokenId = auditLog.reason.split('|')[2];
+            return `${target} ${action} ${target.toUpperCase() == 'YOU' ? 'your' : 'their'} profile using the registration code <span class="text-[14px] opacity-75">${getEntityName(AuditLogEntityType.RegistrationToken, tokenId)}</span>.`;
         } else if (target.toUpperCase() == 'YOU') {
             return `${author} ${action} your profile.`;
         } else if (target == 'SETTINGS') {
             return `${author} ${action} the settings.`;
         } else {
-            return `${author} ${action} the ${log.entityType == AuditLogEntityType.OAuthApplication ? 'OAuth Application' : log.entityType.toLowerCase()} ${target.length == 36 && target.includes('-') ? `<span class="text-[14px] opacity-75">${target}</span>` : target}`;
+            return `${author} ${action} the ${log.entityType == AuditLogEntityType.OAuthApplication ? 'OAuth Application' : log.entityType == AuditLogEntityType.RegistrationToken ? 'Registration Token' : log.entityType.toLowerCase()} ${target.length == 36 && target.includes('-') ? `<span class="text-[14px] opacity-75">${target}</span>` : target}`;
         }
     }
 
@@ -58,13 +67,20 @@
         let color: string;
         const getContainer = () => `<p class="opacity-80 text-${color}-600">{{VALUE}}</p>`;
 
-        if (key == 'roles') {
-            const oldRoles = oldValue.split(',');
-            const newRoles = newValue.split(',');
+        if (key == 'roles' || key == 'auto_roles') {
+            let oldRoles = oldValue.split(',');
+            let newRoles = newValue.split(',');
+
+            if (oldRoles[0] == '') {
+                oldRoles = [];
+            }
+            if (newRoles[0] == '') {
+                newRoles = [];
+            }
             
             let action = oldRoles.length > newRoles.length ? 'Removed' : 'Added';
             let roleId: string;
-            
+
             if (action.toUpperCase() == 'REMOVED') {
                 roleId = oldRoles.filter(r => !newRoles.includes(r))[0];
             } else {
@@ -114,6 +130,8 @@
                 <PlusCircle height="30" width="30" class="text-green-500" />
             {:else if auditLog.reason.toUpperCase().includes('DELETE')}
                 <MinusCircle height="30" width="30" class="text-red-500" />
+            {:else if auditLog.reason.toUpperCase().includes("LOGIN SUCCESSFUL")}
+                <LogIn height="30" width="30" class="text-blue-500" />
             {:else if auditLog.reason.toUpperCase().includes('ENABLE TOTP')}
                 <ShieldCheck height="30" width="30" class="text-green-500" />
             {:else if auditLog.reason.toUpperCase().includes('DISABLE TOTP')}

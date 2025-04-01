@@ -6,6 +6,7 @@
 - [x] Validate redirect URI (not sure if we already do this) -> Update: We did :3
 - [x] Emails are not unique??? -> Fixed
 - [x] Require at lease one oauth scope to authorize
+- [ ] Add openid well_known page
 
 ## Frontend
 
@@ -13,16 +14,19 @@
 - [x] User roles ~~dropdown~~ -> Selection Popup
 - [x] Create / Edit users
 - [x] Disable Users
-- [ ] Registration
+- [x] Registration
 - [x] ~~New "Your Profile" page style +~~ edit button
-- [ ] Tooltips
-- [ ] render invalid ouath url errors
+- [x] Tooltips -> "sv-tooltip"
+- [x] render invalid ouath url errors -> auto redirect, fine for now
 - [ ] raw json viewer -> debug mode???
+- [x] show code users used to join in logs
+- [x] show code full warning
+- [x] add copy join url button to registration codes
 
 ## Both
 
 - [ ] Role descriptions
-- [ ] Limit registations (registration codes with limited uses and autoroles?)
+- [x] Limit registations (registration codes with limited uses and autoroles?)
 - [x] System admin settings (limited registrations, disable oauth application create for default users)
 - [ ] Pagination
 

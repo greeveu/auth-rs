@@ -7,6 +7,7 @@
 	import { onMount } from "svelte";
 	import Popup from '$lib/components/global/Popup.svelte';
 	import DateUtils from '$lib/dateUtils';
+	import Tooltip from 'sv-tooltip';
 
     export let api: AuthRsApi;
     export let user: User;
@@ -54,24 +55,26 @@
                 <div class="flex flex-row justify-between w-full">
                     <p class="text-[20px] font-bold h-[20px]">{connection.application.name}</p>
                     <div class="flex flex-row">
-                        <!-- svelte-ignore a11y_click_events_have_key_events -->
-                        <!-- svelte-ignore a11y_no_static_element_interactions -->
-                        <div class="flex self-end" on:click={() => {
-                            unlinkConnection = connection;
-                            unlinkConnectionPopup = true;
-                        }}>
-                            {#if OAuthConnection.getExpiresAt(connection).getTime() >= 0}
-                                <Unlink
-                                    class="cursor-pointer hover:text-red-600 transition-all"
-                                    size=20
-                                />
-                            {:else}
-                                <Trash
-                                    class="cursor-pointer hover:text-red-600 transition-all"
-                                    size=20
-                                />
-                            {/if}
-                        </div>
+                        <Tooltip tip={OAuthConnection.getExpiresAt(connection).getTime() >= 0 ? "Unlink Connection" : "Delete Connection"} bottom color="var(--color-red-600)">
+                            <!-- svelte-ignore a11y_click_events_have_key_events -->
+                            <!-- svelte-ignore a11y_no_static_element_interactions -->
+                            <div class="flex self-end" on:click={() => {
+                                unlinkConnection = connection;
+                                unlinkConnectionPopup = true;
+                            }}>
+                                {#if OAuthConnection.getExpiresAt(connection).getTime() >= 0}
+                                    <Unlink
+                                        class="cursor-pointer hover:text-red-600 transition-all"
+                                        size=20
+                                    />
+                                {:else}
+                                    <Trash
+                                        class="cursor-pointer hover:text-red-600 transition-all"
+                                        size=20
+                                    />
+                                {/if}
+                            </div>
+                        </Tooltip>
                     </div>
                 </div>
                 <p class="text-[12px] opacity-35 h-[10px]">Authorized at {DateUtils.getFullDateString(OAuthConnection.getCreatedAt(connection))}</p>

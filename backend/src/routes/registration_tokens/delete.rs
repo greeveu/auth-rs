@@ -2,6 +2,7 @@ use rocket::http::Status;
 use rocket::{delete, error, serde::json::Json};
 use rocket_db_pools::Connection;
 
+use crate::models::registration_token::RegistrationToken;
 use crate::utils::response::json_response;
 use crate::{
     auth::auth::AuthEntity,
@@ -9,20 +10,19 @@ use crate::{
     models::{
         audit_log::{AuditLog, AuditLogAction, AuditLogEntityType},
         http_response::HttpResponse,
-        oauth_application::OAuthApplication,
     },
     utils::parse_uuid::parse_uuid,
 };
 
 #[allow(unused)]
-#[delete("/oauth-applications/<id>", format = "json")]
-pub async fn delete_oauth_application(
+#[delete("/registration-tokens/<id>", format = "json")]
+pub async fn delete_registration_token(
     db: Connection<AuthRsDatabase>,
     req_entity: AuthEntity,
     id: &str,
 ) -> (Status, Json<HttpResponse<()>>) {
-    if !req_entity.is_user() {
-        return json_response(HttpResponse::forbidden("Forbidden"));
+    if !req_entity.is_user() || !req_entity.user.unwrap().is_admin() {
+        return json_response(HttpResponse::forbidden("Only admins can delete registration tokens"));
     }
 
     let uuid = match parse_uuid(id) {
@@ -30,22 +30,18 @@ pub async fn delete_oauth_application(
         Err(err) => return json_response(err.into()),
     };
 
-    let oauth_application = match OAuthApplication::get_by_id(uuid, &db).await {
-        Ok(oauth_application) => oauth_application,
+    let registration_token = match RegistrationToken::get_by_id(uuid, &db).await {
+        Ok(registration_token) => registration_token,
         Err(err) => return json_response(err.into()),
     };
 
-    if req_entity.user_id != oauth_application.owner && !req_entity.user.unwrap().is_admin() {
-        return json_response(HttpResponse::forbidden("Missing permissions!"));
-    }
-
-    match oauth_application.delete(&db).await {
-        Ok(oauth_application) => {
+    match registration_token.delete(&db).await {
+        Ok(registration_token) => {
             match AuditLog::new(
-                oauth_application.id,
-                AuditLogEntityType::OAuthApplication,
+                registration_token.id,
+                AuditLogEntityType::RegistrationToken,
                 AuditLogAction::Delete,
-                "OAuthApplication deleted.".to_string(),
+                "Registration token deleted.".to_string(),
                 req_entity.user_id,
                 None,
                 None,
@@ -57,7 +53,7 @@ pub async fn delete_oauth_application(
                 Err(err) => error!("{}", err),
             }
 
-            json_response(HttpResponse::success_no_data("OAuthApplication deleted."))
+            json_response(HttpResponse::success_no_data("Registration token deleted."))
         }
         Err(err) => json_response(err.into()),
     }

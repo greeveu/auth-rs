@@ -10,6 +10,7 @@
 	import OAuthApplicationUpdates from '$lib/models/OAuthApplicationUpdates';
 	import type User from '$lib/models/User';
 	import DateUtils from '$lib/dateUtils';
+    import Tooltip from "sv-tooltip";
 
     export let api: AuthRsApi;
     export let user: User;
@@ -104,7 +105,7 @@
                 class="text-green-600 rounded-md {newApplicationName.length > 3 ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px] button green-button"
                 style="margin-top: 25px; margin-bottom: 10px;"
                 on:click={newApplicationName.length > 3 ? () => {
-                    if (newApplicationRedirectUris.length > 0 && newApplicationRedirectUris.split(',').filter(uri => uri.includes('http') && uri.includes('://') && uri.includes('.')).length != newApplicationRedirectUris.split(',').length) {
+                    if (newApplicationRedirectUris.length > 0 && newApplicationRedirectUris.split(',').filter(uri => (uri.includes('http') || uri.includes(':///')) && uri.includes('://') && uri.includes('.')).length != newApplicationRedirectUris.split(',').length) {
                         newApplicationRedirectUrisError = true;
                         return;
                     }
@@ -171,7 +172,7 @@
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
-                class="text-green-600 rounded-md text-[18px] {newRedirectUri.includes('http') && newRedirectUri.includes('://') && newRedirectUri.includes('.') ? 'cursor-pointer' : 'cursor-default opacity-50'} button green-button"
+                class="text-green-600 rounded-md text-[18px] {(newRedirectUri.includes('http') || newRedirectUri.includes(':///')) && newRedirectUri.includes('://') && newRedirectUri.includes('.') ? 'cursor-pointer' : 'cursor-default opacity-50'} button green-button"
                 style="margin-top: 25px;"
                 class:enabled={newRedirectUri.includes('http') && newRedirectUri.includes('://') && newRedirectUri.includes('.')}
                 on:click={newRedirectUri.includes('http') && newRedirectUri.includes('://') && newRedirectUri.includes('.') ? () => addRedirectUri(newRedirectUriApplication!) : null}
@@ -208,30 +209,34 @@
                 <div class="flex flex-row justify-between w-full">
                     <p class="text-[20px] font-bold h-[20px]">{application.name}</p>
                     <div class="flex flex-row">
-                        <!-- svelte-ignore a11y_click_events_have_key_events -->
-                        <!-- svelte-ignore a11y_no_static_element_interactions -->
-                        <div class="flex self-end" style="margin-right: 12.5px;" on:click={() => {
-                            editApplication = application;
-                            editApplicationName = application.name;
-                            editApplicationDescription = application.description ?? '';
-                            editApplicationPopup = true;
-                        }}>
-                            <Pen
-                                class="cursor-pointer hover:text-blue-500 transition-all"
-                                size=20
-                            />
-                        </div>
-                        <!-- svelte-ignore a11y_click_events_have_key_events -->
-                        <!-- svelte-ignore a11y_no_static_element_interactions -->
-                        <div class="flex self-end" on:click={() => {
-                            deleteApplication = application;
-                            deleteApplicationPopup = true;
-                        }}>
-                            <Trash
-                                class="cursor-pointer hover:text-red-600 transition-all"
-                                size=20
-                            />
-                        </div>
+                        <Tooltip tip="Edit Application" bottom>
+                            <!-- svelte-ignore a11y_click_events_have_key_events -->
+                            <!-- svelte-ignore a11y_no_static_element_interactions -->
+                            <div class="flex self-end" style="margin-right: 12.5px;" on:click={() => {
+                                editApplication = application;
+                                editApplicationName = application.name;
+                                editApplicationDescription = application.description ?? '';
+                                editApplicationPopup = true;
+                            }}>
+                                <Pen
+                                    class="cursor-pointer hover:text-blue-500 transition-all"
+                                    size=20
+                                />
+                            </div>
+                        </Tooltip>
+                        <Tooltip tip="Delete Application" bottom color="var(--color-red-600)">
+                            <!-- svelte-ignore a11y_click_events_have_key_events -->
+                            <!-- svelte-ignore a11y_no_static_element_interactions -->
+                            <div class="flex self-end" on:click={() => {
+                                deleteApplication = application;
+                                deleteApplicationPopup = true;
+                            }}>
+                                <Trash
+                                    class="cursor-pointer hover:text-red-600 transition-all"
+                                    size=20
+                                />
+                            </div>
+                        </Tooltip>
                     </div>
                 </div>
                 <p class="text-[12px] opacity-35 {onlyShowOwned ? 'h-[20px]' : 'h-[10px]'}">Created at {DateUtils.getFullDateString(OAuthApplication.getCreatedAt(application))}</p>

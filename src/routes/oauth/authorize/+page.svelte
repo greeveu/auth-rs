@@ -105,7 +105,6 @@
 </script>
 
 <div class="flex items-center justify-center h-screen w-screen">
-
     <div class="flex flex-col items-center border-[2.5px] rounded-md" style="padding: 30px; border-color: #333;">
         <div class="flex flex-col gap-2 items-center">
             <div class="flex flex-row items-center justify-center gap-[10px]" style="margin-bottom: 20px;">

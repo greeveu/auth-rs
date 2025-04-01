@@ -140,24 +140,6 @@ impl OAuthApplication {
         }
     }
 
-    // ONLY USE THIS INTERNALLY!
-    #[allow(unused)]
-    pub async fn get_full_by_id(
-        id: Uuid,
-        connection: &Connection<AuthRsDatabase>,
-    ) -> OAuthApplicationResult<OAuthApplication> {
-        let db = Self::get_collection(connection);
-
-        let filter = doc! {
-            "_id": id
-        };
-        match db.find_one(filter, None).await {
-            Ok(Some(oauth_application)) => Ok(oauth_application),
-            Ok(None) => Err(OAuthApplicationError::NotFound(id)),
-            Err(err) => Err(OAuthApplicationError::DatabaseError(err.to_string())),
-        }
-    }
-
     #[allow(unused)]
     pub async fn get_by_id(
         id: Uuid,
