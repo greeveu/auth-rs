@@ -17,7 +17,7 @@
 - [ ] Registration
 - [x] ~~New "Your Profile" page style +~~ edit button
 - [ ] Tooltips -> "sv-tooltip"
-- [ ] render invalid ouath url errors
+- [x] render invalid ouath url errors -> auto redirect, fine for now
 - [ ] raw json viewer -> debug mode???
 - [ ] show code users used to join in logs
 - [ ] show code full warning
