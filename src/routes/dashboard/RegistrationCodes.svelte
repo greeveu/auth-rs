@@ -106,7 +106,7 @@
 </script>
 
 {#if showNewRegistrationTokenPopup}
-    <Popup title="Create RegistrationToken" onClose={() => showNewRegistrationTokenPopup = false}>
+    <Popup title="Create Registration Code" onClose={() => showNewRegistrationTokenPopup = false}>
         <div class="flex flex-col items-center justify-center min-w-[350px] max-w-[500px]">
             <TextInput type="number" label="Maximum Uses" bind:value={newRegistrationTokenMaxUses} autofocus />
             <p class="text-[14px] self-start h-[17.5px] opacity-50">Expires In</p>
@@ -141,7 +141,7 @@
 {/if}
 
 {#if editRegistrationTokenPopup}
-    <Popup title="Edit Registration Token" onClose={() => editRegistrationTokenPopup = false}>
+    <Popup title="Edit Registration Code" onClose={() => editRegistrationTokenPopup = false}>
         <div class="flex flex-col items-center justify-center min-w-[350px]">
             <TextInput type="number" label="Maximum Uses" bind:value={editRegistrationTokenMaxUses} autofocus />
             <p class="text-[14px] self-start h-[17.5px] opacity-50" style="margin-top: 5px;">Expires In</p>
@@ -182,7 +182,7 @@
                 let token: RegistrationToken = registrationTokens.find(token => token._id == showAddRegistrationTokenAutoRolesPopup?._id)!;
                 return !token.autoRoles.includes(r._id) && r._id != User.DEFAULT_ROLE_ID;
             }).length < 1}
-                <i>Registration Token already has every auto role.</i>
+                <i>Registration Code already has every auto role.</i>
                 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <p
@@ -245,7 +245,7 @@
 {/if}
 
 {#if deleteRegistrationTokenPopup}
-    <Popup title="Delete RegistrationToken" onClose={() => deleteRegistrationTokenPopup = false}>
+    <Popup title="Delete Registration Code" onClose={() => deleteRegistrationTokenPopup = false}>
         <div class="flex flex-col items-center justify-center max-w-[350px]" style="margin-top: 20px; margin-bottom: 20px;">
             <p class="text-[14px] text-center opacity-50">Are you sure you want to delete the user "{deleteRegistrationToken?.code}"?</p>
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
@@ -274,7 +274,7 @@
                 class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md button"
                 style="padding: 10px; margin-top: 25px;"
                 on:click={openCreateRegistrationTokenPopup}
-            >Create Registration Token</p>
+            >Create Registration Code</p>
     </div>
 {:else}
     <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
@@ -284,7 +284,7 @@
             class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md button"
             style="padding: 10px;"
             on:click={openCreateRegistrationTokenPopup}
-        >Create Registration Token</p>
+        >Create Registration Code</p>
     </div>
     <div class="flex flex-wrap overflow-y-scroll gap-[25px]">
         {#each registrationTokens as token}
