@@ -38,6 +38,11 @@ class AuditLog {
         "description": "Description",
         "redirect_uris": "Redirect URIs",
 
+        // RegistrationToken
+        "max_uses": "Max Uses",
+        "expires_in": "Expires At",
+        "auto_roles": "Auto Roles",
+
         // Settings
         "open_registration": "Open Registrations",
         "allow_oauth_apps_for_users": "Allow OAuth Apps for Users",
@@ -52,6 +57,7 @@ class AuditLog {
 enum AuditLogAction {
     Create = 'User',
     Update = 'Update',
+    Login = 'Login',
     Delete = 'Delete',
 }
 
@@ -59,6 +65,7 @@ enum AuditLogEntityType {
     User = 'User',
     Role = 'Role',
     OAuthApplication = 'OAuthApplication',
+    RegistrationToken = 'RegistrationToken',
     Settings = 'Settings',
     Unknown = 'Unknown',
 }

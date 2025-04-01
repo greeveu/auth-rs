@@ -194,6 +194,12 @@ fn rocket() -> _ {
                 // Connection Routes
                 routes::connections::get_by_user_id::get_by_user_id,
                 routes::connections::disconnect::disconnect,
+                // Registration Token Routes
+                routes::registration_tokens::create::create_registration_token,
+                routes::registration_tokens::get_all::get_all_registration_tokens,
+                routes::registration_tokens::get_by_id::get_registration_token_by_id,
+                routes::registration_tokens::update::update_registration_token,
+                routes::registration_tokens::delete::delete_registration_token,
                 // Auth Routes
                 routes::auth::register::register,
                 routes::auth::login::login,

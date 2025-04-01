@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { LogIn, MinusCircle, Pencil, PlusCircle, ShieldCheck, ShieldX } from 'lucide-svelte';
+    import { LogIn, MinusCircle, Pencil, PlusCircle, ShieldCheck, ShieldX } from 'lucide-svelte';
 	import DateUtils from "$lib/dateUtils";
 	import { AuditLog, AuditLogEntityType } from "$lib/models/AuditLog";
 	import type OAuthApplication from "$lib/models/OAuthApplication";
+	import type RegistrationToken from '$lib/models/RegistrationToken';
 	import type Role from "$lib/models/Role";
 	import type User from "$lib/models/User";
 
@@ -11,6 +12,7 @@
     export let users: User[];
     export let roles: Role[];
     export let applications: OAuthApplication[];
+    export let registrationTokens: RegistrationToken[];
 
     $: isOpen = false;
 
@@ -28,6 +30,8 @@
             return roles.find(r => r._id == entityId)?.name ?? entityId;
         } else if (entityType == AuditLogEntityType.OAuthApplication) {
             return applications.find(a => a._id == entityId)?.name ?? entityId;
+        } else if (entityType == AuditLogEntityType.RegistrationToken) {
+            return registrationTokens.find(t => t._id == entityId)?.code ?? entityId;
         } else if (entityType == AuditLogEntityType.Settings) {
             return "SETTINGS";
         } else {
@@ -51,7 +55,7 @@
         } else if (target == 'SETTINGS') {
             return `${author} ${action} the settings.`;
         } else {
-            return `${author} ${action} the ${log.entityType == AuditLogEntityType.OAuthApplication ? 'OAuth Application' : log.entityType.toLowerCase()} ${target.length == 36 && target.includes('-') ? `<span class="text-[14px] opacity-75">${target}</span>` : target}`;
+            return `${author} ${action} the ${log.entityType == AuditLogEntityType.OAuthApplication ? 'OAuth Application' : log.entityType == AuditLogEntityType.RegistrationToken ? 'Registration Token' : log.entityType.toLowerCase()} ${target.length == 36 && target.includes('-') ? `<span class="text-[14px] opacity-75">${target}</span>` : target}`;
         }
     }
 
@@ -60,13 +64,20 @@
         let color: string;
         const getContainer = () => `<p class="opacity-80 text-${color}-600">{{VALUE}}</p>`;
 
-        if (key == 'roles') {
-            const oldRoles = oldValue.split(',');
-            const newRoles = newValue.split(',');
+        if (key == 'roles' || key == 'auto_roles') {
+            let oldRoles = oldValue.split(',');
+            let newRoles = newValue.split(',');
+
+            if (oldRoles[0] == '') {
+                oldRoles = [];
+            }
+            if (newRoles[0] == '') {
+                newRoles = [];
+            }
             
             let action = oldRoles.length > newRoles.length ? 'Removed' : 'Added';
             let roleId: string;
-            
+
             if (action.toUpperCase() == 'REMOVED') {
                 roleId = oldRoles.filter(r => !newRoles.includes(r))[0];
             } else {

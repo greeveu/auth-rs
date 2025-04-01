@@ -3,6 +3,8 @@ import type { AuditLog } from "./models/AuditLog";
 import type OAuthApplication from "./models/OAuthApplication";
 import type OAuthApplicationUpdates from "./models/OAuthApplicationUpdates";
 import type OAuthConnection from "./models/OAuthConnection";
+import type RegistrationToken from "./models/RegistrationToken";
+import type RegistrationTokenUpdates from "./models/RegistrationTokenUpdates";
 import type Role from "./models/Role";
 import type RoleUpdates from "./models/RoleUpdates";
 import type Settings from "./models/Settings";
@@ -162,7 +164,7 @@ class AuthRsApi {
         }
     }
 
-    async createUser(email: string, password: string, firstName: string, lastName: string): Promise<User> {
+    async createUser(email: string, password: string, firstName: string, lastName: string, registrationCode: string | null): Promise<User> {
         if (!this.token) {
             throw new Error('No token');
         }
@@ -173,7 +175,7 @@ class AuthRsApi {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${this.token}`,
             },
-            body: JSON.stringify({ email, password, firstName, lastName }),
+            body: JSON.stringify({ email, password, firstName, lastName, registrationCode }),
         });
 
         if (response.ok) {
@@ -603,6 +605,116 @@ class AuthRsApi {
         const response = await fetch(`${AuthRsApi.baseUrl}/users`, {
             method: 'GET',
             headers: {
+                Authorization: `Bearer ${this.token}`,
+            },
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            return data.data;
+        } else {
+            console.error((await response.json()));
+            throw new Error(`(${response.status}): ${response.statusText}`);
+        }
+    }
+
+    async createRegistrationToken(maxUses: number, expiresIn: number | null): Promise<RegistrationToken> {
+        if (!this.token) {
+            throw new Error('No token');
+        }
+
+        const response = await fetch(`${AuthRsApi.baseUrl}/registration-tokens`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${this.token}`,
+            },
+            body: JSON.stringify({ maxUses, expiresIn }),
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            return data.data;
+        } else {
+            console.error((await response.json()));
+            throw new Error(`(${response.status}): ${response.statusText}`);
+        }
+    }
+
+    async getRegistrationToken(tokenId: string): Promise<RegistrationToken> {
+        if (!this.token) {
+            throw new Error('No token');
+        }
+
+        const response = await fetch(`${AuthRsApi.baseUrl}/registration-tokens/${tokenId}`, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${this.token}`,
+            },
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            return data.data;
+        } else {
+            console.error((await response.json()));
+            throw new Error(`(${response.status}): ${response.statusText}`);
+        }
+    }
+
+    async getAllRegistrationTokens(): Promise<RegistrationToken[]> {
+        if (!this.token) {
+            throw new Error('No token');
+        }
+
+        const response = await fetch(`${AuthRsApi.baseUrl}/registration-tokens`, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${this.token}`,
+            },
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            return data.data;
+        } else {
+            console.error((await response.json()));
+            throw new Error(`(${response.status}): ${response.statusText}`);
+        }
+    }
+
+    async updateRegistrationToken(token: RegistrationToken, updates: RegistrationTokenUpdates): Promise<RegistrationToken> {
+        if (!this.token) {
+            throw new Error('No token');
+        }
+
+        const response = await fetch(`${AuthRsApi.baseUrl}/registration-tokens/${token._id}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${this.token}`,
+            },
+            body: JSON.stringify(updates),
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            return data.data;
+        } else {
+            console.error((await response.json()));
+            throw new Error(`(${response.status}): ${response.statusText}`);
+        }
+    }
+
+    async deleteRegistrationToken(token: RegistrationToken): Promise<RegistrationToken> {
+        if (!this.token) {
+            throw new Error('No token');
+        }
+
+        const response = await fetch(`${AuthRsApi.baseUrl}/registration-tokens/${token._id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
                 Authorization: `Bearer ${this.token}`,
             },
         });

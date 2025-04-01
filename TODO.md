@@ -19,11 +19,13 @@
 - [ ] Tooltips -> "sv-tooltip"
 - [ ] render invalid ouath url errors
 - [ ] raw json viewer -> debug mode???
+- [ ] show code users used to join in logs
+- [ ] add copy join url button to registration codes
 
 ## Both
 
 - [ ] Role descriptions
-- [ ] Limit registations (registration codes with limited uses and autoroles?)
+- [x] Limit registations (registration codes with limited uses and autoroles?)
 - [x] System admin settings (limited registrations, disable oauth application create for default users)
 - [ ] Pagination
 

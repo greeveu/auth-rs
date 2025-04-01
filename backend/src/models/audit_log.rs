@@ -72,6 +72,7 @@ pub enum AuditLogEntityType {
     Role,
     OAuthApplication,
     Settings,
+    RegistrationToken,
     Unknown,
 }
 
@@ -98,6 +99,7 @@ impl fmt::Display for AuditLogEntityType {
             AuditLogEntityType::Role => write!(f, "ROLE"),
             AuditLogEntityType::OAuthApplication => write!(f, "OAUTH_APPLICATION"),
             AuditLogEntityType::Settings => write!(f, "SETTINGS"),
+            AuditLogEntityType::RegistrationToken => write!(f, "REGISTRATION_TOKEN"),
             AuditLogEntityType::Unknown => write!(f, "UNKNOWN"),
         }
     }
@@ -107,6 +109,7 @@ impl AuditLog {
     pub const COLLECTION_NAME_USERS: &'static str = "user-logs";
     pub const COLLECTION_NAME_ROLES: &'static str = "role-logs";
     pub const COLLECTION_NAME_OAUTH_APPLICATIONS: &'static str = "oauth-application-logs";
+    pub const COLLECTION_NAME_REGISTRATION_TOKENS: &'static str = "registration-token-logs";
     pub const COLLECTION_NAME_SYSTEM: &'static str = "system-logs";
 
     #[allow(unused)]
@@ -236,6 +239,16 @@ impl AuditLog {
                 }
             };
 
+        let registration_token_logs_collection =
+            match Self::get_collection(&AuditLogEntityType::RegistrationToken, connection) {
+                Some(coll) => coll,
+                None => {
+                    return Err(AuditLogError::InvalidEntityType(
+                        "Registration Token entity type invalid".to_string(),
+                    ))
+                }
+            };
+
         let system_ = match Self::get_collection(&AuditLogEntityType::Settings, connection) {
             Some(coll) => coll,
             None => {
@@ -325,6 +338,32 @@ impl AuditLog {
             }
         };
 
+        // Fetch registration token logs
+        let registration_token_logs = match registration_token_logs_collection
+            .find(filter.clone(), None)
+            .await
+        {
+            Ok(cursor) => {
+                let mut logs = Vec::new();
+                let mut stream = cursor;
+
+                while let Some(result) = stream.next().await {
+                    match result {
+                        Ok(doc) => logs.push(doc),
+                        Err(err) => return Err(AuditLogError::DatabaseError(err.to_string())),
+                    }
+                }
+
+                logs
+            }
+            Err(err) => {
+                return Err(AuditLogError::DatabaseError(format!(
+                    "Error fetching registration token audit logs: {}",
+                    err
+                )))
+            }
+        };
+
         // Fetch system logs
         let system_logs = match system_.find(filter.clone(), None).await {
             Ok(cursor) => {
@@ -351,6 +390,7 @@ impl AuditLog {
         all_logs.extend(user_logs);
         all_logs.extend(role_logs);
         all_logs.extend(oauth_application_logs);
+        all_logs.extend(registration_token_logs);
         all_logs.extend(system_logs);
 
         all_logs.sort_by(|a, b| a.created_at.cmp(&b.created_at));
@@ -427,9 +467,8 @@ impl AuditLog {
         match entity_type {
             &AuditLogEntityType::User => Some(db.collection(Self::COLLECTION_NAME_USERS)),
             &AuditLogEntityType::Role => Some(db.collection(Self::COLLECTION_NAME_ROLES)),
-            &AuditLogEntityType::OAuthApplication => {
-                Some(db.collection(Self::COLLECTION_NAME_OAUTH_APPLICATIONS))
-            }
+            &AuditLogEntityType::OAuthApplication => Some(db.collection(Self::COLLECTION_NAME_OAUTH_APPLICATIONS)),
+            &AuditLogEntityType::RegistrationToken => Some(db.collection(Self::COLLECTION_NAME_REGISTRATION_TOKENS)),
             &AuditLogEntityType::Settings => Some(db.collection(Self::COLLECTION_NAME_SYSTEM)),
             &AuditLogEntityType::Unknown => None,
         }

@@ -16,6 +16,9 @@ pub enum UserError {
     #[error("Missing permissions to perform this action")]
     MissingPermissions,
 
+    #[error("Invalid registration code")]
+    RegistrationCodeInvalid,
+
     #[error("Cannot modify system user")]
     SystemUserModification,
 
@@ -75,6 +78,11 @@ impl<T> From<UserError> for HttpResponse<T> {
             UserError::MissingPermissions => HttpResponse {
                 status: 403,
                 message: "Missing permissions to perform this action".to_string(),
+                data: None,
+            },
+            UserError::RegistrationCodeInvalid => HttpResponse {
+                status: 400,
+                message: "Invalid registration code".to_string(),
                 data: None,
             },
             UserError::SystemUserModification => HttpResponse {

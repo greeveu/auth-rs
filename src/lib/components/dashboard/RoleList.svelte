@@ -8,6 +8,7 @@
     export let readOnly: boolean = true;
     export let disableOutline: boolean = false;
     export let isSystemAdmin: boolean = false;
+    export let emptyText: string = "No roles assigned.";
     export let onAdd: () => void;
     export let onRemove: (role: Role) => void;
 </script>
@@ -36,5 +37,8 @@
                 {/if}
             </div>
         {/each}
+        {#if roles.length == 0}
+            <i class="text-[13px] text-[#777]" style="margin-left: 7.5px; margin-top: 5px">{emptyText}</i>
+        {/if}
     </div>
 </div>

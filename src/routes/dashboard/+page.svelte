@@ -17,6 +17,8 @@
 	import Users from './Users.svelte';
 	import type Settings from '$lib/models/Settings';
 	import SystemSettings from './SystemSettings.svelte';
+	import type RegistrationToken from '$lib/models/RegistrationToken';
+	import RegistrationCodes from './RegistrationCodes.svelte';
 
     const authStateManager = new AuthStateManager();
     let api = new AuthRsApi();
@@ -30,6 +32,7 @@
     let connections: OAuthConnection[] = [];
     let applications: OAuthApplication[] = [];
     let auditLogs: AuditLog[] = [];
+    let registrationTokens: RegistrationToken[] = [];
 
     const TABS: {
         slug: string,
@@ -96,15 +99,17 @@
                 {:else if TABS[currentTabIndex].slug == 'oauth-applications'}
                     <Applications bind:api bind:user bind:applications onlyShowOwned={true} />
                 {:else if TABS[currentTabIndex].slug == 'logs'}
-                    <Logs bind:api bind:user bind:users bind:roles bind:applications bind:auditLogs />
+                    <Logs bind:api bind:user bind:users bind:roles bind:applications bind:auditLogs bind:registrationTokens />
                 {:else if TABS[currentTabIndex].slug == 'users'}
                     <Users bind:api bind:currentUser={user} bind:users bind:roles />
                 {:else if TABS[currentTabIndex].slug == 'roles'}
                     <Roles bind:api bind:roles />
                 {:else if TABS[currentTabIndex].slug == 'all-oauth-applications'}
                     <Applications bind:api bind:user bind:applications onlyShowOwned={false} />
+                {:else if TABS[currentTabIndex].slug == 'registration-codes'}
+                    <RegistrationCodes bind:api bind:users bind:currentUser={user} bind:roles bind:registrationTokens />
                 {:else if TABS[currentTabIndex].slug == 'global-logs'}
-                    <Logs bind:api bind:user bind:users bind:roles bind:applications bind:auditLogs isGlobalLogs />
+                    <Logs bind:api bind:user bind:users bind:roles bind:applications bind:auditLogs bind:registrationTokens isGlobalLogs />
                 {:else if TABS[currentTabIndex].slug == 'system-settings'}
                     <SystemSettings bind:api bind:settings={settings!} />
                 {/if}

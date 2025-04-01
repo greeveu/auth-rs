@@ -103,7 +103,7 @@
                 style="margin-top: 25px; margin-bottom: 10px;"
                 on:click={newUserDataIsValid() ? () => {
                     showNewUserPopup = false;
-                    api.createUser(newUserEmail, newUserPassword, newUserFirstName, newUserLastName)
+                    api.createUser(newUserEmail, newUserPassword, newUserFirstName, newUserLastName, null)
                         .then(createdUser => {
                             users = [...users, createdUser]
                         })
@@ -158,7 +158,16 @@
                         <!-- svelte-ignore a11y_no_static_element_interactions -->
                         <!-- svelte-ignore a11y_click_events_have_key_events -->
                         <div
-                            class="cursor-pointer {addUserRoles.map(r => r._id).includes(role._id) ? 'border-green-600' : 'border-[#333]'} border-[1px] rounded-md" on:click={addUserRoles.map(r => r._id).includes(role._id) ? () => addUserRoles.slice(addUserRoles.map(r => r._id).indexOf(role._id), 1) : () => addUserRoles = [...addUserRoles, role]}
+                            class="cursor-pointer {addUserRoles.map(r => r._id).includes(role._id) ? 'border-green-600' : 'border-[#333]'} border-[1px] rounded-md"
+                            on:click={() => {
+                                const roleIds = addUserRoles.map(r => r._id);
+                                
+                                if (roleIds.includes(role._id)) {
+                                    addUserRoles = addUserRoles.filter(r => r._id != role._id);
+                                } else {
+                                    addUserRoles = [...addUserRoles, role];
+                                }
+                            }}
                             style="padding: 10px;"
                         >
                             <p>{role.name}</p>

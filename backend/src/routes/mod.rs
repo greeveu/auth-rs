@@ -7,3 +7,4 @@ pub mod oauth_applications;
 pub mod roles;
 pub mod users;
 pub mod settings;
+pub mod registration_tokens;
