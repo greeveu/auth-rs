@@ -20,7 +20,7 @@ export default class RegistrationToken {
     }
 
     static getUrl(token: RegistrationToken): string {
-        return `${document.location.origin}/register?registrationCode=${token.code}`;
+        return `${document.location.origin}/register?registration_code=${token.code}`;
     }
 
     static getCreatedAt(token: RegistrationToken): Date {

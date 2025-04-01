@@ -14,7 +14,7 @@
 - [x] User roles ~~dropdown~~ -> Selection Popup
 - [x] Create / Edit users
 - [x] Disable Users
-- [ ] Registration
+- [x] Registration
 - [x] ~~New "Your Profile" page style +~~ edit button
 - [ ] Tooltips -> "sv-tooltip"
 - [x] render invalid ouath url errors -> auto redirect, fine for now

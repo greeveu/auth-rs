@@ -165,10 +165,6 @@ class AuthRsApi {
     }
 
     async createUser(email: string, password: string, firstName: string, lastName: string, registrationCode: string | null): Promise<User> {
-        if (!this.token) {
-            throw new Error('No token');
-        }
-
         const response = await fetch(`${AuthRsApi.baseUrl}/users`, {
             method: 'POST',
             headers: {
