@@ -1,7 +1,7 @@
 <script lang="ts">
     import { LogIn, MinusCircle, Pencil, PlusCircle, ShieldCheck, ShieldX } from 'lucide-svelte';
 	import DateUtils from "$lib/dateUtils";
-	import { AuditLog, AuditLogEntityType } from "$lib/models/AuditLog";
+	import { AuditLog, AuditLogAction, AuditLogEntityType } from "$lib/models/AuditLog";
 	import type OAuthApplication from "$lib/models/OAuthApplication";
 	import type RegistrationToken from '$lib/models/RegistrationToken';
 	import type Role from "$lib/models/Role";
@@ -50,6 +50,9 @@
             return `${target} disabled 2FA.`;
         } else if (auditLog.reason.toUpperCase().includes("LOGIN SUCCESSFUL")) {
             return `New login on ${target.toUpperCase() == 'YOU' ? 'your' : `${target}\'s`} account.`;
+        } if (auditLog.entityType == AuditLogEntityType.User && auditLog.action == AuditLogAction.Create && auditLog.reason.split('|').length >= 3 && auditLog.reason.split('|')[1].toUpperCase() == 'REGISTRATION_TOKEN') {
+            const tokenId = auditLog.reason.split('|')[2];
+            return `${target} ${action} ${target.toUpperCase() == 'YOU' ? 'your' : 'their'} profile using the registration code <span class="text-[14px] opacity-75">${getEntityName(AuditLogEntityType.RegistrationToken, tokenId)}</span>.`;
         } else if (target.toUpperCase() == 'YOU') {
             return `${author} ${action} your profile.`;
         } else if (target == 'SETTINGS') {

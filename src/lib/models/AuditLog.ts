@@ -55,7 +55,7 @@ class AuditLog {
 }
 
 enum AuditLogAction {
-    Create = 'User',
+    Create = 'Create',
     Update = 'Update',
     Login = 'Login',
     Delete = 'Delete',
