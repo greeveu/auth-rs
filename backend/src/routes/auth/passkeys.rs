@@ -4,7 +4,7 @@ use lazy_static::lazy_static;
 use mongodb::bson::Uuid;
 use rocket::{
     http::Status,
-    post, get, patch, delete,
+    post,
     serde::{json::Json, Deserialize, Serialize},
 };
 use rocket_db_pools::Connection;
@@ -26,7 +26,7 @@ use crate::{
     models::{
         http_response::HttpResponse,
         user::{User, UserDTO},
-        passkey::{Passkey, PasskeyDTO},
+        passkey::Passkey,
     },
     utils::response::json_response,
 };
@@ -105,14 +105,6 @@ pub struct PasskeyAuthenticateStartRequest {
 pub struct PasskeyAuthenticateFinishRequest {
     pub authentication_id: Uuid,
     pub credential: PublicKeyCredential,
-}
-
-// DTO for updating passkey metadata
-#[derive(Deserialize)]
-#[serde(crate = "rocket::serde")]
-#[serde(rename_all = "camelCase")]
-pub struct PasskeyUpdateRequest {
-    pub device_type: String,
 }
 
 // Response for passkey registration start
@@ -427,126 +419,4 @@ async fn process_authenticate_finish(
         user: user.to_dto(),
         token,
     })
-}
-
-// 5. List User's Passkeys
-#[get("/auth/passkeys")]
-pub async fn list_passkeys(
-    db: Connection<AuthRsDatabase>,
-    req_entity: AuthEntity,
-) -> (Status, Json<HttpResponse<Vec<PasskeyDTO>>>) {
-    match process_list_passkeys(db, req_entity).await {
-        Ok(passkeys) => json_response(HttpResponse {
-            status: 200,
-            message: "Passkeys retrieved successfully".to_string(),
-            data: Some(passkeys),
-        }),
-        Err(err) => json_response(err.into()),
-    }
-}
-
-async fn process_list_passkeys(
-    db: Connection<AuthRsDatabase>,
-    req_entity: AuthEntity,
-) -> ApiResult<Vec<PasskeyDTO>> {
-    // Get the authenticated user
-    let user = User::get_by_id(req_entity.user_id, &db).await
-        .map_err(|e| ApiError::NotFound(format!("User not found: {}", e)))?;
-    
-    // Get all passkey DTOs
-    Ok(user.get_passkey_dtos())
-}
-
-// 6. Update Passkey Metadata
-#[patch("/auth/passkeys/<id>", format = "json", data = "<data>")]
-pub async fn update_passkey(
-    db: Connection<AuthRsDatabase>,
-    req_entity: AuthEntity,
-    id: String,
-    data: Json<PasskeyUpdateRequest>,
-) -> (Status, Json<HttpResponse<PasskeyDTO>>) {
-    let passkey_id = match Uuid::parse_str(&id) {
-        Ok(id) => id,
-        Err(_) => return json_response(ApiError::InvalidUUID.into()),
-    };
-    
-    match process_update_passkey(db, req_entity, passkey_id, data.into_inner()).await {
-        Ok(passkey) => json_response(HttpResponse {
-            status: 200,
-            message: "Passkey updated successfully".to_string(),
-            data: Some(passkey),
-        }),
-        Err(err) => json_response(err.into()),
-    }
-}
-
-async fn process_update_passkey(
-    db: Connection<AuthRsDatabase>,
-    req_entity: AuthEntity,
-    passkey_id: Uuid,
-    data: PasskeyUpdateRequest,
-) -> ApiResult<PasskeyDTO> {
-    // Get the authenticated user
-    let mut user = User::get_by_id(req_entity.user_id, &db).await
-        .map_err(|e| ApiError::NotFound(format!("User not found: {}", e)))?;
-    
-    // Find the passkey
-    let passkey = user.find_passkey_by_id(&passkey_id)
-        .ok_or(ApiError::NotFound("Passkey not found".to_string()))?
-        .clone();
-    
-    // Create updated passkey
-    let mut updated_passkey = passkey.clone();
-    updated_passkey.device_type = data.device_type;
-    
-    // Update the user
-    user.remove_passkey(&passkey_id);
-    user.add_passkey(updated_passkey.clone());
-    user.update(&db).await
-        .map_err(|e| ApiError::AppError(AppError::DatabaseError(e.to_string())))?;
-    
-    Ok(updated_passkey.to_dto())
-}
-
-// 7. Delete Passkey
-#[delete("/auth/passkeys/<id>")]
-pub async fn delete_passkey(
-    db: Connection<AuthRsDatabase>,
-    req_entity: AuthEntity,
-    id: String,
-) -> (Status, Json<HttpResponse<()>>) {
-    let passkey_id = match Uuid::parse_str(&id) {
-        Ok(id) => id,
-        Err(_) => return json_response(ApiError::InvalidUUID.into()),
-    };
-    
-    match process_delete_passkey(db, req_entity, passkey_id).await {
-        Ok(_) => json_response(HttpResponse {
-            status: 200,
-            message: "Passkey deleted successfully".to_string(),
-            data: None,
-        }),
-        Err(err) => json_response(err.into()),
-    }
-}
-
-async fn process_delete_passkey(
-    db: Connection<AuthRsDatabase>,
-    req_entity: AuthEntity,
-    passkey_id: Uuid,
-) -> ApiResult<()> {
-    // Get the authenticated user
-    let mut user = User::get_by_id(req_entity.user_id, &db).await
-        .map_err(|e| ApiError::NotFound(format!("User not found: {}", e)))?;
-    
-    // Try to find and remove the passkey
-    if !user.remove_passkey(&passkey_id) {
-        return Err(ApiError::NotFound("Passkey not found".to_string()));
-    }
-    
-    // Update the user
-    user.update(&db).await
-        .map_err(|e| ApiError::AppError(AppError::DatabaseError(e.to_string())))?;
-    
-    Ok(())
 } 
