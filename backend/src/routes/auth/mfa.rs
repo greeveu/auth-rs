@@ -49,7 +49,7 @@ async fn process_mfa(
         ));
     }
 
-    if flow.r#type != MfaType::TOTP && flow.r#type != MfaType::EnableTOTP {
+    if flow.r#type != MfaType::Totp && flow.r#type != MfaType::EnableTotp {
         return Err(ApiError::BadRequest("Invalid MFA type".to_string()));
     }
 
@@ -57,7 +57,7 @@ async fn process_mfa(
         return Err(ApiError::Unauthorized("Invalid TOTP code".to_string()));
     }
 
-    if flow.r#type == MfaType::EnableTOTP && flow.totp.is_some() && flow.user.totp_secret.is_none()
+    if flow.r#type == MfaType::EnableTotp && flow.totp.is_some() && flow.user.totp_secret.is_none()
     {
         let mut user = flow.user.clone();
         user.totp_secret = Some(flow.totp.as_ref().unwrap().get_secret_base32());

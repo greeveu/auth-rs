@@ -15,7 +15,7 @@ use crate::{
     MFA_SESSIONS,
 };
 
-use super::auth::AuthEntity;
+use super::AuthEntity;
 
 #[derive(Debug, Clone)]
 pub enum MfaState {
@@ -25,8 +25,8 @@ pub enum MfaState {
 
 #[derive(Debug, Clone)]
 pub enum MfaType {
-    TOTP,
-    EnableTOTP,
+    Totp,
+    EnableTotp,
 }
 
 #[derive(Debug, Clone)]
@@ -47,7 +47,7 @@ impl MfaHandler {
         let flow = Self {
             flow_id: Uuid::new(),
             state: MfaState::Pending,
-            r#type: MfaType::EnableTOTP,
+            r#type: MfaType::EnableTotp,
             user: user.clone(),
             totp: Some(
                 TOTP::new(
@@ -90,7 +90,7 @@ impl MfaHandler {
         let mut flow = Self {
             flow_id: Uuid::new(),
             state: MfaState::Pending,
-            r#type: MfaType::TOTP,
+            r#type: MfaType::Totp,
             user: user.clone(),
             totp: None,
         };
@@ -223,7 +223,7 @@ impl PartialEq for MfaType {
     fn eq(&self, other: &Self) -> bool {
         matches!(
             (self, other),
-            (MfaType::TOTP, MfaType::TOTP) | (MfaType::EnableTOTP, MfaType::EnableTOTP)
+            (MfaType::Totp, MfaType::Totp) | (MfaType::EnableTotp, MfaType::EnableTotp)
         )
     }
 }

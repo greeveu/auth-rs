@@ -1,7 +1,7 @@
 use crate::models::user::UserDTO;
 use crate::utils::response::json_response;
 use crate::{
-    auth::auth::AuthEntity,
+    auth::AuthEntity,
     db::AuthRsDatabase,
     models::{
         audit_log::{AuditLog, AuditLogAction, AuditLogEntityType},
@@ -112,7 +112,7 @@ impl UserUpdate {
     ) -> UserResult<()> {
         if let Some(first_name) = first_name {
             if self.user.first_name != first_name {
-                if first_name.len() < 1 {
+                if first_name.is_empty() {
                     return Err(UserError::FirstNameRequired);
                 }
                 let old_first_name = self.user.first_name.clone();

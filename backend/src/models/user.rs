@@ -360,12 +360,12 @@ impl User {
         let db = Self::get_collection(connection);
 
         // Delete all owned OAuth applications
-        OAuthApplication::delete_all_matching(doc! { "owner": self.id.clone() }, &connection)
+        OAuthApplication::delete_all_matching(doc! { "owner": self.id }, connection)
             .await
             .map_err(|err| UserError::DatabaseError(format!("Error deleting owned oauth apps data: {:?}", err)))?;
 
         // Delete all OAuth tokens that belong to this user
-        OAuthToken::delete_all_matching(doc! { "userId": self.id.clone() }, &connection)
+        OAuthToken::delete_all_matching(doc! { "userId": self.id }, connection)
             .await
             .map_err(|err| UserError::DatabaseError(err.to_string()))?;
 

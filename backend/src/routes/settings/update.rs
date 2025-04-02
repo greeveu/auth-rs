@@ -2,7 +2,7 @@ use crate::models::setttings::{Settings, SettingsError, SettingsResult};
 use crate::utils::response::json_response;
 use crate::SETTINGS;
 use crate::{
-    auth::auth::AuthEntity,
+    auth::AuthEntity,
     db::AuthRsDatabase,
     models::{
         audit_log::{AuditLog, AuditLogAction, AuditLogEntityType},
@@ -70,16 +70,16 @@ impl SettingsUpdate {
 
     fn update_open_registration(&mut self, new_open_registration: bool) {
         if self.settings.open_registration != new_open_registration {
-            let old_open_registration = self.settings.open_registration.clone();
-            self.update_field("open_registration", old_open_registration.to_string(), new_open_registration.clone().to_string());
+            let old_open_registration = self.settings.open_registration;
+            self.update_field("open_registration", old_open_registration.to_string(), new_open_registration.to_string());
             self.settings.open_registration = new_open_registration;
         }
     }
 
     fn update_allow_oauth_apps_for_users(&mut self, new_allow_oauth_apps_for_users: bool) {
         if self.settings.allow_oauth_apps_for_users != new_allow_oauth_apps_for_users {
-            let old_allow_oauth_apps_for_users = self.settings.allow_oauth_apps_for_users.clone();
-            self.update_field("allow_oauth_apps_for_users", old_allow_oauth_apps_for_users.to_string(), new_allow_oauth_apps_for_users.clone().to_string());
+            let old_allow_oauth_apps_for_users = self.settings.allow_oauth_apps_for_users;
+            self.update_field("allow_oauth_apps_for_users", old_allow_oauth_apps_for_users.to_string(), new_allow_oauth_apps_for_users.to_string());
             self.settings.allow_oauth_apps_for_users = new_allow_oauth_apps_for_users;
         }
     }
@@ -122,14 +122,14 @@ async fn update_settings_internal(
 ) -> SettingsResult<Settings> {
     // Basic permission checks
     if !req_entity.is_user() {
-        return Err(SettingsError::Forbidden("Only the system user can change settings!".to_string()).into());
+        return Err(SettingsError::Forbidden("Only the system user can change settings!".to_string()));
     }
 
     let req_user = req_entity
         .user()
         .map_err(|_| SettingsError::Forbidden("Only the system user can change settings!".to_string()))?;
     if !req_user.is_system_admin() {
-        return Err(SettingsError::Forbidden("Only the system user can change settings!".to_string()).into());
+        return Err(SettingsError::Forbidden("Only the system user can change settings!".to_string()));
     }
 
     // Get role and prepare update

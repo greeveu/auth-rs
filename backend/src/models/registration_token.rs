@@ -130,7 +130,7 @@ impl RegistrationToken {
             max_uses: max_uses.unwrap_or(1),
             uses: vec![],
             expires_in,
-            auto_roles: auto_roles.unwrap_or(vec![]),
+            auto_roles: auto_roles.unwrap_or_default(),
             expires_from: if expires_in.is_some() {
                 Some(DateTime::now())
             } else {

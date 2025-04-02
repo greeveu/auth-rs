@@ -5,7 +5,7 @@ use rocket_db_pools::Connection;
 use crate::models::user::UserDTO;
 use crate::utils::response::json_response;
 use crate::{
-    auth::auth::AuthEntity,
+    auth::AuthEntity,
     db::AuthRsDatabase,
     models::{
         http_response::HttpResponse,

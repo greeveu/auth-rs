@@ -6,12 +6,12 @@ use rocket::{
 };
 use rocket_db_pools::Connection;
 
-use crate::auth::auth::OptionalAuthEntity;
-use crate::models::registration_token::RegistrationToken;
-use crate::models::user::UserDTO;
-use crate::utils::response::json_response;
-use crate::SETTINGS;
 use crate::{
+    auth::OptionalAuthEntity,
+    models::registration_token::RegistrationToken,
+    models::user::UserDTO,
+    utils::response::json_response,
+    SETTINGS,
     db::AuthRsDatabase,
     models::{
         audit_log::{AuditLog, AuditLogAction, AuditLogEntityType},
@@ -66,7 +66,7 @@ async fn create_user_internal(
 
     // Handle closed registration
     let settings = (*SETTINGS).lock().await;
-    if !settings.open_registration && (!req_user.is_some() || !req_user.as_ref().unwrap().is_admin()) {
+    if !settings.open_registration && (req_user.is_none() || !req_user.as_ref().unwrap().is_admin()) {
         if data.registration_code.is_none() || data.registration_code.len() < 1 {
             return Err(UserError::RegistrationClosed);
         }
@@ -87,7 +87,7 @@ async fn create_user_internal(
     if !data.email.contains('@') || !data.email.contains('.') || data.email.len() < 5 {
         return Err(UserError::InvalidEmail);
     }
-    if data.first_name.len() < 1 {
+    if data.first_name.is_empty() {
         return Err(UserError::FirstNameRequired);
     }
     if data.password.len() < 8 {
@@ -131,14 +131,14 @@ async fn create_user_internal(
             },
             if registration_token.is_some() {
                 registration_token.as_ref().unwrap().id
-            } else if req_user.is_some() {
-                req_user.as_ref().unwrap().id
+            } else if let Some(req_user) = &req_user {
+                req_user.id
             } else {
                 inserted_user.id
             }
         ),
-        if req_user.is_some() {
-            req_user.as_ref().unwrap().id
+        if let Some(req_user) = &req_user {
+            req_user.id
         } else {
             inserted_user.id
         },

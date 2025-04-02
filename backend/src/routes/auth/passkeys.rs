@@ -20,7 +20,7 @@ use webauthn_rs::{
 use base64::{engine::general_purpose, Engine as _};
 
 use crate::{
-    auth::auth::AuthEntity,
+    auth::AuthEntity,
     db::AuthRsDatabase,
     errors::{ApiError, ApiResult, AppError},
     models::{

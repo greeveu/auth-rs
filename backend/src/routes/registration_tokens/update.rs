@@ -4,7 +4,7 @@ use crate::utils::parse_uuid::parse_uuid;
 use crate::utils::response::json_response;
 use crate::DEFAULT_ROLE_ID;
 use crate::{
-    auth::auth::AuthEntity,
+    auth::AuthEntity,
     db::AuthRsDatabase,
     errors::ApiError,
     models::{

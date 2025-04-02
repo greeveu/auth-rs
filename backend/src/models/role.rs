@@ -236,7 +236,7 @@ impl Role {
         }
 
         // Remove role from all users
-        User::remove_role_from_all(self.id.clone(), &connection)
+        User::remove_role_from_all(self.id, connection)
             .await
             .map_err(|err| RoleError::DatabaseError(err.to_string()))?;
 
