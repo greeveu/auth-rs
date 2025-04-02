@@ -52,7 +52,7 @@ pub struct UserDTO {
     pub last_name: String,
     pub roles: Vec<Uuid>,
     pub mfa: bool,
-    pub passkey_count: usize,
+    pub passkeys: bool,
     pub disabled: bool,
     pub created_at: DateTime,
 }
@@ -86,7 +86,7 @@ impl User {
             last_name: self.last_name.clone(),
             roles: self.roles.clone(),
             mfa: self.totp_secret.is_some(),
-            passkey_count: self.passkeys.len(),
+            passkeys: !self.passkeys.is_empty(),
             disabled: self.disabled,
             created_at: self.created_at,
         }

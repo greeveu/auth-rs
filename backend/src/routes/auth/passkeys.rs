@@ -48,13 +48,13 @@ impl webauthn_rs::WebauthnConfig for WebauthnConfig {
     fn get_relying_party_name(&self) -> &str {
         &self.rp_name
     }
-    
-    fn get_relying_party_id(&self) -> &str {
-        &self.rp_id
-    }
-    
+
     fn get_origin(&self) -> &Url {
         &self.rp_origin
+    }
+
+    fn get_relying_party_id(&self) -> &str {
+        &self.rp_id
     }
 }
 
@@ -132,7 +132,7 @@ pub struct PasskeyRegisterStartResponse {
 pub struct PasskeyRegisterFinishResponse {
     pub id: Uuid,
     pub device_type: String,
-    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub created_at: mongodb::bson::DateTime,
 }
 
 // Response for passkey authentication start
@@ -158,9 +158,10 @@ pub struct PasskeyAuthenticateFinishResponse {
 #[post("/auth/passkeys/register/start", format = "json", data = "<data>")]
 pub async fn register_start(
     db: Connection<AuthRsDatabase>,
+    req_entity: AuthEntity,
     data: Json<PasskeyRegisterStartRequest>,
 ) -> (Status, Json<HttpResponse<PasskeyRegisterStartResponse>>) {
-    match process_register_start(db, data.into_inner()).await {
+    match process_register_start(db, req_entity, data.into_inner()).await {
         Ok(response) => json_response(HttpResponse {
             status: 200,
             message: "Passkey registration initiated".to_string(),
@@ -172,9 +173,14 @@ pub async fn register_start(
 
 async fn process_register_start(
     db: Connection<AuthRsDatabase>,
+    req_entity: AuthEntity,
     data: PasskeyRegisterStartRequest,
 ) -> ApiResult<PasskeyRegisterStartResponse> {
-    //TODO: SECURITY: This doesn't verify if the userID is the one of the user who is making the request
+    // Verify that the user ID in the request matches the authenticated user's ID
+    if data.user_id != req_entity.user_id {
+        return Err(ApiError::Unauthorized("Cannot register passkey for another user".to_string()));
+    }
+    
     // Find the user
     let user = User::get_by_id(data.user_id, &db).await
         .map_err(|e| ApiError::NotFound(format!("User not found: {}", e)))?;

@@ -420,6 +420,8 @@ impl From<ApiError> for SettingsError {
             ApiError::Unauthorized(_) => SettingsError::Unauthorized("Unauthorized".to_string()),
             ApiError::InternalError(msg) => SettingsError::InternalServerError(msg),
             ApiError::AppError(err) => err.into(),
+            ApiError::InvalidState(msg) => SettingsError::DatabaseError(msg),
+            ApiError::InvalidUUID => SettingsError::DatabaseError("Invalid UUID".to_string()),
         }
     }
 }

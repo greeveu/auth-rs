@@ -1,7 +1,6 @@
 use mongodb::bson::{doc, Uuid};
 use rocket::serde::{Deserialize, Serialize};
 use base64::{engine::general_purpose, Engine as _};
-use chrono;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
@@ -15,7 +14,7 @@ pub struct Passkey {
     pub backup_eligible: bool,
     pub backup_state: bool,
     pub device_type: String,
-    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub created_at: mongodb::bson::DateTime,
 }
 
 // DTO for API responses with less sensitive data
@@ -25,7 +24,7 @@ pub struct Passkey {
 pub struct PasskeyDTO {
     pub id: Uuid,
     pub device_type: String,
-    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub created_at: mongodb::bson::DateTime,
 }
 
 impl Passkey {
@@ -43,7 +42,7 @@ impl Passkey {
             backup_eligible: true,
             backup_state: false,
             device_type: "unknown".to_string(),
-            created_at: chrono::Utc::now(),
+            created_at: mongodb::bson::DateTime::now(),
         }
     }
 
