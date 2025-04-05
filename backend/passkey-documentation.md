@@ -22,15 +22,15 @@ Initiates the passkey registration process for a user.
 **Response:**
 ```json
 {
-  "success": true,
+  "status": 200,
   "message": "Passkey registration initiated",
   "data": {
     "challenge": "Base64EncodedChallenge",
     "registrationId": "UUID",
     "publicKey": {
       "rp": {
-        "name": "Your Service Name",
-        "id": "yourdomain.com"
+        "name": "auth-rs",
+        "id": "localhost"
       },
       "user": {
         "id": "Base64EncodedUserId",
@@ -95,12 +95,15 @@ Completes the passkey registration process.
 **Response:**
 ```json
 {
-  "success": true,
+  "status": 200,
   "message": "Passkey registered successfully",
   "data": {
     "id": "UUID",
-    "deviceType": "platform",
-    "createdAt": "2023-01-01T12:00:00Z"
+    "deviceType": "passkey",
+    "createdAt": "2023-01-01T12:00:00Z",
+    "backupEligible": true,
+    "backupState": false,
+    "transports": null
   }
 }
 ```
@@ -121,14 +124,14 @@ Initiates the passkey authentication process with a username.
 **Response:**
 ```json
 {
-  "success": true,
+  "status": 200,
   "message": "Authentication initiated",
   "data": {
     "challenge": "Base64EncodedChallenge",
     "authenticationId": "UUID",
     "publicKey": {
       "challenge": "Base64EncodedChallenge",
-      "rpId": "yourdomain.com",
+      "rpId": "localhost",
       "allowCredentials": [
         {
           "type": "public-key",
@@ -194,7 +197,7 @@ Completes the passkey authentication process.
 **Response:**
 ```json
 {
-  "success": true,
+  "status": 200,
   "message": "Authentication successful",
   "data": {
     "user": {
@@ -213,9 +216,9 @@ Completes the passkey authentication process.
 
 ### 3. Manage Passkeys
 
-#### `GET /auth/passkeys`
+#### `GET /users/<user_id>/passkeys`
 
-Retrieves all registered passkeys for the authenticated user.
+Retrieves all registered passkeys for the specified user.
 
 **Request Headers:**
 ```
@@ -225,24 +228,19 @@ Authorization: Bearer <token>
 **Response:**
 ```json
 {
-  "success": true,
+  "status": 200,
   "message": "Passkeys retrieved successfully",
   "data": [
     {
       "id": "UUID",
-      "deviceType": "platform",
+      "deviceType": "passkey",
       "createdAt": "2023-01-01T12:00:00Z"
-    },
-    {
-      "id": "UUID",
-      "deviceType": "cross-platform",
-      "createdAt": "2023-01-02T12:00:00Z"
     }
   ]
 }
 ```
 
-#### `PATCH /auth/passkeys/:id`
+#### `PATCH /users/<user_id>/passkeys/<passkey_id>`
 
 Updates a passkey's metadata.
 
@@ -261,7 +259,7 @@ Authorization: Bearer <token>
 **Response:**
 ```json
 {
-  "success": true,
+  "status": 200,
   "message": "Passkey updated successfully",
   "data": {
     "id": "UUID",
@@ -271,7 +269,7 @@ Authorization: Bearer <token>
 }
 ```
 
-#### `DELETE /auth/passkeys/:id`
+#### `DELETE /users/<user_id>/passkeys/<passkey_id>`
 
 Deletes a passkey.
 
@@ -283,56 +281,80 @@ Authorization: Bearer <token>
 **Response:**
 ```json
 {
-  "success": true,
-  "message": "Passkey deleted successfully"
+  "status": 200,
+  "message": "Passkey deleted successfully",
+  "data": null
 }
 ```
 
-## Integration with Existing Authentication
+## Configuration
 
-### Combined Login Flow
+The current implementation uses these default values:
+- RP ID: "localhost"
+- RP Name: "auth-rs"
+- RP Origin: "http://localhost"
 
-1. User enters email on login page
-2. Backend checks if user has passkeys registered
-3. If passkeys are registered, offer passkey authentication
-4. If passkeys are not registered or user chooses password, proceed with regular login + MFA if enabled
-5. For new registrations, offer passkey setup after successful registration
+Note: These values are planned to be moved to a configuration file in a future update.
 
-### Resident Key (Usernameless) Flow
+## Security Considerations
 
-1. User visits login page
-2. User selects "Sign in with passkey" without entering a username
-3. Browser prompts user to select a passkey from available resident keys
-4. User is authenticated based on the selected credential
+### Authorization and Authentication
 
-## Implementation Considerations
+1. **User Verification**: All passkey operations require proper authorization:
+   - Registration requires an authenticated user session
+   - Users can only register/manage passkeys for their own account
+   - Passkey operations are protected by JWT token authentication
 
-### Resident Key Support
+2. **Counter Validation**: 
+   - Each passkey maintains a counter to prevent replay attacks
+   - Counter is updated after successful authentication
+   - Counter validation is performed during authentication
 
-Resident keys (also called discoverable credentials) offer these benefits:
+3. **Cross-User Protection**:
+   - API endpoints validate that users can only access their own passkeys
+   - User ID verification is performed for all passkey management operations
 
-1. **Usernameless Authentication**: Users can authenticate without typing a username first
-2. **Cross-Device Syncing**: Credentials can sync across the user's devices (with platform authenticators)
-3. **True Passwordless**: Eliminates all knowledge-based factors from the authentication process
+### Error Handling
 
-Configuration is controlled through the authenticator selection parameters:
+The API provides specific error responses for common scenarios:
+- Invalid or expired registration/authentication sessions
+- Missing or invalid credentials
+- Unauthorized access attempts
+- Non-existent passkeys or users
 
+## Implementation Notes
+
+1. **Passkey Model**:
 ```json
-"authenticatorSelection": {
-  "authenticatorAttachment": "platform", // or "cross-platform" or undefined to allow both
-  "requireResidentKey": true, // Enforce resident key capability
-  "residentKey": "required", // Options: "required", "preferred", "discouraged" 
-  "userVerification": "preferred" // Options: "required", "preferred", "discouraged"
+{
+  "id": "UUID",
+  "credentialId": "Base64EncodedString",
+  "publicKey": "String",
+  "counter": "Integer",
+  "transports": ["String"] | null,
+  "backupEligible": "Boolean",
+  "backupState": "Boolean",
+  "deviceType": "String",
+  "createdAt": "DateTime"
 }
 ```
 
-### General Considerations
+2. **Response Format**: All API responses follow a consistent format:
+```json
+{
+  "status": "Integer",
+  "message": "String",
+  "data": "T | null"
+}
+```
 
-1. **Security**: Passkeys should be stored securely in the database, with public key data properly encoded
-2. **User Experience**: Provide clear instructions to users about passkey usage
-3. **Browser Compatibility**: Implement graceful degradation for browsers that don't support WebAuthn
-4. **Error Handling**: Provide helpful error messages for common issues (e.g., timeout, user cancellation)
-5. **Recovery Options**: Ensure users have alternative authentication methods in case they lose access to their passkey device
+## Planned Features
+
+The following features are planned for future implementation:
+
+1. **Conditional Registration**: Allow passkey registration during initial user signup
+2. **Conditional Authentication**: Support usernameless authentication with resident keys
+3. **Configuration Management**: Move WebAuthn configuration to external config file
 
 ## Testing
 
@@ -340,7 +362,10 @@ Configuration is controlled through the authenticator selection parameters:
 2. Test with both platform authenticators (e.g., Windows Hello, Touch ID) and cross-platform authenticators (e.g., YubiKey)
 3. Test registration, authentication, and management flows thoroughly
 4. Test error scenarios and edge cases
-5. Specifically test resident key functionality across different browsers and platforms
+5. Test authorization and security measures:
+   - Cross-user access attempts
+   - Counter replay attacks
+   - Invalid token access
 
 ## Example Implementation Notes
 
