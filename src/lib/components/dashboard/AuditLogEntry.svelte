@@ -1,11 +1,12 @@
 <script lang="ts">
-    import { LogIn, MinusCircle, Pencil, PlusCircle, ShieldCheck, ShieldX } from 'lucide-svelte';
+    import { LogIn, MinusCircle, Pencil, PlusCircle, ShieldCheck, ShieldX, KeyRound } from 'lucide-svelte';
 	import DateUtils from "$lib/dateUtils";
 	import { AuditLog, AuditLogAction, AuditLogEntityType } from "$lib/models/AuditLog";
 	import type OAuthApplication from "$lib/models/OAuthApplication";
 	import type RegistrationToken from '$lib/models/RegistrationToken';
 	import type Role from "$lib/models/Role";
 	import type User from "$lib/models/User";
+	import type Passkey from '$lib/models/Passkey';
 
     export let user: User;
     export let auditLog: AuditLog;
@@ -13,6 +14,7 @@
     export let roles: Role[];
     export let applications: OAuthApplication[];
     export let registrationTokens: RegistrationToken[];
+    export let passkeys: Passkey[];
 
     $: isOpen = false;
 
@@ -53,6 +55,27 @@
         } if (auditLog.entityType == AuditLogEntityType.User && auditLog.action == AuditLogAction.Create && auditLog.reason.split('|').length >= 3 && auditLog.reason.split('|')[1].toUpperCase() == 'REGISTRATION_TOKEN') {
             const tokenId = auditLog.reason.split('|')[2];
             return `${target} ${action} ${target.toUpperCase() == 'YOU' ? 'your' : 'their'} profile using the registration code <span class="text-[14px] opacity-75">${getEntityName(AuditLogEntityType.RegistrationToken, tokenId)}</span>.`;
+        } else if (auditLog.entityType == AuditLogEntityType.User && auditLog.action == AuditLogAction.Update && auditLog.reason.toUpperCase().includes('PASSKEY')) {
+            let oldPasskeys = auditLog.oldValues['passkeys'].split(',');
+            let newPasskeys = auditLog.newValues['passkeys'].split(',');
+
+            if (oldPasskeys[0] == '') {
+                oldPasskeys = [];
+            }
+            if (newPasskeys[0] == '') {
+                newPasskeys = [];
+            }
+
+            let action = oldPasskeys.length > newPasskeys.length ? 'Removed' : 'Added';
+            let passkeyId: string;
+
+            if (action.toUpperCase() == 'REMOVED') {
+                passkeyId = oldPasskeys.filter(p => !newPasskeys.includes(p))[0];
+            } else {
+                passkeyId = newPasskeys.filter(p => !oldPasskeys.includes(p))[0];
+            }
+
+            return `${author} ${action.toUpperCase() == 'ADDED' ? 'registered a new' : 'deleted a'} passkey. (<span class="text-[14px] opacity-75">${passkeys.find(p => p.id == passkeyId)?.name ?? passkeyId}</span>)`;
         } else if (target.toUpperCase() == 'YOU') {
             return `${author} ${action} your profile.`;
         } else if (target == 'SETTINGS') {
@@ -115,14 +138,18 @@
         // Don't  question this, is doesnt work the 'normal' way ok?
         return getContainer().replace('{{VALUE}}', result);
     }
+
+    function isAuditLogExpandable(log: AuditLog): boolean {
+        return log.oldValues && log.newValues && !log.reason.toUpperCase().includes('TOTP') && !log.reason.toUpperCase().includes('PASSKEY');
+    }
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <div
-    class="flex flex-col items-start border-[1px] border-[#333] rounded-md {auditLog.oldValues && auditLog.newValues && !auditLog.reason.toUpperCase().includes('TOTP') ? 'cursor-pointer' : ''}"
+    class="flex flex-col items-start border-[1px] border-[#333] rounded-md {isAuditLogExpandable(auditLog) ? 'cursor-pointer' : ''}"
     style="padding: 15px;"
-    on:click={auditLog.oldValues && auditLog.newValues && !auditLog.reason.toUpperCase().includes('TOTP') ? () => isOpen = !isOpen : () => {}}
+    on:click={isAuditLogExpandable(auditLog) ? () => isOpen = !isOpen : () => {}}
 >
     <div class="flex flex-row justify-between w-full">
         <div class="flex flex-row gap-[15px]">
@@ -136,6 +163,10 @@
                 <ShieldCheck height="30" width="30" class="text-green-500" />
             {:else if auditLog.reason.toUpperCase().includes('DISABLE TOTP')}
                 <ShieldX height="30" width="30" class="text-red-500" />
+            {:else if auditLog.reason.toUpperCase().includes('ADDED PASSKEY')}
+                <KeyRound height="30" width="30" class="text-green-500" />
+            {:else if auditLog.reason.toUpperCase().includes('DELETED PASSKEY')}
+                <KeyRound height="30" width="30" class="text-red-500" />
             {:else}
                 <Pencil height="30" width="30" class="text-yellow-400" />
             {/if}
