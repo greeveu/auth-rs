@@ -14,6 +14,7 @@
 
     export let api: AuthRsApi;
     export let user: User;
+    export let users: User[];
     export let applications: OAuthApplication[];
     export let onlyShowOwned: boolean = true;
 
@@ -73,6 +74,14 @@
         api.getOAuthApplications()
             .then(apps => applications = apps)
             .catch(e => console.error(e));
+
+        if (!onlyShowOwned && users.length < 1) {
+            api.getUsers()
+                .then(users => {
+                    users = users;
+                })
+                .catch(e => console.error(e));
+        }
     });
 </script>
 
@@ -102,7 +111,7 @@
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
-                class="text-green-600 rounded-md {newApplicationName.length > 3 ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px] button green-button"
+                class="text-green-600 rounded-md {newApplicationName.length > 3 ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px]"
                 style="margin-top: 25px; margin-bottom: 10px;"
                 on:click={newApplicationName.length > 3 ? () => {
                     if (newApplicationRedirectUris.length > 0 && newApplicationRedirectUris.split(',').filter(uri => (uri.includes('http') || uri.includes(':///')) && uri.includes('://') && uri.includes('.')).length != newApplicationRedirectUris.split(',').length) {
@@ -130,7 +139,7 @@
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
-                class="text-green-600 rounded-md {editApplicationName.length > 3 ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px] button green-button"
+                class="text-green-600 rounded-md {editApplicationName.length > 3 ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px]"
                 style="margin-top: 25px;"
                 on:click={editApplicationName.length > 3 ? () => {
                     editApplicationPopup = false;
@@ -152,7 +161,7 @@
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
-                class="text-red-600 cursor-pointer rounded-md text-[18px] button red-button"
+                class="text-red-600 cursor-pointer rounded-md text-[18px]"
                 style="margin-top: 25px;"
                 on:click={() => {
                     deleteApplicationPopup = false;
@@ -172,7 +181,7 @@
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
-                class="text-green-600 rounded-md text-[18px] {(newRedirectUri.includes('http') || newRedirectUri.includes(':///')) && newRedirectUri.includes('://') && newRedirectUri.includes('.') ? 'cursor-pointer' : 'cursor-default opacity-50'} button green-button"
+                class="text-green-600 rounded-md text-[18px] {(newRedirectUri.includes('http') || newRedirectUri.includes(':///')) && newRedirectUri.includes('://') && newRedirectUri.includes('.') ? 'cursor-pointer' : 'cursor-default opacity-50'}"
                 style="margin-top: 25px;"
                 class:enabled={newRedirectUri.includes('http') && newRedirectUri.includes('://') && newRedirectUri.includes('.')}
                 on:click={newRedirectUri.includes('http') && newRedirectUri.includes('://') && newRedirectUri.includes('.') ? () => addRedirectUri(newRedirectUriApplication!) : null}
@@ -188,7 +197,7 @@
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <p
-                class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md button"
+                class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md"
                 style="padding: 10px; margin-top: 25px;"
                 on:click={openCreateApplicationPopup}
             >Create Application</p>
@@ -198,7 +207,7 @@
     <div class="absolute flex flex-col min-h-[70px] items-center justify-center self-end" style="margin-right: 50px;">
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <p
-            class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md button"
+            class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md"
             style="padding: 10px;"
             on:click={openCreateApplicationPopup}
         >Create Application</p>
@@ -241,7 +250,7 @@
                 </div>
                 <p class="text-[12px] opacity-35 {onlyShowOwned ? 'h-[20px]' : 'h-[10px]'}">Created at {DateUtils.getFullDateString(OAuthApplication.getCreatedAt(application))}</p>
                 {#if !onlyShowOwned}
-                    <p class="text-[12px] opacity-35 h-[20px]">Owner: <span class="text-[10px]">{application.owner}</span></p>
+                    <p class="text-[12px] opacity-35 h-[20px]">Owner: <span class="text-[10px]">{users.some(u => u._id == application.owner) ? `${users.find(u => u._id == application.owner)?.firstName} ${users.find(u => u._id == application.owner)?.lastName}` : application.owner}</span></p>
                 {/if}
                 <p class="text-[12px] opacity-50">{@html (application.description?.length ?? 0) > 1 ? application.description?.substring(0, 200) + ((application.description?.length ?? 0) > 200 ? '...' : '') : '<i>This application does not have a description.</i>'}</p>
                 <RedirectUriList bind:redirectUris={application.redirectUris} onAdd={() => openAddRedirectUriPopup(application)} onRemove={(redirectUri) => removeRedirectUri(application, redirectUri)} />

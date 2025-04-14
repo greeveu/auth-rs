@@ -99,7 +99,7 @@
                 {:else if TABS[currentTabIndex].slug == 'connections'}
                     <Connections bind:api bind:user bind:connections />
                 {:else if TABS[currentTabIndex].slug == 'oauth-applications'}
-                    <Applications bind:api bind:user bind:applications onlyShowOwned={true} />
+                    <Applications bind:api bind:user bind:users bind:applications onlyShowOwned={true} />
                 {:else if TABS[currentTabIndex].slug == 'logs'}
                     <Logs bind:api bind:user bind:users bind:roles bind:applications bind:auditLogs bind:registrationTokens bind:passkeys />
                 {:else if TABS[currentTabIndex].slug == 'users'}
@@ -107,7 +107,7 @@
                 {:else if TABS[currentTabIndex].slug == 'roles'}
                     <Roles bind:api bind:roles />
                 {:else if TABS[currentTabIndex].slug == 'all-oauth-applications'}
-                    <Applications bind:api bind:user bind:applications onlyShowOwned={false} />
+                    <Applications bind:api bind:user bind:users bind:applications onlyShowOwned={false} />
                 {:else if TABS[currentTabIndex].slug == 'registration-codes'}
                     <RegistrationCodes bind:api bind:users bind:currentUser={user} bind:roles bind:registrationTokens />
                 {:else if TABS[currentTabIndex].slug == 'global-logs'}
