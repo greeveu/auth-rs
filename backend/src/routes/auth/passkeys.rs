@@ -24,9 +24,7 @@ use crate::{
     db::AuthRsDatabase,
     errors::{ApiError, ApiResult, AppError},
     models::{
-        http_response::HttpResponse,
-        user::{User, UserDTO},
-        passkey::Passkey,
+        audit_log::{AuditLog, AuditLogAction, AuditLogEntityType}, http_response::HttpResponse, passkey::Passkey, user::{User, UserDTO}
     },
     utils::response::json_response,
 };
@@ -253,10 +251,24 @@ async fn process_register_finish(
     
     // Set device type
     passkey.device_type = "passkey".to_string();
+
+    let old_values = HashMap::from([("passkeys".to_string(), user.passkeys.iter()
+        .map(|pk| pk.id.to_string())
+        .collect::<Vec<_>>()
+        .join(","))]);
     
     // Add passkey to user and update
     user.add_passkey(passkey.clone());
+
+    let new_values = HashMap::from([("passkeys".to_string(), user.passkeys.iter()
+        .map(|pk| pk.id.to_string())
+        .collect::<Vec<_>>()
+        .join(","))]);
+    
     user.update(&db).await
+        .map_err(|e| ApiError::AppError(AppError::DatabaseError(e.to_string())))?;
+
+    AuditLog::new(user_id.clone(), AuditLogEntityType::User, AuditLogAction::Update, "Added passkey.".to_string(), user_id, Some(old_values), Some(new_values)).insert(&db).await
         .map_err(|e| ApiError::AppError(AppError::DatabaseError(e.to_string())))?;
     
     // Return success response
@@ -407,16 +419,15 @@ async fn process_authenticate_finish(
         user.update(&db).await
             .map_err(|e| ApiError::AppError(AppError::DatabaseError(e.to_string())))?;
     }
-    
-    // Generate a fresh token for the user
-    let token = User::generate_token();
-    user.token = token.clone();
-    user.update(&db).await
-        .map_err(|e| ApiError::AppError(AppError::DatabaseError(e.to_string())))?;
+
+    AuditLog::new(user.clone().id, AuditLogEntityType::User, AuditLogAction::Login, "Login successful.".to_string(), user.id, None, None)
+        .insert(&db)
+        .await
+        .ok();
     
     // Return success with user information and token
     Ok(PasskeyAuthenticateFinishResponse {
         user: user.to_dto(),
-        token,
+        token: user.token,
     })
 } 
