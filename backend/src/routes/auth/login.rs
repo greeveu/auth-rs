@@ -31,6 +31,7 @@ pub struct LoginResponse {
     pub user: Option<UserDTO>,
     pub token: Option<String>,
     pub mfa_required: bool,
+    pub has_passkeys: bool,
     pub mfa_flow_id: Option<Uuid>,
 }
 
@@ -62,6 +63,7 @@ async fn process_login(
             user: None,
             token: None,
             mfa_required: true,
+            has_passkeys: !user.passkeys.is_empty(),
             mfa_flow_id: Some(mfa_flow.flow_id),
         });
     }
@@ -69,6 +71,7 @@ async fn process_login(
     Ok(LoginResponse {
         user: Some(user.to_dto()),
         token: Some(user.token),
+        has_passkeys: !user.passkeys.is_empty(),
         mfa_required: false,
         mfa_flow_id: None,
     })

@@ -67,6 +67,7 @@ async fn process_enable_totp_mfa(
             user: Some(user.to_dto()),
             token: Some(flow.totp.unwrap().get_qr_base64().unwrap()),
             mfa_required: true,
+            has_passkeys: !user.passkeys.is_empty(),
             mfa_flow_id: Some(flow.flow_id),
         },
     ))

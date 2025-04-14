@@ -93,6 +93,7 @@ async fn process_mfa(
                 user: Some(user.to_dto()),
                 token: Some(TOTP::get_qr_base64(flow.totp.as_ref().unwrap()).unwrap()),
                 mfa_required: false,
+                has_passkeys: !user.passkeys.is_empty(),
                 mfa_flow_id: None,
             },
         ))
@@ -103,6 +104,7 @@ async fn process_mfa(
                 user: Some(flow.user.to_dto()),
                 token: Some(flow.user.token.to_string()),
                 mfa_required: false,
+                has_passkeys: !flow.user.passkeys.is_empty(),
                 mfa_flow_id: None,
             },
         ))

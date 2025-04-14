@@ -10,9 +10,7 @@ use rocket::{
 use rocket_db_pools::Connection;
 use url::Url;
 use webauthn_rs::{
-    proto::{
-        COSEKey, Credential, PublicKeyCredential, PublicKeyCredentialCreationOptions, RegisterPublicKeyCredential, RequestChallengeResponse, UserVerificationPolicy
-    },
+    proto::{Credential, PublicKeyCredential, PublicKeyCredentialCreationOptions, PublicKeyCredentialRequestOptions, RegisterPublicKeyCredential, UserVerificationPolicy},
     AuthenticationState, RegistrationState, Webauthn,
 };
 use base64::{engine::general_purpose, Engine as _};
@@ -130,7 +128,7 @@ pub struct PasskeyRegisterFinishResponse {
 pub struct PasskeyAuthenticateStartResponse {
     pub challenge: String,
     pub authentication_id: Uuid,
-    pub public_key: RequestChallengeResponse,
+    pub public_key: PublicKeyCredentialRequestOptions,
 }
 
 // Response for passkey authentication finish
@@ -248,13 +246,13 @@ async fn process_register_finish(
         .map_err(|_| ApiError::NotFound("User not found".to_string()))?;
     
     // Set device type
-    passkey.device_type = "passkey".to_string();
+    passkey.device_type = format!("Passkey {}", user.passkeys.len() + 1);
 
     let old_values = HashMap::from([("passkeys".to_string(), user.passkeys.iter()
         .map(|pk| pk.id.to_string())
         .collect::<Vec<_>>()
         .join(","))]);
-    
+
     // Add passkey to user and update
     user.add_passkey(passkey.clone());
 
@@ -312,13 +310,13 @@ async fn process_authenticate_start(
             let cred_bytes = pk.get_credential_id_bytes()
                 .map_err(|e| ApiError::AppError(AppError::InvalidState(e.to_string())))?;
             
-            // Parse the COSEKey from the stored JSON
-            let cose_key: COSEKey = serde_json::from_str(&pk.public_key)
+            // Decode the Credential from the stored JSON
+            let credential: Credential = serde_json::from_str(&pk.public_key)
                 .map_err(|e| ApiError::AppError(AppError::JsonSerializationError(e)))?;
                 
             Ok(Credential {
                 cred_id: cred_bytes,
-                cred: cose_key,
+                cred: credential.cred,
                 counter: pk.counter,
                 verified: true,
                 registration_policy: UserVerificationPolicy::Required,
@@ -331,8 +329,8 @@ async fn process_authenticate_start(
     
     // Generate challenge for authentication
     let (challenge, auth_state) = webauthn.generate_challenge_authenticate(credentials)
-        .map_err(|e| ApiError::AppError(AppError::WebauthnError(e)))?;
-    
+    .map_err(|e| ApiError::AppError(AppError::WebauthnError(e)))?;
+
     // Store authentication state
     let authentication_id = Uuid::new();
     AUTHENTICATIONS.lock().unwrap().insert(authentication_id, (vec![user.id], auth_state));
@@ -343,7 +341,7 @@ async fn process_authenticate_start(
     Ok(PasskeyAuthenticateStartResponse {
         challenge: challenge_b64,
         authentication_id,
-        public_key: challenge,
+        public_key: challenge.public_key,
     })
 }
 
