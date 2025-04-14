@@ -23,7 +23,7 @@ use crate::{
 #[serde(crate = "rocket::serde")]
 #[serde(rename_all = "camelCase")]
 pub struct PasskeyUpdateRequest {
-    pub device_type: String,
+    pub device_type: Option<String>,
 }
 
 // 1. List User's Passkeys
@@ -149,13 +149,16 @@ async fn process_update_passkey(
     
     // Create updated passkey
     let mut updated_passkey = passkey.clone();
-    updated_passkey.device_type = data.device_type;
-    
-    // Update the user
-    user.remove_passkey(&passkey_id);
-    user.add_passkey(updated_passkey.clone());
-    user.update(&db).await
-        .map_err(|e| ApiError::AppError(AppError::DatabaseError(e.to_string())))?;
+
+    if data.device_type.is_some() {
+        updated_passkey.device_type = data.device_type.unwrap();
+        
+        // Update the user
+        user.remove_passkey(&passkey_id);
+        user.add_passkey(updated_passkey.clone());
+        user.update(&db).await
+            .map_err(|e| ApiError::AppError(AppError::DatabaseError(e.to_string())))?;
+    }
     
     Ok(updated_passkey.to_dto())
 }

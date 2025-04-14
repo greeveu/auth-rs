@@ -11,9 +11,7 @@ use rocket_db_pools::Connection;
 use url::Url;
 use webauthn_rs::{
     proto::{
-        RegisterPublicKeyCredential, PublicKeyCredential,
-        CreationChallengeResponse, RequestChallengeResponse,
-        Credential, COSEKey, UserVerificationPolicy,
+        COSEKey, Credential, PublicKeyCredential, PublicKeyCredentialCreationOptions, RegisterPublicKeyCredential, RequestChallengeResponse, UserVerificationPolicy
     },
     AuthenticationState, RegistrationState, Webauthn,
 };
@@ -112,7 +110,7 @@ pub struct PasskeyAuthenticateFinishRequest {
 pub struct PasskeyRegisterStartResponse {
     pub challenge: String,
     pub registration_id: Uuid,
-    pub public_key: CreationChallengeResponse,
+    pub public_key: PublicKeyCredentialCreationOptions,
 }
 
 // Response for passkey registration finish
@@ -192,7 +190,7 @@ async fn process_register_start(
     Ok(PasskeyRegisterStartResponse {
         challenge: challenge_b64,
         registration_id,
-        public_key: challenge,
+        public_key: challenge.public_key,
     })
 }
 
