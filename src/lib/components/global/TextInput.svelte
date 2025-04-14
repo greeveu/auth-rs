@@ -33,7 +33,7 @@
         <span
             
             class="absolute cursor-pointer self-end"
-            style="margin-right: 10px; margin-bottom: -12.5px;"
+            style="margin-right: 10px; {label.length > 0 ? 'margin-bottom: -12.5px;' : 'margin-bottom: 5px;'}"
             on:click={() => hidePassword = !hidePassword}
         >
             {#if hidePassword}
