@@ -30,4 +30,4 @@ COPY --from=builder /app/package.json ./
 EXPOSE 3000
 
 # Command to run the application
-CMD ["bun", "run", "start"]
+CMD ["bun", "build/index.js"]

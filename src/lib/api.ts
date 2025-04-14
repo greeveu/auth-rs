@@ -16,7 +16,7 @@ import type UserUpdates from "./models/UserUpdates";
 import PasskeyUtils from "./passkeyUtils";
 
 class AuthRsApi {
-    public static baseUrl = 'http://localhost:8000/api';//'http://localhost:8000/api';
+    public static baseUrl = import.meta.env.VITE_PUBLIC_API_URL ?? 'http://auth-rs-backend:8000/api';
     private token: string | null = null;
     private currentMfaFlowId: string | null = null;
 

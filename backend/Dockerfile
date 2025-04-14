@@ -1,10 +1,10 @@
-FROM rust:slim as builder
+FROM rust:slim AS builder
 
 WORKDIR /app
 
 # Copy the actual source code
 COPY src ./src
-COPY Cargo.toml Cargo.lock ./
+COPY Cargo.toml Cargo.lock Rocket.toml ./
 # Build the application
 RUN cargo build --release
 

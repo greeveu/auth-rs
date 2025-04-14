@@ -27,7 +27,7 @@
 
 ## Both
 
-- [ ] Role descriptions
+- [ ] ~~Role descriptions~~ Canceled for now.
 - [x] Limit registations (registration codes with limited uses and autoroles?)
 - [x] System admin settings (limited registrations, disable oauth application create for default users)
 - [ ] Pagination

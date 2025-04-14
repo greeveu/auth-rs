@@ -1,16 +1,14 @@
-version: '3.8'
-
 services:
   mongodb:
     image: mongo:latest
     container_name: auth-rs-mongodb
-    ports:
-      - "27017:27017"
+    # ports:
+      # - "27017:27017" # Uncomment if you want to expose MongoDB to the host
     volumes:
       - mongodb_data:/data/db
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+    # environment:
+      # - MONGO_INITDB_ROOT_USERNAME= optional -> has to be included in the backend mongo_uri variable if you use it
+      # - MONGO_INITDB_ROOT_PASSWORD= optional -> has to be included in the backend mongo_uri variable if you use it
     networks:
       - auth-rs-network
     healthcheck:
@@ -29,10 +27,9 @@ services:
       mongodb:
         condition: service_healthy
     environment:
-      - MONGODB_URI=${MONGODB_URI}
-      - SYSTEM_EMAIL=${SYSTEM_EMAIL}
-      - SYSTEM_PASSWORD=${SYSTEM_PASSWORD}
-      - ROCKET_ENV=${ROCKET_ENV}
+      - ROCKET_DATABASES={auth-rs-db={url="mongodb://mongodb:27017"}} # adjust the url="" part if needed
+      - SYSTEM_EMAIL=admin@example.com
+      - SYSTEM_PASSWORD=admin # Create a strong system user password here
     networks:
       - auth-rs-network
     restart: unless-stopped
@@ -45,7 +42,7 @@ services:
     depends_on:
       - backend
     environment:
-      - PUBLIC_API_URL=${PUBLIC_API_URL}
+      - VITE_PUBLIC_API_URL=https://oauth.timlohrer.de/api
     networks:
       - auth-rs-network
     restart: unless-stopped
