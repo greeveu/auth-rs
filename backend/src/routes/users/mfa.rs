@@ -8,7 +8,7 @@ use rocket_db_pools::Connection;
 use crate::models::user::UserDTO;
 use crate::utils::response::json_response;
 use crate::{
-    auth::{AuthEntity, mfa::MfaHandler},
+    auth::{mfa::MfaHandler, AuthEntity},
     db::AuthRsDatabase,
     errors::{ApiError, ApiResult},
     models::{http_response::HttpResponse, user::User},
@@ -67,7 +67,6 @@ async fn process_enable_totp_mfa(
             user: Some(user.to_dto()),
             token: Some(flow.totp.unwrap().get_qr_base64().unwrap()),
             mfa_required: true,
-            has_passkeys: !user.passkeys.is_empty(),
             mfa_flow_id: Some(flow.flow_id),
         },
     ))

@@ -2,12 +2,11 @@ use mongodb::bson::Uuid;
 use rocket::serde;
 use std::env::VarError;
 use thiserror::Error;
-use webauthn_rs::error::WebauthnError;
-
+use webauthn_rs::prelude::WebauthnError;
 use crate::models::http_response::HttpResponse;
 use crate::models::oauth_application::OAuthApplicationError;
 use crate::models::role::RoleError;
-use crate::models::setttings::SettingsError;
+use crate::models::settings::SettingsError;
 use crate::models::user_error::UserError;
 
 #[derive(Error, Debug)]
@@ -30,6 +29,9 @@ pub enum AppError {
 
     #[error("Role not found: {0}")]
     RoleNotFound(Uuid),
+
+    #[error("Passkey(s) not found via id: {0}")]
+    PasskeyNotFound(Uuid),
 
     #[error("Missing permissions")]
     MissingPermissions,
@@ -82,8 +84,8 @@ pub enum AppError {
     #[error("HTTP response error: {0}")]
     HttpResponseError(String),
 
-    #[error("Webauthn error: {0}")]
-    WebauthnError(#[from] WebauthnError),
+    #[error("Webauthn error")]
+    WebauthnError,
 
     #[error("Invalid state: {0}")]
     InvalidState(String),
@@ -139,6 +141,11 @@ impl<T> From<AppError> for HttpResponse<T> {
             AppError::RoleNotFound(id) => HttpResponse {
                 status: 400,
                 message: format!("Role with ID {} does not exist", id),
+                data: None,
+            },
+            AppError::PasskeyNotFound(id) => HttpResponse {
+                status: 400,
+                message: format!("Passkey with ID {} does not exist", id),
                 data: None,
             },
             AppError::MissingPermissions => HttpResponse {
@@ -226,9 +233,9 @@ impl<T> From<AppError> for HttpResponse<T> {
                 message: format!("HTTP error: {}", msg),
                 data: None,
             },
-            AppError::WebauthnError(err) => HttpResponse {
+            AppError::WebauthnError => HttpResponse {
                 status: 400,
-                message: format!("Passkey error: {}", err),
+                message: "Passkey error".to_string(),
                 data: None,
             },
             AppError::InvalidState(msg) => HttpResponse {
@@ -313,7 +320,9 @@ impl From<UserError> for AppError {
     fn from(error: UserError) -> Self {
         match error {
             UserError::NotFound(id) => AppError::UserNotFound(id),
-            UserError::EmailAlreadyExists(email) => AppError::ValidationError(format!("User with email {} already exists", email)),
+            UserError::EmailAlreadyExists(email) => {
+                AppError::ValidationError(format!("User with email {} already exists", email))
+            }
             UserError::InvalidUuid(msg) => AppError::InvalidUuid(msg),
             UserError::MissingPermissions => AppError::MissingPermissions,
             UserError::SystemUserModification => AppError::SystemUserModification,
@@ -324,11 +333,19 @@ impl From<UserError> for AppError {
             UserError::NoUpdatesApplied => AppError::NoUpdatesApplied,
             UserError::DatabaseError(msg) => AppError::DatabaseError(msg),
             UserError::InternalServerError(msg) => AppError::InternalServerError(msg),
-            UserError::InvalidEmail => AppError::InvalidOrMissingFields("Invalid email".to_string()),
-            UserError::FirstNameRequired => AppError::InvalidOrMissingFields("First name required".to_string()),
-            UserError::PasswordToShort => AppError::InvalidOrMissingFields("Password too short".to_string()),
+            UserError::InvalidEmail => {
+                AppError::InvalidOrMissingFields("Invalid email".to_string())
+            }
+            UserError::FirstNameRequired => {
+                AppError::InvalidOrMissingFields("First name required".to_string())
+            }
+            UserError::PasswordToShort => {
+                AppError::InvalidOrMissingFields("Password too short".to_string())
+            }
             UserError::RegistrationClosed => AppError::MissingPermissions,
-            UserError::RegistrationCodeInvalid => AppError::InvalidOrMissingFields("Registration code invalid".to_string())
+            UserError::RegistrationCodeInvalid => {
+                AppError::InvalidOrMissingFields("Registration code invalid".to_string())
+            }
         }
     }
 }
@@ -406,7 +423,7 @@ impl From<String> for AppError {
 // Now we can properly convert WebAuthnError to a string and then to AppError
 impl From<WebauthnError> for ApiError {
     fn from(error: WebauthnError) -> Self {
-        ApiError::AppError(AppError::WebauthnError(error))
+        ApiError::AppError(AppError::WebauthnError)
     }
 }
 

@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use mongodb::bson::Uuid;
 use rocket::http::Status;
 use rocket::{
@@ -6,6 +5,7 @@ use rocket::{
     serde::{json::Json, Deserialize, Serialize},
 };
 use rocket_db_pools::Connection;
+use std::collections::HashMap;
 use totp_rs::TOTP;
 
 use super::login::LoginResponse;
@@ -66,10 +66,7 @@ async fn process_mfa(
             .await
             .map_err(|err| ApiError::InternalError(format!("Failed to enable TOTP: {:?}", err)))?;
 
-        let new_values = HashMap::from([(
-            "totp_secret".to_string(),
-            "*************".to_string(),
-        )]);
+        let new_values = HashMap::from([("totp_secret".to_string(), "*************".to_string())]);
         let old_values = HashMap::from([("totp_secret".to_string(), "".to_string())]);
 
         if let Err(err) = AuditLog::new(
@@ -93,7 +90,6 @@ async fn process_mfa(
                 user: Some(user.to_dto()),
                 token: Some(TOTP::get_qr_base64(flow.totp.as_ref().unwrap()).unwrap()),
                 mfa_required: false,
-                has_passkeys: !user.passkeys.is_empty(),
                 mfa_flow_id: None,
             },
         ))
@@ -104,7 +100,6 @@ async fn process_mfa(
                 user: Some(flow.user.to_dto()),
                 token: Some(flow.user.token.to_string()),
                 mfa_required: false,
-                has_passkeys: !flow.user.passkeys.is_empty(),
                 mfa_flow_id: None,
             },
         ))
@@ -137,7 +132,7 @@ pub async fn mfa(
             }
 
             json_response(HttpResponse::success(&message, response))
-        },
+        }
         Err(err) => json_response(err.into()),
     }
 }

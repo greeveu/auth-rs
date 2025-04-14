@@ -31,7 +31,6 @@ pub struct LoginResponse {
     pub user: Option<UserDTO>,
     pub token: Option<String>,
     pub mfa_required: bool,
-    pub has_passkeys: bool,
     pub mfa_flow_id: Option<Uuid>,
 }
 
@@ -63,7 +62,6 @@ async fn process_login(
             user: None,
             token: None,
             mfa_required: true,
-            has_passkeys: !user.passkeys.is_empty(),
             mfa_flow_id: Some(mfa_flow.flow_id),
         });
     }
@@ -71,7 +69,6 @@ async fn process_login(
     Ok(LoginResponse {
         user: Some(user.to_dto()),
         token: Some(user.token),
-        has_passkeys: !user.passkeys.is_empty(),
         mfa_required: false,
         mfa_flow_id: None,
     })
@@ -88,10 +85,18 @@ pub async fn login(
     match process_login(&db, login_data).await {
         Ok(response) => {
             if response.user.is_some() {
-                AuditLog::new(response.user.clone().unwrap().id, AuditLogEntityType::User, AuditLogAction::Login, "Login successful.".to_string(), response.user.clone().unwrap().id, None, None)
-                    .insert(&db)
-                    .await
-                    .ok();
+                AuditLog::new(
+                    response.user.clone().unwrap().id,
+                    AuditLogEntityType::User,
+                    AuditLogAction::Login,
+                    "Login successful.".to_string(),
+                    response.user.clone().unwrap().id,
+                    None,
+                    None,
+                )
+                .insert(&db)
+                .await
+                .ok();
             }
 
             let message = if response.mfa_required {

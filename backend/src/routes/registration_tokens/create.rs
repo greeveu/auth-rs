@@ -25,7 +25,7 @@ use crate::{
 pub struct CreateRegistrationTokenData {
     max_uses: Option<u32>,
     expires_in: Option<u64>,
-    auto_roles: Option<Vec<Uuid>>
+    auto_roles: Option<Vec<Uuid>>,
 }
 
 #[allow(unused)]
@@ -38,7 +38,9 @@ pub async fn create_registration_token(
     let data = data.into_inner();
 
     if !req_entity.is_user() || !req_entity.user.unwrap().is_admin() {
-        return json_response(HttpResponse::forbidden("Only admins can create registration tokens"));
+        return json_response(HttpResponse::forbidden(
+            "Only admins can create registration tokens",
+        ));
     }
 
     if data.auto_roles.is_some() {
@@ -48,22 +50,21 @@ pub async fn create_registration_token(
                 .map_err(|err| {
                     error!("{}", err);
                     json_response::<HttpResponse<()>>(err.into())
-                }).ok();
+                })
+                .ok();
         }
     }
 
     let registration_token = match RegistrationToken::new(
         data.max_uses,
         data.expires_in,
-        data.auto_roles
-            .as_ref()
-            .map(|roles| {
-                roles
-                    .iter()
-                    .filter(|role_id| **role_id != *DEFAULT_ROLE_ID)
-                    .cloned()
-                    .collect::<Vec<Uuid>>()
-            }),
+        data.auto_roles.as_ref().map(|roles| {
+            roles
+                .iter()
+                .filter(|role_id| **role_id != *DEFAULT_ROLE_ID)
+                .cloned()
+                .collect::<Vec<Uuid>>()
+        }),
     ) {
         Ok(registration_token) => registration_token,
         Err(err) => return json_response(err.into()),

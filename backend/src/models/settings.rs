@@ -1,4 +1,7 @@
-use crate::{db::{get_main_db, AuthRsDatabase}, SETTINGS_ID};
+use crate::{
+    db::{get_main_db, AuthRsDatabase},
+    SETTINGS_ID,
+};
 use anyhow::Result;
 use mongodb::bson::{doc, Uuid};
 use rocket::serde::{Deserialize, Serialize};
@@ -70,7 +73,9 @@ use crate::errors::AppError;
 impl From<AppError> for SettingsError {
     fn from(error: AppError) -> Self {
         match error {
-            AppError::MissingPermissions => SettingsError::Forbidden("Missing permissions".to_string()),
+            AppError::MissingPermissions => {
+                SettingsError::Forbidden("Missing permissions".to_string())
+            }
             AppError::RocketMongoError(err) => SettingsError::DatabaseError(err.to_string()),
             AppError::InternalServerError(msg) => SettingsError::InternalServerError(msg),
             _ => SettingsError::InternalServerError("Unexpected error".to_string()),
@@ -112,7 +117,7 @@ impl Settings {
             Err(err) => Err(SettingsError::DatabaseError(format!(
                 "Error initializing settings: {:?}",
                 err
-            )))
+            ))),
         }
     }
 
@@ -126,13 +131,18 @@ impl Settings {
 
         match db.find_one(filter, None).await {
             Ok(Some(settings)) => Ok(settings),
-            Ok(None) => Err(SettingsError::DatabaseError("Settings not found! -> Restart the backend to initialize them!".to_string())),
+            Ok(None) => Err(SettingsError::DatabaseError(
+                "Settings not found! -> Restart the backend to initialize them!".to_string(),
+            )),
             Err(err) => Err(SettingsError::DatabaseError(err.to_string())),
         }
     }
 
     #[allow(unused)]
-    pub async fn update(&self, connection: &Connection<AuthRsDatabase>) -> SettingsResult<Settings> {
+    pub async fn update(
+        &self,
+        connection: &Connection<AuthRsDatabase>,
+    ) -> SettingsResult<Settings> {
         let db = Self::get_collection(connection);
 
         let filter = doc! {

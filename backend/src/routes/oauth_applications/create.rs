@@ -36,7 +36,9 @@ pub async fn create_oauth_application(
     let data = data.into_inner();
 
     if !req_entity.is_user() {
-        return json_response(HttpResponse::forbidden("Only users can create OAuth Applications"));
+        return json_response(HttpResponse::forbidden(
+            "Only users can create OAuth Applications",
+        ));
     }
 
     // Handle only admins can create OAuth Applications check
