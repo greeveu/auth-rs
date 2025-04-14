@@ -68,11 +68,11 @@
         style="margin-bottom: 35px;"
     >Register</h1>
     <form id="form" class="flex flex-col items-center justify-center mt-4">
-        <TextInput type="text" label="First Name" bind:value={firstName} autofocus />
-        <TextInput type="text" label="Last Name" bind:value={lastName} />
-        <TextInput type="email" label="Email" bind:value={email} />
-        <TextInput type="password" label="Password" bind:value={password} />
-        <TextInput type="password" label="Confirm Password" bind:value={confirmPassword} />
+        <TextInput type="email" label="Email" bind:value={email} autocomplete="email" />
+        <TextInput type="text" label="First Name" bind:value={firstName} autocomplete="name" autofocus />
+        <TextInput type="text" label="Last Name" bind:value={lastName} autocomplete="family-name" />
+        <TextInput type="password" label="Password" bind:value={password} autocomplete="new-password" />
+        <TextInput type="password" label="Confirm Password" bind:value={confirmPassword} autocomplete="new-password" />
         <button
             type="submit"
             class="border-[1.5px] border-blue-500 bg-blue-500 text-white rounded-md text-[17px] button"

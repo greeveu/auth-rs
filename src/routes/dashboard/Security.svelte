@@ -238,7 +238,7 @@
 {#if startEnable2FAPopup}
     <Popup title="Enable MFA" onClose={() => startEnable2FAPopup = false}>
         <div class="flex flex-col items-center justify-center w-full" style="margin-top: 10px; margin-bottom: 10px;">
-            <TextInput type="password" label="" placeholder="Confirm Password" bind:value={enablePassword} autofocus />
+            <TextInput type="password" label="" placeholder="Confirm Password" bind:value={enablePassword} autocomplete="current-password" autofocus />
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
@@ -281,7 +281,7 @@
 {#if disable2FAPopup}
     <Popup title="Disable MFA" onClose={() => disable2FAPopup = false}>
         <div class="flex flex-col items-center justify-center w-full" style="margin-top: 10px; margin-bottom: 10px;">
-            <TextInput type="password" label="" placeholder="Confirm Password" bind:value={disablePassword} autofocus />
+            <TextInput type="password" label="" placeholder="Confirm Password" bind:value={disablePassword} autocomplete="current-password" autofocus />
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p

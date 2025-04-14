@@ -19,6 +19,7 @@
             max="9"
             id="totp-{index}"
             disabled={disabled}
+            autocomplete="one-time-code"
             bind:value={totp[index]}
             on:input={() => {
                 if (totp[index] != null && totp[index] > 9) {

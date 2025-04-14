@@ -92,11 +92,11 @@
 {#if showNewUserPopup}
     <Popup title="Create User" onClose={() => showNewUserPopup = false}>
         <div class="flex flex-col items-center justify-center min-w-[350px] max-w-[400px]">
-            <TextInput type="email" label="Email" bind:value={newUserEmail} autofocus />
-            <TextInput label="First Name" bind:value={newUserFirstName} />
-            <TextInput label="Last Name" bind:value={newUserLastName} />
-            <TextInput type="password" label="Password" bind:value={newUserPassword} />
-            <TextInput type="password" label="Confirm Password" bind:value={newUserPasswordConfirm} />
+            <TextInput type="email" label="Email" bind:value={newUserEmail} autocomplete="email" autofocus />
+            <TextInput label="First Name" bind:value={newUserFirstName} autocomplete="name" />
+            <TextInput label="Last Name" bind:value={newUserLastName} autocomplete="family-name" />
+            <TextInput type="password" label="Password" bind:value={newUserPassword} autocomplete="new-password" />
+            <TextInput type="password" label="Confirm Password" bind:value={newUserPasswordConfirm} autocomplete="new-password" />
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
