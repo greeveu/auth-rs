@@ -58,7 +58,7 @@
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
-                class="text-green-600 rounded-md {editUserDataIsValid() ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px] green-button"
+                class="text-green-600 rounded-md {editUserDataIsValid() ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px]"
                 style="margin-top: 20px; margin-bottom: 10px;"
                 on:click={editUserDataIsValid() ? () => {
                     editUserPopup = false;
@@ -77,7 +77,7 @@
 <div class="absolute flex flex-col min-h-[70px] items-center justify-center self-end" style="margin-right: 50px;">
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <p
-        class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md button"
+        class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md"
         style="padding: 10px;"
         on:click={showEditUserPopup}
     >Edit Profile</p>

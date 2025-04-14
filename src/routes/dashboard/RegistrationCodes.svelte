@@ -124,7 +124,7 @@
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
-                class="text-green-600 rounded-md {newRegistrationTokenMaxUses > 0 ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px] button green-button"
+                class="text-green-600 rounded-md {newRegistrationTokenMaxUses > 0 ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px]"
                 style="margin-top: 25px; margin-bottom: 10px;"
                 on:click={newRegistrationTokenMaxUses > 0 ? () => {
                     showNewRegistrationTokenPopup = false;
@@ -159,7 +159,7 @@
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
-                class="text-green-600 rounded-md {editRegistrationTokenMaxUses > 0 ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px] button green-button"
+                class="text-green-600 rounded-md {editRegistrationTokenMaxUses > 0 ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px]"
                 style="margin-top: 20px; margin-bottom: 10px;"
                 on:click={editRegistrationTokenMaxUses > 0 ? () => {
                     editRegistrationTokenPopup = false;
@@ -187,7 +187,7 @@
                 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <p
-                    class="text-red-600 rounded-md cursor-pointer text-[18px] button red-button"
+                    class="text-red-600 rounded-md cursor-pointer text-[18px]"
                     style="margin-top: 20px; margin-bottom: 10px;"
                     on:click={() => showAddRegistrationTokenAutoRolesPopup = null}
                 >Close</p>
@@ -222,7 +222,7 @@
                 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <p
-                    class="text-green-600 rounded-md {addRegistrationTokenAutoRoles.length > 0 ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px] button green-button"
+                    class="text-green-600 rounded-md {addRegistrationTokenAutoRoles.length > 0 ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px]"
                     style="margin-top: 20px; margin-bottom: 10px;"
                     on:click={addRegistrationTokenAutoRoles.length > 0 ? () => {
                         api.updateRegistrationToken(showAddRegistrationTokenAutoRolesPopup!, new RegistrationTokenUpdates({
@@ -252,7 +252,7 @@
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
-                class="text-red-600 cursor-pointer rounded-md text-[18px] button red-button"
+                class="text-red-600 cursor-pointer rounded-md text-[18px]"
                 style="margin-top: 25px;"
                 on:click={() => {
                     deleteRegistrationTokenPopup = false;
@@ -272,7 +272,7 @@
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <p
-                class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md button"
+                class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md"
                 style="padding: 10px; margin-top: 25px;"
                 on:click={openCreateRegistrationTokenPopup}
             >Create Registration Code</p>
@@ -282,7 +282,7 @@
     <div class="absolute flex flex-col min-h-[70px] items-center justify-center self-end" style="margin-right: 50px;">
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <p
-            class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md button"
+            class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md"
             style="padding: 10px;"
             on:click={openCreateRegistrationTokenPopup}
         >Create Registration Code</p>

@@ -242,7 +242,7 @@
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
-                class="text-green-600 rounded-md text-[18px] button green-button"
+                class="text-green-600 rounded-md text-[18px]"
                 style="margin-top: 25px;"
                 class:enabled={enablePassword.length > 0}
                 on:click={enablePassword.length > 0 ? () => {
@@ -269,9 +269,10 @@
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
-                class="text-green-600 rounded-md text-[18px] button green-button"
+                class="text-green-600 cursor-default rounded-md text-[18px] opacity-50 transition-all"
                 style="margin-top: 25px;"
-                class:enabled={enableTotp.filter(c => c != null).length === 6}
+                class:opacity-100={enableTotp.filter(c => c != null).length === 6}
+                class:cursor-pointer={enableTotp.filter(c => c != null).length === 6}
                 on:click={enableMFA}
             >Confirm</p>
         </div>
@@ -285,34 +286,12 @@
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
-                class="text-red-600 rounded-md text-[18px] button red-button"
+                class="text-red-600 cursor-default rounded-md text-[18px] opacity-50 transition-all"
                 style="margin-top: 25px;"
-                class:enabled={disablePassword.length > 0}
+                class:opacity-100={disablePassword.length > 0}
+                class:cursor-pointer={disablePassword.length > 0}
                 on:click={disablePassword.length > 0 ? () => api.disableMfa(user, null, disablePassword).then(newUser => {disable2FAPopup = false; user = newUser; goto('/logout')}) : null}
             >Confirm</p>
         </div>
     </Popup>
 {/if}
-
-<style>
-    .button {
-        transition-duration: .2s;
-        opacity: 0.5;
-        cursor: default;
-    }
-
-    .button.enabled {
-        opacity: 1;
-        cursor: pointer;
-    }
-
-    .button.red-button.enabled:hover {
-        background-color: transparent;
-        color: var(--color-red-900);
-    }
-
-    .button.green-button.enabled:hover {
-        background-color: transparent;
-        color: var(--color-green-900);
-    }
-</style>
