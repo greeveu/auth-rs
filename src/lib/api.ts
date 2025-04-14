@@ -3,6 +3,8 @@ import type { AuditLog } from "./models/AuditLog";
 import type OAuthApplication from "./models/OAuthApplication";
 import type OAuthApplicationUpdates from "./models/OAuthApplicationUpdates";
 import type OAuthConnection from "./models/OAuthConnection";
+import Passkey from "./models/Passkey";
+import type PasskeyUpdates from "./models/PasskeyUpdates";
 import type RegistrationToken from "./models/RegistrationToken";
 import type RegistrationTokenUpdates from "./models/RegistrationTokenUpdates";
 import type Role from "./models/Role";
@@ -11,6 +13,7 @@ import type Settings from "./models/Settings";
 import type SettingsUpdates from "./models/SettingsUpdates";
 import type User from "./models/User";
 import type UserUpdates from "./models/UserUpdates";
+import PasskeyUtils from "./passkeyUtils";
 
 class AuthRsApi {
     public static baseUrl = 'http://localhost:8000/api';//'http://localhost:8000/api';
@@ -211,6 +214,153 @@ class AuthRsApi {
 
         const response = await fetch(`${AuthRsApi.baseUrl}/users`, {
             method: 'GET',
+            headers: {
+                Authorization: `Bearer ${this.token}`,
+            },
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            return data.data;
+        } else {
+            console.error((await response.json()));
+            throw new Error(`(${response.status}): ${response.statusText}`);
+        }
+    }
+
+    async registerPasskey(userId: string): Promise<Passkey> {
+        if (!this.token) {
+            throw new Error('No token');
+        }
+
+        const startResponse = await fetch(`${AuthRsApi.baseUrl}/auth/passkeys/register/start`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${this.token}`,
+            },
+            body: JSON.stringify({ userId }),
+        });
+
+        if (!startResponse.ok) {
+            console.error((await startResponse.json()));
+            throw new Error(`(${startResponse.status}): ${startResponse.statusText}`);
+        }
+
+        const data = await startResponse.json();
+
+        data.data.publicKey.user.id = PasskeyUtils.base64URLStringToBuffer(data.data.publicKey.user.id);
+
+        const credential = await navigator.credentials.create(data.data) as PublicKeyCredential;
+
+        if (!credential) {
+            throw new Error('No credential created!');
+        }
+
+        console.log('Start Data:', data.data);
+        
+        console.log('Credential created:', credential);
+
+        console.log('New Challenge:', JSON.parse(atob(PasskeyUtils.bufferToBase64URLString(credential.response.clientDataJSON))).challenge);
+        
+        const clientDataJSON = JSON.parse(atob(PasskeyUtils.bufferToBase64URLString(credential.response.clientDataJSON)))
+
+        // TODO: This is very weird and should be fixed
+        clientDataJSON.challenge = data.data.publicKey.challenge;
+
+        // This should not be required in prod, but during development, since the port is different
+        if (document.location.origin.includes('localhost:')) {
+            clientDataJSON.origin = document.location.origin.replace(`:${document.location.port}`, '');
+        }
+
+        console.log('Client Data JSON:', clientDataJSON);
+        
+
+        const finishResponse = await fetch(`${AuthRsApi.baseUrl}/auth/passkeys/register/finish`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${this.token}`,
+            },
+            body: JSON.stringify({
+                registrationId: data.data.registrationId                ,
+                credential: {
+                    id: credential.id,
+                    rawId: PasskeyUtils.bufferToBase64URLString(credential.rawId),
+                    response: {
+                        clientDataJSON: btoa(JSON.stringify(clientDataJSON)),
+                        // @ts-expect-error 
+                        attestationObject: PasskeyUtils.bufferToBase64URLString(credential.response.attestationObject),
+                    },
+                    type: credential.type
+                },
+            }),
+        });
+
+        if (finishResponse.ok) {
+            const finishData = await finishResponse.json();
+            return new Passkey(
+                finishData.data.id,
+                finishData.data.deviceType,
+                finishData.data.createdAt
+            );
+        } else {
+            console.error((await finishResponse.json()));
+            throw new Error(`(${finishResponse.status}): ${finishResponse.statusText}`);
+        }
+    }
+
+    async getUserPasskeys(userId: string): Promise<Passkey[]> {
+        if (!this.token) {
+            throw new Error('No token');
+        }
+
+        const response = await fetch(`${AuthRsApi.baseUrl}/users/${userId}/passkeys`, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${this.token}`,
+            },
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            return data.data;
+        } else {
+            console.error((await response.json()));
+            throw new Error(`(${response.status}): ${response.statusText}`);
+        }
+    }
+
+    async updatePasskey(userId: string, passkeyId: string, updates: PasskeyUpdates): Promise<Passkey> {
+        if (!this.token) {
+            throw new Error('No token');
+        }
+
+        const response = await fetch(`${AuthRsApi.baseUrl}/users/${userId}/passkeys/${passkeyId}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${this.token}`,
+            },
+            body: JSON.stringify(updates),
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            return data.data;
+        } else {
+            console.error((await response.json()));
+            throw new Error(`(${response.status}): ${response.statusText}`);
+        }
+    }
+
+    async deletePasskey(userId: string, passkeyId: string): Promise<null> {
+        if (!this.token) {
+            throw new Error('No token');
+        }
+
+        const response = await fetch(`${AuthRsApi.baseUrl}/users/${userId}/passkeys/${passkeyId}`, {
+            method: 'DELETE',
             headers: {
                 Authorization: `Bearer ${this.token}`,
             },
