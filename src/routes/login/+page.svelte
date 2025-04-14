@@ -13,6 +13,7 @@
 
     let email = '';
     let password = '';
+    let hasPasskeys = false;
     /**
 	 * @type {number[] | null[]}
 	 */
@@ -34,6 +35,10 @@
         api.login(email, password)
             .then(async (data) => {
                 if (data.mfaRequired) {
+                    hasPasskeys = data.hasPasskeys;
+                    if (hasPasskeys) {
+                        usePasskey();
+                    }
                     loginText = 'Login';
                     step = 2;
                     await tick();
@@ -51,13 +56,20 @@
             });
     }
 
+    function usePasskey() {
+        api.startPasskeyAuth(email).then(() => {
+            window.location.href = redirect ?? '/';
+        }).catch(error => {
+            console.error(error);
+        });
+    }
+
     async function completeTotp() {
         const code = totp.map((value) => `${value}`).join('');
         if (code.length != 6) {
             console.error('Invalid TOTP code');
             return;
         }
-
         step = 3;
         verifyText = 'Verifying...';
 
@@ -122,6 +134,15 @@
     {#if settings?.openRegistration && step < 2}
         <p class="text-[14px]" style="margin-top: 15px;">or</p>
         <a href="/register" class="text-[13px]" style="margin-top: 10px;">Don't have an account? <i>Register here!</i></a>
+    {:else if step >= 2 && hasPasskeys}
+        <p class="text-[14px]" style="margin-top: 15px;">or</p>
+        <button
+            type="submit"
+            class="border-[1.5px] border-blue-500 text-blue-500 hover:text-white hover:bg-blue-500 rounded-md text-[15px] button"
+            style="padding: 5px; width: 250px; margin-top: 20px;"
+            class:enabled={true}
+            on:click={usePasskey}
+        >Use a passkey</button>
     {/if}
 </div>
 
