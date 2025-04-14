@@ -92,7 +92,7 @@
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
-                class="text-green-600 rounded-md {editPasskeyName.length > 3 ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px] button green-button"
+                class="text-green-600 rounded-md {editPasskeyName.length > 3 ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px] green-button"
                 style="margin-top: 20px; margin-bottom: 10px;"
                 on:click={editPasskeyName.length > 3 ? () => {
                     editPasskeyPopup = false;
@@ -113,7 +113,7 @@
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
-                class="text-red-600 cursor-pointer rounded-md text-[18px] button red-button"
+                class="text-red-600 cursor-pointer rounded-md text-[18px] red-button"
                 style="margin-top: 25px;"
                 on:click={() => {
                     deletePasskeyPopup = false;
