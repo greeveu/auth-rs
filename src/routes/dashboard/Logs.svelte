@@ -3,6 +3,7 @@
 	import AuditLogEntry from "$lib/components/dashboard/AuditLogEntry.svelte";
 	import { AuditLog } from "$lib/models/AuditLog";
 	import type OAuthApplication from "$lib/models/OAuthApplication";
+	import Passkey from "$lib/models/Passkey";
 	import type RegistrationToken from "$lib/models/RegistrationToken";
 	import type Role from "$lib/models/Role";
 	import User from "$lib/models/User";
@@ -14,6 +15,7 @@
     export let roles: Role[];
     export let applications: OAuthApplication[];
     export let registrationTokens: RegistrationToken[];
+    export let passkeys: Passkey[];
     export let auditLogs: AuditLog[];
     export let isGlobalLogs: boolean = false;
 
@@ -49,6 +51,13 @@
                     console.error(err);
                 });
             }
+            if (passkeys.length <= 0) {
+                api.getUserPasskeys(user._id).then((newPasskeys) => {
+                    passkeys = newPasskeys;
+                }).catch((err) => {
+                    console.error(err);
+                });
+            }
         }).catch((err) => {
             console.error(err);
         });
@@ -57,6 +66,6 @@
 
 <div class="flex flex-col overflow-y-scroll gap-[15px]">
     {#each auditLogs.reverse() as auditLog}
-        <AuditLogEntry {user} {auditLog} {users} {roles} {applications} {registrationTokens} />
+        <AuditLogEntry bind:user bind:auditLog bind:users bind:roles bind:applications bind:registrationTokens bind:passkeys />
     {/each}
 </div>

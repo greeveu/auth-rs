@@ -30,6 +30,7 @@
 	},
 	"dependencies": {
 		"lucide-svelte": "^0.481.0",
-		"sv-tooltip": "^0.2.5"
+		"sv-tooltip": "^0.2.5",
+		"svelte-loading-spinners": "^0.3.6"
 	}
 }
