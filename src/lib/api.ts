@@ -366,6 +366,7 @@ class AuthRsApi {
             const finishData = await finishResponse.json();
             return new Passkey(
                 finishData.data.id,
+                finishData.data.owner,
                 finishData.data.deviceType,
                 finishData.data.createdAt
             );
