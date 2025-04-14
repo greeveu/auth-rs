@@ -29,9 +29,10 @@ pub async fn delete_passkey(
     req_entity: AuthEntity,
     passkey_id: String,
 ) -> (Status, Json<HttpResponse<()>>) {
-    let passkey = Passkey::get_by_id(passkey_id.as_str(), &db)
-        .await
-        .map_err(|_| ApiError::NotFound("Passkey not found".to_string()))?;
+    let passkey = match Passkey::get_by_id(passkey_id.as_str(), &db).await {
+        Ok(passkey) => passkey,
+        Err(_) => return json_response(ApiError::NotFound("Passkey not found".to_string()).into()),
+    };
 
     // Verify that the user ID in the request matches the authenticated user's ID
     if passkey.owner != req_entity.user_id {
