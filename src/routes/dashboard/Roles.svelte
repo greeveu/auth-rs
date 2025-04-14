@@ -19,7 +19,7 @@
     let editRolePopup: boolean = false;
     let editRole: Role | null = null;
     let editRoleName: string = '';
-    let editRoleDescription: string = '';
+    // let editRoleDescription: string = '';
 
     let deleteRolePopup: boolean = false;
     let deleteRole: Role | null = null;
