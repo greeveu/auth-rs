@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::sync::Mutex;
 use lazy_static::lazy_static;
-use mongodb::bson::Uuid;
+use mongodb::bson::{Uuid, DateTime};
 use rocket::{
     http::Status,
     post,
@@ -124,7 +124,7 @@ pub struct PasskeyRegisterStartResponse {
 pub struct PasskeyRegisterFinishResponse {
     pub id: Uuid,
     pub device_type: String,
-    pub created_at: mongodb::bson::DateTime,
+    pub created_at: DateTime,
 }
 
 // Response for passkey authentication start
