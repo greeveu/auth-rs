@@ -118,6 +118,73 @@ class AuthRsApi {
         }
     }
 
+    async startPasskeyAuth() {
+        const startResponse = await fetch(`${AuthRsApi.baseUrl}/auth/passkeys/authenticate/start`);
+
+        if (!startResponse.ok) {
+            console.error((await startResponse.json()));
+            throw new Error(`(${startResponse.status}): ${startResponse.statusText}`);
+        }
+
+        const data = await startResponse.json();
+
+        console.log('Start Data:', data.data);
+
+        const credential = await navigator.credentials.get(data.data) as PublicKeyCredential;
+
+        if (!credential) {
+            throw new Error('No credential created!');
+        }
+
+        console.log('Start Data:', data.data);
+        console.log('Credential created:', credential);
+        console.log('New Challenge:', JSON.parse(atob(PasskeyUtils.bufferToBase64URLString(credential.response.clientDataJSON))).challenge);
+
+        const clientDataJSON = JSON.parse(atob(PasskeyUtils.bufferToBase64URLString(credential.response.clientDataJSON)))
+        clientDataJSON.challenge = data.data.publicKey.challenge;
+        // This should not be required in prod, but during development, since the port is different
+        if (document.location.origin.includes('localhost:')) {
+            clientDataJSON.origin = document.location.origin.replace(`:${document.location.port}`, '');
+        }
+
+        console.log('Client Data JSON:', clientDataJSON);
+
+        const finishResponse = await fetch(`${AuthRsApi.baseUrl}/auth/passkeys/authenticate/finish`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                authenticationId: data.data.authenticationId,
+                credential: {
+                    id: credential.id,
+                    rawId: PasskeyUtils.bufferToBase64URLString(credential.rawId),
+                    response: {
+                        // @ts-expect-error
+                        authenticatorData: PasskeyUtils.bufferToBase64URLString(credential.response.authenticatorData),
+                        clientDataJSON: btoa(JSON.stringify(clientDataJSON)),
+                        // @ts-expect-error
+                        signature: PasskeyUtils.bufferToBase64URLString(credential.response.signature),
+                        // @ts-expect-error
+                        userHandle: PasskeyUtils.bufferToBase64URLString(credential.response.userHandle),
+                    },
+                    extentions: credential.getClientExtensionResults(),
+                    type: credential.type
+                },
+            }),
+        });
+
+        if (finishResponse.ok) {
+            const finishData = await finishResponse.json();
+            new AuthStateManager().setToken(finishData.data.token);
+            this.token = finishData.data.token;
+            return finishData.data;
+        } else {
+            console.error((await finishResponse.json()));
+            throw new Error(`(${finishResponse.status}): ${finishResponse.statusText}`);
+        }
+    }
+
     async enableMfa(user: User, password: string) {
         if (!this.token) {
             throw new Error('No token');
