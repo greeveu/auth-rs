@@ -1,7 +1,7 @@
 export default class PasskeyUpdates {
-    deviceType: string | null;
+    name: string | null;
 
-    constructor({ deviceType }: { deviceType: string | null }) {
-        this.deviceType = deviceType;
+    constructor({ name }: { name: string | null }) {
+        this.name = name;
     }
 }

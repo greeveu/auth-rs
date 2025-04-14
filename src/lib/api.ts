@@ -301,12 +301,10 @@ class AuthRsApi {
         }
 
         const startResponse = await fetch(`${AuthRsApi.baseUrl}/auth/passkeys/register/start`, {
-            method: 'POST',
+            method: 'GET',
             headers: {
-                'Content-Type': 'application/json',
                 Authorization: `Bearer ${this.token}`,
-            },
-            body: JSON.stringify({ userId }),
+            }
         });
 
         if (!startResponse.ok) {

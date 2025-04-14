@@ -1,11 +1,11 @@
 export default class Passkey {
     id: string;
-    deviceType: string;
+    name: string;
     createdAt: any;
 
-    constructor(id: string, deviceType: string, createdAt: any) {
+    constructor(id: string, name: string, createdAt: any) {
         this.id = id;
-        this.deviceType = deviceType;
+        this.name = name;
         this.createdAt = createdAt;
     }
 

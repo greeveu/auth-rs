@@ -96,7 +96,7 @@
                 style="margin-top: 20px; margin-bottom: 10px;"
                 on:click={editPasskeyName.length > 3 ? () => {
                     editPasskeyPopup = false;
-                    api.updatePasskey(user._id, editPasskey?.id!, new PasskeyUpdates({ deviceType: editPasskeyName }))
+                    api.updatePasskey(user._id, editPasskey?.id!, new PasskeyUpdates({ name: editPasskeyName }))
                         .then(newPasskey => {
                             passkeys = passkeys.map(p => p.id === newPasskey.id ? newPasskey : p);
                         }).catch(e => console.error(e));
@@ -109,7 +109,7 @@
 {#if deletePasskeyPopup}
     <Popup title="Delete Passkey" onClose={() => deletePasskeyPopup = false}>
         <div class="flex flex-col items-center justify-center max-w-[350px]" style="margin-top: 20px; margin-bottom: 20px;">
-            <p class="text-[14px] text-center opacity-50">Are you sure you want to delete the passkey "{deletePasskey?.deviceType}"?</p>
+            <p class="text-[14px] text-center opacity-50">Are you sure you want to delete the passkey "{deletePasskey?.name}"?</p>
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
@@ -195,14 +195,14 @@
                     {#each passkeys as passkey}
                         <div class="flex flex-col items-start justify start gap-[25px] min-w-[250px] max-w-[200px] min-h-[100px] border-[2px] border-[#333] rounded-md" style="padding: 15px;">
                             <div class="flex flex-row justify-between w-full">
-                                <p class="text-[20px] font-bold h-[20px]">{passkey.deviceType}</p>
+                                <p class="text-[20px] font-bold h-[20px]">{passkey.name}</p>
                                 <div class="flex flex-row">
                                     <Tooltip tip="Edit Passkey" bottom>
                                         <!-- svelte-ignore a11y_click_events_have_key_events -->
                                         <!-- svelte-ignore a11y_no_static_element_interactions -->
                                         <div class="flex self-end" style="margin-right: 12.5px;" on:click={() => {
                                             editPasskey = passkey;
-                                            editPasskeyName = passkey.deviceType;
+                                            editPasskeyName = passkey.name;
                                             editPasskeyPopup = true;
                                         }}>
                                             <Pen
