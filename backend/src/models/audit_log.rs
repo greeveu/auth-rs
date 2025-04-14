@@ -467,8 +467,12 @@ impl AuditLog {
         match *entity_type {
             AuditLogEntityType::User => Some(db.collection(Self::COLLECTION_NAME_USERS)),
             AuditLogEntityType::Role => Some(db.collection(Self::COLLECTION_NAME_ROLES)),
-            AuditLogEntityType::OAuthApplication => Some(db.collection(Self::COLLECTION_NAME_OAUTH_APPLICATIONS)),
-            AuditLogEntityType::RegistrationToken => Some(db.collection(Self::COLLECTION_NAME_REGISTRATION_TOKENS)),
+            AuditLogEntityType::OAuthApplication => {
+                Some(db.collection(Self::COLLECTION_NAME_OAUTH_APPLICATIONS))
+            }
+            AuditLogEntityType::RegistrationToken => {
+                Some(db.collection(Self::COLLECTION_NAME_REGISTRATION_TOKENS))
+            }
             AuditLogEntityType::Settings => Some(db.collection(Self::COLLECTION_NAME_SYSTEM)),
             AuditLogEntityType::Unknown => None,
         }

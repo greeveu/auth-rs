@@ -168,8 +168,10 @@ impl MfaHandler {
         req_user: AuthEntity,
         db: &Connection<AuthRsDatabase>,
     ) -> Result<User, String> {
-        let mut new_values = HashMap::from([("totp_secret".to_string(), "***********".to_string())]);
-        let mut old_values = HashMap::from([("totp_secret".to_string(), "***********".to_string())]);
+        let mut new_values =
+            HashMap::from([("totp_secret".to_string(), "***********".to_string())]);
+        let mut old_values =
+            HashMap::from([("totp_secret".to_string(), "***********".to_string())]);
 
         user.totp_secret = None;
 

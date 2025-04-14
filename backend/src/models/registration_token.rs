@@ -1,4 +1,7 @@
-use crate::{db::{get_main_db, AuthRsDatabase}, errors::ApiError};
+use crate::{
+    db::{get_main_db, AuthRsDatabase},
+    errors::ApiError,
+};
 use anyhow::Result;
 use mongodb::bson::{doc, DateTime, Document, Uuid};
 use rand::Rng;
@@ -250,7 +253,9 @@ impl RegistrationToken {
                 "Registration token has reached its maximum number of uses".to_string(),
             ));
         } else if let Some(expires_in) = self.expires_in {
-            if DateTime::now().timestamp_millis() > (self.expires_from.unwrap().timestamp_millis() + expires_in as i64) {
+            if DateTime::now().timestamp_millis()
+                > (self.expires_from.unwrap().timestamp_millis() + expires_in as i64)
+            {
                 return Err(RegistrationTokenError::Forbidden(
                     "Registration token has expired".to_string(),
                 ));
