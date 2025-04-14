@@ -20,8 +20,7 @@
 	 * @type {number[] | null[]}
 	 */
     let totp: (number | null)[] = [null, null, null, null, null, null];
-    let loginText = 'Login';
-    let verifyText = 'Verify';
+    let isLoading = false;
 
     let redirect: string | null = null;
 
@@ -32,12 +31,12 @@
         }
 
         step = 1;
-        loginText = 'Logging in...';
+        isLoading = true;
 
         api.login(email, password)
             .then(async (data) => {
                 if (data.mfaRequired) {
-                    loginText = 'Login';
+                    isLoading = false;
                     step = 2;
                     await tick();
                     document.getElementById('totp-0')?.focus();
@@ -48,7 +47,7 @@
             })
             .catch((error) => {
                 step = 0;
-                loginText = 'Login';
+                isLoading = false;
                 password = '';
                 console.error(error);
             });
@@ -71,14 +70,14 @@
             return;
         }
         step = 3;
-        verifyText = 'Verifying...';
+        isLoading = true;
 
         api.mfa(code)
             .then(() => {
                 window.location.href = redirect ?? '/';
             })
             .catch(async (error) => {
-                verifyText = 'Verify';
+                isLoading = false;
                 step = 2;
                 totp = [null, null, null, null, null, null];
                 await tick();
@@ -125,11 +124,27 @@
         {/if}
         <button
             type="submit"
-            class="border-[1.5px] border-blue-500 bg-blue-500 text-white rounded-md text-[17px] login-button"
+            class="border-[1.5px] border-blue-500 bg-blue-500 text-white rounded-md login-button"
+            class:bg-transparent={isLoading}
+            class:text-blue-500={isLoading}
             style="padding: 7.5px; width: {step < 2 ? 300 : 250}px; margin-top: {step < 2 ? 5 : 20}px;"
             class:enabled={step == 0 ? email != '' && password != '' : totp.map(c => c?.toString()).join('').length >= 6 && (step == 0 || step == 2)}
             on:click={step == 0 ? login : completeTotp}
-        >{step < 2 || step >= 4 ? loginText : verifyText}</button>
+        >
+            <div class="flex flex-row items-center justify-center gap-[10px]">
+                {#if step < 2 && !isLoading}
+                    <p class="text-[17px]">Login</p>
+                {:else if step < 2 && isLoading}
+                    <Circle color="var(--color-blue-500)" size=15 />
+                    <p class="text-[17px]">Logging in</p>
+                    {:else if step >= 2 && !isLoading}
+                    <p class="text-[17px]">Verify</p>
+                {:else if step >= 2 && isLoading}
+                    <Circle color="var(--color-blue-500)" size=15 />
+                    <p class="text-[17px]">Verifying</p>
+                {/if}
+            </div>
+        </button>
     </form>
     {#if step < 2}
         <hr class="w-[200px] text-[#333] border-[1.5px] rounded-md" style="margin-top: 15px;">

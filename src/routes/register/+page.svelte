@@ -1,10 +1,12 @@
 <script lang="ts">
     import AuthRsApi from '$lib/api';
 	import AuthStateManager from '$lib/auth';
-	import { onMount, tick } from "svelte";
+	import { onMount } from "svelte";
 	import type Settings from '$lib/models/Settings';
 	import TextInput from '$lib/components/global/TextInput.svelte';
 	import { goto } from '$app/navigation';
+	import { Circle } from 'svelte-loading-spinners';
+    import { Info, TicketCheck } from 'lucide-svelte';
 
     const authStateManager = new AuthStateManager();
     const api = new AuthRsApi();
@@ -17,7 +19,7 @@
     let password = '';
     let confirmPassword = '';
 
-    let registerText = 'Register';
+    let isLoading = false;
 
     let redirect: string | null = null;
     let registrationCode: string | null = null;
@@ -31,7 +33,7 @@
         }
 
         step = 1;
-        registerText = 'Registering...';
+        isLoading = true;
 
         api.createUser(email, password, firstName, lastName, registrationCode)
             .then(async (data) => {
@@ -39,7 +41,7 @@
             })
             .catch((error) => {
                 step = 0;
-                registerText = 'Register';
+                isLoading = false;
                 password = '';
                 confirmPassword = '';
                 console.error(error);
@@ -73,32 +75,32 @@
         <TextInput type="text" label="Last Name" bind:value={lastName} autocomplete="family-name" />
         <TextInput type="password" label="Password" bind:value={password} autocomplete="new-password" />
         <TextInput type="password" label="Confirm Password" bind:value={confirmPassword} autocomplete="new-password" />
+        {#if registrationCode != null}
+            <div class="flex flex-row items-center justity-start w-full gap-[10px]" style="margin-bottom: 10px;">
+                <TicketCheck size="17.5" class="opacity-50" />
+                <p class="text-[14px] opacity-50">Registration code: <i>{registrationCode}</i></p>
+            </div>
+        {/if}
         <button
             type="submit"
-            class="border-[1.5px] border-blue-500 bg-blue-500 text-white rounded-md text-[17px] button"
+            class="border-[1.5px] border-blue-500 bg-blue-500 text-white rounded-md text-[17px] opacity-50 cursor-default transition-all"
             style="padding: 7.5px; width: 300px; margin-top: 5px;"
-            class:enabled={step == 0 && dataIsValid}
+            class:opacity-100={step == 0 && dataIsValid}
+            class:cursor-pointer={step == 0 && dataIsValid}
+            class:hover:bg-transparent={step == 0 && dataIsValid}
+            class:hover:text-blue-500={step == 0 && dataIsValid}
             on:click={register}
-        >{registerText}</button>
+        >
+            <div class="flex flex-row items-center justify-center gap-[10px]">
+                {#if !isLoading}
+                    <p class="text-[17px]">Register</p>
+                {:else}
+                    <Circle color="var(--color-blue-500)" size=15 />
+                    <p class="text-[17px]">Registering</p>
+                {/if}
+            </div>
+        </button>
     </form>
     <p class="text-[14px]" style="margin-top: 15px;">or</p>
     <a href={`/login${redirect ? `?redirect_uri=${redirect}` : ''}`} class="text-[13px]" style="margin-top: 10px;">Already have an account? <i>Log In here!</i></a>
 </div>
-
-<style>
-    .button {
-        transition-duration: .2s;
-        opacity: 0.5;
-        cursor: default;
-    }
-
-    .button.enabled {
-        opacity: 1;
-        cursor: pointer;
-    }
-
-    .button.enabled:hover {
-        background-color: transparent;
-        color: var(--color-blue-500);
-    }
-</style>
