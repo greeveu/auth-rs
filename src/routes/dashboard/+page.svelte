@@ -19,6 +19,7 @@
 	import SystemSettings from './SystemSettings.svelte';
 	import type RegistrationToken from '$lib/models/RegistrationToken';
 	import RegistrationCodes from './RegistrationCodes.svelte';
+	import type Passkey from '$lib/models/Passkey';
 
     const authStateManager = new AuthStateManager();
     let api = new AuthRsApi();
@@ -33,6 +34,7 @@
     let applications: OAuthApplication[] = [];
     let auditLogs: AuditLog[] = [];
     let registrationTokens: RegistrationToken[] = [];
+    let passkeys: Passkey[] = [];
 
     const TABS: {
         slug: string,
@@ -93,7 +95,7 @@
                 {#if TABS[currentTabIndex].slug == 'your-profile'}
                     <Profile bind:api bind:user bind:roles />
                 {:else if TABS[currentTabIndex].slug == 'security'}
-                    <Security bind:api bind:user />
+                    <Security bind:api bind:user bind:passkeys />
                 {:else if TABS[currentTabIndex].slug == 'connections'}
                     <Connections bind:api bind:user bind:connections />
                 {:else if TABS[currentTabIndex].slug == 'oauth-applications'}
