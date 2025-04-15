@@ -422,6 +422,7 @@ impl From<String> for AppError {
 
 // Now we can properly convert WebAuthnError to a string and then to AppError
 impl From<WebauthnError> for ApiError {
+    #[allow(unused)]
     fn from(error: WebauthnError) -> Self {
         ApiError::AppError(AppError::WebauthnError)
     }

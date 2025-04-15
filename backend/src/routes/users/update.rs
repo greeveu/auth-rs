@@ -221,7 +221,7 @@ impl UserUpdate {
 
         // Create audit log
         if let Err(err) = AuditLog::new(
-            updated_user.id,
+            updated_user.id.to_string(),
             AuditLogEntityType::User,
             AuditLogAction::Update,
             "User updated.".to_string(),

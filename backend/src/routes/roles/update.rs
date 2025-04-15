@@ -87,7 +87,7 @@ impl RoleUpdate {
 
         // Create audit log
         if let Err(err) = AuditLog::new(
-            updated_role.id,
+            updated_role.id.to_string(),
             AuditLogEntityType::Role,
             AuditLogAction::Update,
             "Role updated.".to_string(),

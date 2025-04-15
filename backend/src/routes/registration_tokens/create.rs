@@ -73,7 +73,7 @@ pub async fn create_registration_token(
     match registration_token.insert(&db).await {
         Ok(registration_token) => {
             match AuditLog::new(
-                registration_token.id,
+                registration_token.id.to_string(),
                 AuditLogEntityType::RegistrationToken,
                 AuditLogAction::Create,
                 "Registration token created.".to_string(),

@@ -53,7 +53,7 @@ pub async fn delete_role(
     match role.delete(&db).await {
         Ok(role) => {
             match AuditLog::new(
-                role.id,
+                role.id.to_string(),
                 AuditLogEntityType::Role,
                 AuditLogAction::Delete,
                 "Role deleted.".to_string(),

@@ -1,7 +1,5 @@
-use crate::models::passkey;
 use crate::models::passkey::Passkey;
 use crate::{
-    auth::AuthEntity,
     db::AuthRsDatabase,
     errors::{ApiError, ApiResult, AppError},
     models::{
@@ -14,7 +12,7 @@ use crate::{
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use base64::Engine as _;
 use lazy_static::lazy_static;
-use mongodb::bson::{DateTime, Uuid};
+use mongodb::bson::Uuid;
 use rocket::{
     get,
     http::Status,
@@ -25,10 +23,7 @@ use rocket_db_pools::Connection;
 use std::collections::HashMap;
 use std::sync::Mutex;
 use url::Url;
-use webauthn_rs::prelude::{
-    CreationChallengeResponse, PasskeyAuthentication, PasskeyRegistration, PublicKeyCredential,
-    RegisterPublicKeyCredential, RequestChallengeResponse,
-};
+use webauthn_rs::prelude::{PasskeyAuthentication, PasskeyRegistration, PublicKeyCredential,RequestChallengeResponse};
 use webauthn_rs::{Webauthn, WebauthnBuilder};
 
 // In-memory storage for registration and authentication sessions
@@ -163,9 +158,9 @@ async fn process_authenticate_finish(
         .map_err(|_| ApiError::NotFound("User not found with this credential".to_string()))?;
 
     // Verify authentication
-    let result = webauthn
+    let _ = webauthn
         .finish_passkey_authentication(&data.credential, &auth_state)
-        .map_err(|e| ApiError::AppError(AppError::WebauthnError))?;
+        .map_err(|_| ApiError::AppError(AppError::WebauthnError))?;
 
     // Update counter if needed
     //TODO: Check if this is required!
@@ -181,7 +176,7 @@ async fn process_authenticate_finish(
     // }
 
     AuditLog::new(
-        user.clone().id,
+        user.clone().id.to_string(),
         AuditLogEntityType::User,
         AuditLogAction::Login,
         "Login successful.".to_string(),

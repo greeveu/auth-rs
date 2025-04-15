@@ -86,7 +86,7 @@ pub async fn login(
         Ok(response) => {
             if response.user.is_some() {
                 AuditLog::new(
-                    response.user.clone().unwrap().id,
+                    response.user.clone().unwrap().id.to_string(),
                     AuditLogEntityType::User,
                     AuditLogAction::Login,
                     "Login successful.".to_string(),

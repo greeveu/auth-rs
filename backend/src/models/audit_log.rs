@@ -46,7 +46,7 @@ impl<T> From<AuditLogError> for HttpResponse<T> {
 pub struct AuditLog {
     #[serde(rename = "_id")]
     pub id: Uuid,
-    pub entity_id: Uuid,
+    pub entity_id: String,
     pub entity_type: AuditLogEntityType,
     pub action: AuditLogAction,
     pub reason: String,
@@ -73,6 +73,7 @@ pub enum AuditLogEntityType {
     OAuthApplication,
     Settings,
     RegistrationToken,
+    Passkey,
     Unknown,
 }
 
@@ -100,6 +101,7 @@ impl fmt::Display for AuditLogEntityType {
             AuditLogEntityType::OAuthApplication => write!(f, "OAUTH_APPLICATION"),
             AuditLogEntityType::Settings => write!(f, "SETTINGS"),
             AuditLogEntityType::RegistrationToken => write!(f, "REGISTRATION_TOKEN"),
+            AuditLogEntityType::Passkey => write!(f, "PASSKEY"),
             AuditLogEntityType::Unknown => write!(f, "UNKNOWN"),
         }
     }
@@ -110,11 +112,12 @@ impl AuditLog {
     pub const COLLECTION_NAME_ROLES: &'static str = "role-logs";
     pub const COLLECTION_NAME_OAUTH_APPLICATIONS: &'static str = "oauth-application-logs";
     pub const COLLECTION_NAME_REGISTRATION_TOKENS: &'static str = "registration-token-logs";
+    pub const COLLECTION_NAME_PASSKEYS: &'static str = "passkey-logs";
     pub const COLLECTION_NAME_SYSTEM: &'static str = "system-logs";
 
     #[allow(unused)]
     pub fn new(
-        entity_id: Uuid,
+        entity_id: String,
         entity_type: AuditLogEntityType,
         action: AuditLogAction,
         reason: String,
@@ -473,6 +476,7 @@ impl AuditLog {
             AuditLogEntityType::RegistrationToken => {
                 Some(db.collection(Self::COLLECTION_NAME_REGISTRATION_TOKENS))
             }
+            AuditLogEntityType::Passkey => Some(db.collection(Self::COLLECTION_NAME_PASSKEYS)),
             AuditLogEntityType::Settings => Some(db.collection(Self::COLLECTION_NAME_SYSTEM)),
             AuditLogEntityType::Unknown => None,
         }

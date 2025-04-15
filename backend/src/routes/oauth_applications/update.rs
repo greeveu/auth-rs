@@ -124,7 +124,7 @@ impl OAuthApplicationUpdate {
 
         // Create audit log
         if let Err(err) = AuditLog::new(
-            updated_app.id,
+            updated_app.id.to_string(),
             AuditLogEntityType::OAuthApplication,
             AuditLogAction::Update,
             "OAuthApplication updated.".to_string(),

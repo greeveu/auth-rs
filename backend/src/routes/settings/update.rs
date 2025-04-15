@@ -105,7 +105,7 @@ impl SettingsUpdate {
 
         // Create audit log
         if let Err(err) = AuditLog::new(
-            updated_settings.id,
+            updated_settings.id.to_string(),
             AuditLogEntityType::Settings,
             AuditLogAction::Update,
             "Settings updated.".to_string(),

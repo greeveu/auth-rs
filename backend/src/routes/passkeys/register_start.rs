@@ -1,29 +1,15 @@
-use crate::models::passkey;
+use crate::models::http_response::HttpResponse;
 use crate::models::passkey::Passkey;
-use crate::{auth::AuthEntity, db::AuthRsDatabase, errors::{ApiError, ApiResult, AppError}, models::{
-    audit_log::{AuditLog, AuditLogAction, AuditLogEntityType},
-    http_response::HttpResponse,
-    user::{User, UserDTO},
-}, utils::response::json_response, REGISTRATIONS};
-use base64::engine::general_purpose::URL_SAFE_NO_PAD;
-use base64::Engine as _;
-use lazy_static::lazy_static;
-use mongodb::bson::{DateTime, Uuid};
+use crate::utils::response::json_response;
+use crate::{auth::AuthEntity, db::AuthRsDatabase, errors::{ApiError, ApiResult, AppError}, REGISTRATIONS};
+use mongodb::bson::Uuid;
 use rocket::{
     get,
     http::Status,
-    post,
-    serde::{json::Json, Deserialize, Serialize},
+    serde::{json::Json, Serialize},
 };
 use rocket_db_pools::Connection;
-use std::collections::HashMap;
-use std::sync::Mutex;
-use url::Url;
-use webauthn_rs::prelude::{
-    CreationChallengeResponse, PasskeyAuthentication, PasskeyRegistration, PublicKeyCredential,
-    RegisterPublicKeyCredential, RequestChallengeResponse,
-};
-use webauthn_rs::{Webauthn, WebauthnBuilder};
+use webauthn_rs::prelude::CreationChallengeResponse;
 use crate::routes::auth::passkey::get_webauthn;
 
 // Response for passkey registration start
@@ -35,7 +21,7 @@ pub struct PasskeyRegisterStartResponse {
     pub challenge: CreationChallengeResponse,
 }
 
-#[get("/auth/passkeys/register/start")]
+#[get("/passkeys/register/start")]
 pub async fn register_start(
     db: Connection<AuthRsDatabase>,
     req_entity: AuthEntity,

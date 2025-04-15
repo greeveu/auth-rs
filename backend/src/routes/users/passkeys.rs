@@ -1,28 +1,19 @@
 use mongodb::bson::Uuid;
 use rocket::{
-    delete, get,
+    get,
     http::Status,
-    patch,
-    serde::{json::Json, Deserialize},
+    serde::json::Json,
 };
 use rocket_db_pools::Connection;
 
 use crate::{
     auth::AuthEntity,
     db::AuthRsDatabase,
-    errors::{ApiError, ApiResult, AppError},
-    models::{http_response::HttpResponse, passkey::PasskeyDTO, user::User},
+    errors::{ApiError, ApiResult},
+    models::{http_response::HttpResponse, passkey::PasskeyDTO},
     utils::response::json_response,
 };
 use crate::models::passkey::Passkey;
-
-// DTO for updating passkey metadata
-#[derive(Deserialize)]
-#[serde(crate = "rocket::serde")]
-#[serde(rename_all = "camelCase")]
-pub struct PasskeyUpdateRequest {
-    pub name: Option<String>,
-}
 
 // 1. List User's Passkeys
 #[get("/users/<user_id>/passkeys")]

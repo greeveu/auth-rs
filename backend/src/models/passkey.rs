@@ -33,6 +33,7 @@ pub enum PasskeyError {
 
 impl PasskeyError {
     // Add a message method to maintain compatibility with existing code
+    #[allow(unused)]
     pub fn message(&self) -> String {
         match self {
             PasskeyError::NotFound(id) => format!("Passkey with ID {} not found", id),

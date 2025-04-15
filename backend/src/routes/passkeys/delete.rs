@@ -1,8 +1,7 @@
 use rocket::{
     delete,
     http::Status,
-    patch,
-    serde::{json::Json, Deserialize},
+    serde::json::Json,
 };
 use rocket_db_pools::Connection;
 
@@ -10,18 +9,10 @@ use crate::{
     auth::AuthEntity,
     db::AuthRsDatabase,
     errors::{ApiError, ApiResult, AppError},
-    models::{http_response::HttpResponse},
+    models::{audit_log::{AuditLog, AuditLogAction, AuditLogEntityType}, http_response::HttpResponse},
     utils::response::json_response,
 };
 use crate::models::passkey::Passkey;
-
-// DTO for updating passkey metadata
-#[derive(Deserialize)]
-#[serde(crate = "rocket::serde")]
-#[serde(rename_all = "camelCase")]
-pub struct PasskeyUpdateRequest {
-    pub name: Option<String>,
-}
 
 #[delete("/passkeys/<passkey_id>")]
 pub async fn delete_passkey(
@@ -41,7 +32,7 @@ pub async fn delete_passkey(
         );
     }
 
-    match process_delete_passkey(db, passkey_id.as_str()).await {
+    match process_delete_passkey(db, passkey_id.as_str(), req_entity).await {
         Ok(_) => json_response(HttpResponse {
             status: 200,
             message: "Passkey deleted successfully".to_string(),
@@ -54,6 +45,7 @@ pub async fn delete_passkey(
 async fn process_delete_passkey(
     db: Connection<AuthRsDatabase>,
     passkey_id: &str,
+    req_entity: AuthEntity
 ) -> ApiResult<()> {
     // Get the authenticated user
     let passkey = Passkey::get_by_id(passkey_id, &db)
@@ -64,6 +56,19 @@ async fn process_delete_passkey(
     passkey.delete(&db)
         .await
         .map_err(|e| ApiError::AppError(AppError::DatabaseError(e.to_string())))?;
+
+    AuditLog::new(
+        passkey.id,
+        AuditLogEntityType::Passkey,
+        AuditLogAction::Delete,
+        "Passkey deleted.".to_string(),
+        req_entity.user_id,
+        None,
+        None
+    )
+    .insert(&db)
+    .await
+    .ok();
 
     Ok(())
 }

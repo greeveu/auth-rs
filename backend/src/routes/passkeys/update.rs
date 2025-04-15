@@ -1,6 +1,6 @@
-use mongodb::bson::Uuid;
+use std::collections::HashMap;
+
 use rocket::{
-    delete, get,
     http::Status,
     patch,
     serde::{json::Json, Deserialize},
@@ -11,7 +11,7 @@ use crate::{
     auth::AuthEntity,
     db::AuthRsDatabase,
     errors::{ApiError, ApiResult, AppError},
-    models::{http_response::HttpResponse, passkey::PasskeyDTO, user::User},
+    models::{audit_log::{AuditLog, AuditLogAction, AuditLogEntityType}, http_response::HttpResponse, passkey::PasskeyDTO},
     utils::response::json_response,
 };
 use crate::models::passkey::Passkey;
@@ -47,7 +47,7 @@ pub async fn update_passkey(
         );
     }
 
-    match process_update_passkey(db, passkey_id.as_str(), data.into_inner()).await {
+    match process_update_passkey(db, passkey_id.as_str(), data.into_inner(), req_entity).await {
         Ok(passkey) => json_response(HttpResponse {
             status: 200,
             message: "Passkey updated successfully".to_string(),
@@ -61,6 +61,7 @@ async fn process_update_passkey(
     db: Connection<AuthRsDatabase>,
     passkey_id: &str,
     data: PasskeyUpdateRequest,
+    req_entity: AuthEntity
 ) -> ApiResult<PasskeyDTO> {
     // Get the authenticated user
     let passkey = Passkey::get_by_id(passkey_id, &db)
@@ -73,9 +74,26 @@ async fn process_update_passkey(
     if data.name.is_some() {
         updated_passkey.name = data.name.unwrap();
 
-        passkey.update(&db)
+        updated_passkey.update(&db)
             .await
             .map_err(|e| ApiError::AppError(AppError::DatabaseError(e.to_string())))?;
+
+        let old_values = HashMap::from([("name".to_string(), passkey.name.clone())]);
+
+        let new_values = HashMap::from([("name".to_string(), updated_passkey.name.clone())]);
+
+        AuditLog::new(
+            passkey.id,
+            AuditLogEntityType::Passkey,
+            AuditLogAction::Update,
+            "Passkey updated.".to_string(),
+            req_entity.user_id,
+            Some(old_values),
+            Some(new_values)
+        )
+        .insert(&db)
+        .await
+        .ok();
     }
 
     Ok(updated_passkey.to_dto())

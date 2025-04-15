@@ -2,7 +2,6 @@ use crate::models::passkey::Passkey;
 use crate::{auth::AuthEntity, db::AuthRsDatabase, errors::{ApiError, ApiResult, AppError}, models::{
     audit_log::{AuditLog, AuditLogAction, AuditLogEntityType},
     http_response::HttpResponse,
-    user::{User},
 }, utils::response::json_response, REGISTRATIONS};
 use rocket::{
     http::Status,
@@ -10,12 +9,8 @@ use rocket::{
     serde::{json::Json, Deserialize, Serialize},
 };
 use rocket_db_pools::Connection;
-use std::collections::HashMap;
 use mongodb::bson::{DateTime, Uuid};
-use webauthn_rs::prelude::{
-    PublicKeyCredential,
-    RegisterPublicKeyCredential, RequestChallengeResponse,
-};
+use webauthn_rs::prelude::RegisterPublicKeyCredential;
 use crate::routes::auth::passkey::get_webauthn;
 
 // DTO for passkey registration finish request
@@ -37,7 +32,7 @@ pub struct PasskeyRegisterFinishResponse {
     pub created_at: DateTime,
 }
 
-#[post("/auth/passkeys/register/finish", format = "json", data = "<data>")]
+#[post("/passkeys/register/finish", format = "json", data = "<data>")]
 pub async fn register_finish(
     db: Connection<AuthRsDatabase>,
     data: Json<PasskeyRegisterFinishRequest>,
@@ -79,64 +74,30 @@ async fn process_register_finish(
         ));
     }
 
-    let mut passkeys = Passkey::get_by_owner(user_id, &db)
-        .await
-        .map_err(|_| ApiError::AppError(AppError::PasskeyNotFound(user_id)))?;
-
     // Initialize Webauthn
     let webauthn = get_webauthn();
 
     // Verify and process registration
     let result = webauthn
         .finish_passkey_registration(&data.credential, &reg_state)
-        .map_err(|e| ApiError::AppError(AppError::WebauthnError))?;
-
-    // Find the user (get the mutable user)
-    //TODO: Check if we can use the req_entity user as mut
-    let mut user = User::get_by_id(user_id, &db)
-        .await
-        .map_err(|_| ApiError::NotFound("User not found".to_string()))?;
+        .map_err(|_| ApiError::AppError(AppError::WebauthnError))?;
 
     let passkey = Passkey::new(
         result.cred_id(),
-        format!("Passkey {}", passkeys.len() + 1),
+        "New Passkey".to_string(),
         user_id,
         result.clone(),
-    );
-
-    let old_values = HashMap::from([(
-        "passkeys".to_string(),
-        passkeys
-            .iter()
-            .map(|pk| pk.id.to_string())
-            .collect::<Vec<_>>()
-            .join(","),
-    )]);
-
-    // Add passkey to user and update
-    passkeys.push(passkey.clone());
-
-    let new_values = HashMap::from([(
-        "passkeys".to_string(),
-        passkeys
-            .iter()
-            .map(|pk| pk.id.to_string())
-            .collect::<Vec<_>>()
-            .join(","),
-    )]);
-
-    user.update(&db)
-        .await
+    ).insert(&db).await
         .map_err(|e| ApiError::AppError(AppError::DatabaseError(e.to_string())))?;
 
     AuditLog::new(
-        user_id.clone(),
-        AuditLogEntityType::User,
-        AuditLogAction::Update,
-        "Added passkey.".to_string(),
+        passkey.id.clone(),
+        AuditLogEntityType::Passkey,
+        AuditLogAction::Create,
+        "Registered passkey.".to_string(),
         user_id,
-        Some(old_values),
-        Some(new_values),
+        None,
+        None
     )
     .insert(&db)
     .await

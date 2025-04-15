@@ -191,7 +191,7 @@ impl MfaHandler {
         {
             Ok(_) => {
                 match AuditLog::new(
-                    user.id,
+                    user.id.to_string(),
                     AuditLogEntityType::User,
                     AuditLogAction::Update,
                     "Disable TOTP.".to_string(),

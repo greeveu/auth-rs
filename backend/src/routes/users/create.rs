@@ -123,7 +123,7 @@ async fn create_user_internal(
 
     // Create audit log
     if let Err(err) = AuditLog::new(
-        inserted_user.id,
+        inserted_user.id.to_string(),
         AuditLogEntityType::User,
         AuditLogAction::Create,
         format!(

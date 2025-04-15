@@ -47,7 +47,7 @@ pub async fn delete_user(
     match user.delete(&db).await {
         Ok(user) => {
             match AuditLog::new(
-                user.id,
+                user.id.to_string(),
                 AuditLogEntityType::User,
                 AuditLogAction::Delete,
                 "User deleted.".to_string(),

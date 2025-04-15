@@ -53,7 +53,7 @@ pub async fn create_role(
     match role.insert(&db).await {
         Ok(role) => {
             match AuditLog::new(
-                role.id,
+                role.id.to_string(),
                 AuditLogEntityType::Role,
                 AuditLogAction::Create,
                 "Role created.".to_string(),

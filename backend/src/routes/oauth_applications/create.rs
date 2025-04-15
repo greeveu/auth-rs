@@ -62,7 +62,7 @@ pub async fn create_oauth_application(
     match oauth_application.insert(&db).await {
         Ok(oauth_application) => {
             match AuditLog::new(
-                oauth_application.id,
+                oauth_application.id.to_string(),
                 AuditLogEntityType::OAuthApplication,
                 AuditLogAction::Create,
                 "OAuth Application created.".to_string(),

@@ -69,8 +69,8 @@ async fn process_mfa(
         let new_values = HashMap::from([("totp_secret".to_string(), "*************".to_string())]);
         let old_values = HashMap::from([("totp_secret".to_string(), "".to_string())]);
 
-        if let Err(err) = AuditLog::new(
-            user.id,
+        AuditLog::new(
+            user.id.to_string(),
             AuditLogEntityType::User,
             AuditLogAction::Update,
             "Enable TOTP.".to_string(),
@@ -80,9 +80,7 @@ async fn process_mfa(
         )
         .insert(db)
         .await
-        {
-            eprintln!("{:?}", err);
-        }
+        .ok();
 
         Ok((
             "TOTP enabled".to_string(),
@@ -118,7 +116,7 @@ pub async fn mfa(
         Ok((message, response)) => {
             if message == "MFA complete" {
                 AuditLog::new(
-                    response.user.clone().unwrap().id,
+                    response.user.clone().unwrap().id.to_string(),
                     AuditLogEntityType::User,
                     AuditLogAction::Login,
                     "MFA login successful.".to_string(),

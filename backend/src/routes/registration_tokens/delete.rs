@@ -40,7 +40,7 @@ pub async fn delete_registration_token(
     match registration_token.delete(&db).await {
         Ok(registration_token) => {
             match AuditLog::new(
-                registration_token.id,
+                registration_token.id.to_string(),
                 AuditLogEntityType::RegistrationToken,
                 AuditLogAction::Delete,
                 "Registration token deleted.".to_string(),

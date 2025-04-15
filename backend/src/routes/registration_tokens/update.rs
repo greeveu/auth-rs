@@ -162,7 +162,7 @@ impl RegistrationTokenUpdate {
 
         // Create audit log
         if let Err(err) = AuditLog::new(
-            updated_token.id,
+            updated_token.id.to_string(),
             AuditLogEntityType::RegistrationToken,
             AuditLogAction::Update,
             "Registration token updated.".to_string(),
