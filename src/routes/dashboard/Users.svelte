@@ -291,7 +291,7 @@
             on:click={openCreateUserPopup}
         >Create User</p>
     </div>
-    <div class="flex flex-wrap overflow-y-scroll gap-[25px]">
+    <div class="flex flex-wrap overflow-y-scroll overflow-x-hidden gap-[25px]">
         {#each users.filter(u => u._id != User.DEFAULT_USER_ID) as user}
             <div
                 class="flex flex-col items-start justify start gap-[10px] min-w-[300px] border-[2px] border-[#333] rounded-md"

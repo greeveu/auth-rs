@@ -212,7 +212,7 @@
             on:click={openCreateApplicationPopup}
         >Create Application</p>
     </div>
-    <div class="flex flex-wrap overflow-y-scroll gap-[25px]">
+    <div class="flex flex-wrap overflow-y-scroll overflow-x-hidden gap-[25px]">
         {#each filteredApplications as application}
             <div class="flex flex-col items-start justify start gap-[10px] min-w-[350px] max-w-[400px] min-h-[200px] border-[2px] border-[#333] rounded-md" style="padding: 15px;">
                 <div class="flex flex-row justify-between w-full">
