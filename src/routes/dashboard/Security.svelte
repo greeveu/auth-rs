@@ -96,7 +96,7 @@
                 style="margin-top: 20px; margin-bottom: 10px;"
                 on:click={editPasskeyName.length > 3 ? () => {
                     editPasskeyPopup = false;
-                    api.updatePasskey(user._id, editPasskey?.id!, new PasskeyUpdates({ name: editPasskeyName }))
+                    api.updatePasskey(editPasskey?.id!, new PasskeyUpdates({ name: editPasskeyName }))
                         .then(newPasskey => {
                             passkeys = passkeys.map(p => p.id === newPasskey.id ? newPasskey : p);
                         }).catch(e => console.error(e));
@@ -117,7 +117,7 @@
                 style="margin-top: 25px;"
                 on:click={() => {
                     deletePasskeyPopup = false;
-                    api.deletePasskey(user._id, deletePasskey?.id!)
+                    api.deletePasskey(deletePasskey?.id!)
                         .then(() => {
                             passkeys = passkeys.filter(p => p.id !== deletePasskey?.id);
                         }).catch(e => console.error(e));

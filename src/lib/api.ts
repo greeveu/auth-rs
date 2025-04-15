@@ -300,7 +300,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const startResponse = await fetch(`${AuthRsApi.baseUrl}/auth/passkeys/register/start`, {
+        const startResponse = await fetch(`${AuthRsApi.baseUrl}/passkeys/register/start`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${this.token}`,
@@ -341,7 +341,7 @@ class AuthRsApi {
         console.log('Client Data JSON:', clientDataJSON);
         
 
-        const finishResponse = await fetch(`${AuthRsApi.baseUrl}/auth/passkeys/register/finish`, {
+        const finishResponse = await fetch(`${AuthRsApi.baseUrl}/passkeys/register/finish`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -397,12 +397,12 @@ class AuthRsApi {
         }
     }
 
-    async updatePasskey(userId: string, passkeyId: string, updates: PasskeyUpdates): Promise<Passkey> {
+    async updatePasskey(passkeyId: string, updates: PasskeyUpdates): Promise<Passkey> {
         if (!this.token) {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/users/${userId}/passkeys/${passkeyId}`, {
+        const response = await fetch(`${AuthRsApi.baseUrl}/passkeys/${passkeyId}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -420,12 +420,12 @@ class AuthRsApi {
         }
     }
 
-    async deletePasskey(userId: string, passkeyId: string): Promise<null> {
+    async deletePasskey(passkeyId: string): Promise<null> {
         if (!this.token) {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/users/${userId}/passkeys/${passkeyId}`, {
+        const response = await fetch(`${AuthRsApi.baseUrl}/passkeys/${passkeyId}`, {
             method: 'DELETE',
             headers: {
                 Authorization: `Bearer ${this.token}`,
