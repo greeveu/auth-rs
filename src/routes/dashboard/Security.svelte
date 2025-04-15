@@ -31,7 +31,7 @@
     let showEnablePassword = false;
     
     let enableTotpQR: string | null = null;
-    let enableTotp: (number | null)[] = [null, null, null, null, null, null];
+    let enableTotp: (string | null)[] = [null, null, null, null, null, null];
     
     let disablePassword = '';
     let showDisablePassword = false;
@@ -49,14 +49,22 @@
         startEnable2FAPopup = true;
     }
 
-    async function enableMFA() {
+    async function enableMFA(code: string): Promise<boolean> {
         if (enableTotpQR) {
-            const totp = enableTotp.map(n => n === null ? 0 : n).join('');
-            api.mfa(totp).then((newUser: User) => {
+            api.mfa(code).then((newUser: User) => {
                 completeEnable2FAPopup = false;
                 user = newUser;
                 goto('/logout');
+                return true;
+            }).catch(e => {
+                console.error(e);
+                enableTotp = [null, null, null, null, null, null];
+                return false;
             });
+
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -297,7 +305,7 @@
                 style="margin-top: 25px;"
                 class:opacity-100={enableTotp.filter(c => c != null).length === 6}
                 class:cursor-pointer={enableTotp.filter(c => c != null).length === 6}
-                on:click={enableMFA}
+                on:click={() => enableMFA(enableTotp.join(''))}
             >Confirm</p>
         </div>
     </Popup>

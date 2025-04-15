@@ -20,7 +20,7 @@
     /**
 	 * @type {number[] | null[]}
 	 */
-    let totp: (number | null)[] = [null, null, null, null, null, null];
+    let totp: (string | null)[] = [null, null, null, null, null, null];
     let isLoading = false;
 
     let redirect: string | null = null;
@@ -64,18 +64,19 @@
         });
     }
 
-    async function completeTotp() {
-        const code = totp.map((value) => `${value}`).join('');
+    async function completeTotp(code: string): Promise<boolean> {
         if (code.length != 6) {
             console.error('Invalid TOTP code');
-            return;
+            return false;
         }
+
         step = 3;
         isLoading = true;
 
         api.mfa(code)
             .then(() => {
                 window.location.href = redirect ?? '/';
+                return true;
             })
             .catch(async (error) => {
                 isLoading = false;
@@ -84,7 +85,10 @@
                 await tick();
                 document.getElementById('totp-0')?.focus();
                 console.error(error);
+                return false;
             });
+
+        return true;
     }
 
     onMount(async () => {
@@ -131,7 +135,7 @@
             class:text-blue-500={isLoading}
             style="padding: 7.5px; width: {step < 2 ? 300 : 250}px; margin-top: {step < 2 ? 5 : 20}px;"
             class:enabled={step == 0 ? email != '' && password != '' : totp.map(c => c?.toString()).join('').length >= 6 && (step == 0 || step == 2)}
-            on:click={step == 0 ? login : completeTotp}
+            on:click={step == 0 ? login : () => completeTotp(totp.join(''))}
         >
             <div class="flex flex-row items-center justify-center gap-[10px]">
                 {#if step < 2 && !isLoading}
