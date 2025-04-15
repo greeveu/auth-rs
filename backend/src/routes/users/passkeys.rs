@@ -20,7 +20,7 @@ use crate::models::passkey::Passkey;
 pub async fn list_passkeys(
     db: Connection<AuthRsDatabase>,
     req_entity: AuthEntity,
-    user_id: String,
+    user_id: &str,
 ) -> (Status, Json<HttpResponse<Vec<PasskeyDTO>>>) {
     let user_uuid = match Uuid::parse_str(&user_id) {
         Ok(id) => id,
