@@ -311,6 +311,10 @@ class AuthRsApi {
 
         publicKey.user.id = PasskeyUtils.base64URLStringToBuffer(publicKey.user.id);
         publicKey.challenge = PasskeyUtils.base64URLStringToBuffer(publicKey.challenge);
+        publicKey.excludeCredentials = publicKey.excludeCredentials.map((credential: any) => {
+            credential.id = PasskeyUtils.base64URLStringToBuffer(credential.id);
+            return credential;
+        });
 
         const credential = await navigator.credentials.create({ publicKey }) as PublicKeyCredential;
 
