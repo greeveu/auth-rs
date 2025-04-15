@@ -21,7 +21,7 @@ use rocket::{
 };
 use rocket_cors::{AllowedHeaders, AllowedOrigins, CorsOptions};
 use rocket_db_pools::{mongodb::Collection, Database};
-use webauthn_rs::prelude::{DiscoverableAuthentication, PasskeyAuthentication, PasskeyRegistration};
+use webauthn_rs::prelude::{DiscoverableAuthentication, PasskeyRegistration};
 use routes::oauth::token::TokenOAuthData;
 
 // oauth codes stored in memory
