@@ -19,7 +19,7 @@ use rocket::{
 };
 use rocket_db_pools::Connection;
 use url::Url;
-use webauthn_rs::prelude::{DiscoverableKey, PasskeyAuthentication, PublicKeyCredential, RequestChallengeResponse};
+use webauthn_rs::prelude::{DiscoverableKey, PublicKeyCredential, RequestChallengeResponse};
 use webauthn_rs::{Webauthn, WebauthnBuilder};
 
 //TODO: First create a config file for these values, secondly check if this needs to be instantiated every time or if it can be a static variable
