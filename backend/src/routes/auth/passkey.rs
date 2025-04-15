@@ -10,8 +10,6 @@ use crate::{
     },
     utils::response::json_response,
 };
-use base64::engine::general_purpose::URL_SAFE_NO_PAD;
-use base64::Engine as _;
 use mongodb::bson::Uuid;
 use rocket::{
     get,
@@ -80,7 +78,6 @@ async fn process_authenticate_start() -> ApiResult<PasskeyAuthenticateStartRespo
     // Initialize Webauthn
     let webauthn = get_webauthn();
 
-    // Generate challenge for authentication
     let (challenge, auth_state) = webauthn
         .start_passkey_authentication(&[])
         .map_err(|_| ApiError::AppError(AppError::WebauthnError))?;
@@ -135,11 +132,8 @@ async fn process_authenticate_finish(
     // Initialize Webauthn
     let webauthn = get_webauthn();
 
-    // Get credential ID as base64
-    let credential_id = URL_SAFE_NO_PAD.encode(&data.credential.id);
-
     // Find user with this credential
-    let passkey = Passkey::get_by_id(&credential_id, &db)
+    let passkey = Passkey::get_by_id(&data.credential.id, &db)
         .await
         .map_err(|_| ApiError::NotFound("Passkey not found with this credential".to_string()))?;
 
@@ -151,19 +145,6 @@ async fn process_authenticate_finish(
     let _ = webauthn
         .finish_passkey_authentication(&data.credential, &auth_state)
         .map_err(|_| ApiError::AppError(AppError::WebauthnError))?;
-
-    // Update counter if needed
-    //TODO: Check if this is required!
-    // if pk.counter != result.counter() {
-    //     pk.counter = result.1.counter;
-    // }
-    //
-    // // Update user if counter changed
-    // if should_update {
-    //     user.update(&db)
-    //         .await
-    //         .map_err(|e| ApiError::AppError(AppError::DatabaseError(e.to_string())))?;
-    // }
 
     AuditLog::new(
         user.clone().id.to_string(),
