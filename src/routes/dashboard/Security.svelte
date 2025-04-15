@@ -21,6 +21,7 @@
         { name: '2FA', icon: ClockFading },
         { name: 'Passkeys', icon: KeyRound }
     ];
+    let supportsPasskeys = false;
 
     let startEnable2FAPopup = false;
     let completeEnable2FAPopup = false;
@@ -76,7 +77,9 @@
     }
 
     onMount(() => {
-        if (passkeys.length < 1) {
+        supportsPasskeys = window.PublicKeyCredential != null;
+
+        if (supportsPasskeys && passkeys.length < 1) {
             api.getUserPasskeys(user._id).then((newPasskeys: Passkey[]) => {
                 passkeys = newPasskeys;
             });
@@ -171,26 +174,48 @@
             {#if passkeys.length < 1}
                 <div class="flex flex-col items-center justify-center gap-[25px] h-full w-full">
                     <Search size="75" class="opacity-40" />
-                        <p class="text-[20px] text-center opacity-50">You dont have any passkeys registered.</p>
-                        <!-- svelte-ignore a11y_click_events_have_key_events -->
-                        <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-                        <p
-                            class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md"
-                            style="padding: 10px; margin-top: 25px;"
-                            on:click={createPasskey}
-                        >Create Passkey</p>
+                    <p class="text-[20px] text-center opacity-50">You dont have any passkeys registered.</p>
+                    <!-- svelte-ignore a11y_click_events_have_key_events -->
+                    <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+                    <p
+                        class="border-blue-500 text-blue-500 transition-all border-[1.5px] cursor-default rounded-md"
+                        class:opacity-50={!supportsPasskeys}
+                        class:hover:bg-blue-500={supportsPasskeys}
+                        class:hover:text-white={supportsPasskeys}
+                        class:hover:cursor-pointer={supportsPasskeys}
+                        style="padding: 10px; margin-top: 25px;"
+                        on:click={supportsPasskeys ? createPasskey : () => {}}
+                    >
+                        Create Passkey
+                    </p>
+                    {#if !supportsPasskeys}
+                        <Tooltip tip="Your browser doesn't support passkeys." bottom color="var(--color-red-600)">
+                            <!-- svelte-ignore element_invalid_self_closing_tag -->
+                            <div class="absolute w-[160px] h-[45px] z-10" style="top: -70px; left: -80px;" />
+                        </Tooltip>
+                    {/if}
                 </div>
             {:else}
                 <div class="absolute flex flex-col min-h-[70px] items-center justify-center self-end" style="margin-right: 50px;">
                     <!-- svelte-ignore a11y_click_events_have_key_events -->
                     <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
                     <p
-                        class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md"
+                        class="border-blue-500 text-blue-500 transition-all border-[1.5px] cursor-default rounded-md"
+                        class:opacity-50={!supportsPasskeys}
+                        class:hover:bg-blue-500={supportsPasskeys}
+                        class:hover:text-white={supportsPasskeys}
+                        class:hover:cursor-pointer={supportsPasskeys}
                         style="padding: 10px;"
-                        on:click={createPasskey}
+                        on:click={supportsPasskeys ? createPasskey : () => {}}
                     >Create Passkey</p>
+                    {#if !supportsPasskeys}
+                        <Tooltip tip="Your browser doesn't support passkeys." bottom color="var(--color-red-600)">
+                            <!-- svelte-ignore element_invalid_self_closing_tag -->
+                            <div class="absolute w-[160px] h-[45px] z-10" style="top: -45px; left: -80px;" />
+                        </Tooltip>
+                    {/if}
                 </div>
-                <div class="flex flex-wrap overflow-y-scroll gap-[25px]">
+                <div class="flex flex-wrap overflow-y-scroll overflow-x-hidden gap-[25px]">
                     {#each passkeys as passkey}
                         <div class="flex flex-col items-start justify start gap-[25px] min-w-[250px] max-w-[200px] min-h-[100px] border-[2px] border-[#333] rounded-md" style="padding: 15px;">
                             <div class="flex flex-row justify-between w-full">

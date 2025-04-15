@@ -12,6 +12,7 @@
     const api = new AuthRsApi();
     let settings: Settings | null = null;
     let step = 0;
+    let supportsPasskeys = false;
 
     let email = '';
     let password = '';
@@ -88,6 +89,7 @@
 
     onMount(async () => {
         redirect = new URL(window.location.href).searchParams.get('redirect_uri');
+        supportsPasskeys = window.PublicKeyCredential != null;
 
         const token = authStateManager.getToken();
         if (token) {
@@ -146,7 +148,7 @@
             </div>
         </button>
     </form>
-    {#if step < 2}
+    {#if step < 2 && supportsPasskeys}
         <hr class="w-[200px] text-[#333] border-[1.5px] rounded-md" style="margin-top: 15px;">
         <button
             type="submit"
