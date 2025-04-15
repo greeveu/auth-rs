@@ -128,26 +128,18 @@ class AuthRsApi {
 
         const data = await startResponse.json();
 
-        console.log('Start Data:', data.data);
+        const authenticationId = data.data.authenticationId;
+        const publicKey = data.data.challenge.publicKey;
 
-        const credential = await navigator.credentials.get(data.data.challenge) as PublicKeyCredential;
+        delete publicKey.userVerification;
+
+        publicKey.challenge = PasskeyUtils.base64URLStringToBuffer(publicKey.challenge);
+
+        const credential = await navigator.credentials.get({ publicKey }) as PublicKeyCredential;
 
         if (!credential) {
             throw new Error('No credential created!');
         }
-
-        console.log('Start Data:', data.data);
-        console.log('Credential created:', credential);
-        console.log('New Challenge:', JSON.parse(atob(PasskeyUtils.bufferToBase64URLString(credential.response.clientDataJSON))).challenge);
-
-        const clientDataJSON = JSON.parse(atob(PasskeyUtils.bufferToBase64URLString(credential.response.clientDataJSON)))
-        clientDataJSON.challenge = data.data.challenge.publicKey.challenge;
-        // This should not be required in prod, but during development, since the port is different
-        if (document.location.origin.includes('localhost:')) {
-            clientDataJSON.origin = document.location.origin.replace(`:${document.location.port}`, '');
-        }
-
-        console.log('Client Data JSON:', clientDataJSON);
 
         const finishResponse = await fetch(`${AuthRsApi.baseUrl}/auth/passkeys/authenticate/finish`, {
             method: 'POST',
@@ -155,14 +147,14 @@ class AuthRsApi {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                authenticationId: data.data.authenticationId,
+                authenticationId: authenticationId,
                 credential: {
                     id: credential.id,
                     rawId: PasskeyUtils.bufferToBase64URLString(credential.rawId),
                     response: {
                         // @ts-expect-error
                         authenticatorData: PasskeyUtils.bufferToBase64URLString(credential.response.authenticatorData),
-                        clientDataJSON: btoa(JSON.stringify(clientDataJSON)),
+                        clientDataJSON: PasskeyUtils.bufferToBase64URLString(credential.response.clientDataJSON),
                         // @ts-expect-error
                         signature: PasskeyUtils.bufferToBase64URLString(credential.response.signature),
                         // @ts-expect-error
@@ -314,32 +306,17 @@ class AuthRsApi {
 
         const data = await startResponse.json();
 
-        data.data.challenge.publicKey.user.id = PasskeyUtils.base64URLStringToBuffer(data.data.challenge.publicKey.user.id);
+        const registrationId = data.data.registrationId;
+        const publicKey = data.data.challenge.publicKey;
 
-        const credential = await navigator.credentials.create(data.data.challenge) as PublicKeyCredential;
+        publicKey.user.id = PasskeyUtils.base64URLStringToBuffer(publicKey.user.id);
+        publicKey.challenge = PasskeyUtils.base64URLStringToBuffer(publicKey.challenge);
+
+        const credential = await navigator.credentials.create({ publicKey }) as PublicKeyCredential;
 
         if (!credential) {
             throw new Error('No credential created!');
         }
-
-        console.log('Start Data:', data.data);
-        
-        console.log('Credential created:', credential);
-
-        console.log('New Challenge:', JSON.parse(atob(PasskeyUtils.bufferToBase64URLString(credential.response.clientDataJSON))).challenge);
-        
-        const clientDataJSON = JSON.parse(atob(PasskeyUtils.bufferToBase64URLString(credential.response.clientDataJSON)))
-
-        // TODO: This is very weird and should be fixed
-        clientDataJSON.challenge = data.data.challenge.publicKey.challenge;
-
-        // This should not be required in prod, but during development, since the port is different
-        if (document.location.origin.includes('localhost:')) {
-            clientDataJSON.origin = document.location.origin.replace(`:${document.location.port}`, '');
-        }
-
-        console.log('Client Data JSON:', clientDataJSON);
-        
 
         const finishResponse = await fetch(`${AuthRsApi.baseUrl}/passkeys/register/finish`, {
             method: 'POST',
@@ -348,12 +325,12 @@ class AuthRsApi {
                 Authorization: `Bearer ${this.token}`,
             },
             body: JSON.stringify({
-                registrationId: data.data.registrationId                ,
+                registrationId: registrationId                ,
                 credential: {
                     id: credential.id,
                     rawId: PasskeyUtils.bufferToBase64URLString(credential.rawId),
                     response: {
-                        clientDataJSON: btoa(JSON.stringify(clientDataJSON)),
+                        clientDataJSON: PasskeyUtils.bufferToBase64URLString(credential.response.clientDataJSON),
                         // @ts-expect-error 
                         attestationObject: PasskeyUtils.bufferToBase64URLString(credential.response.attestationObject),
                     },
@@ -367,7 +344,7 @@ class AuthRsApi {
             return new Passkey(
                 finishData.data.id,
                 finishData.data.owner,
-                finishData.data.deviceType,
+                finishData.data.name,
                 finishData.data.createdAt
             );
         } else {
