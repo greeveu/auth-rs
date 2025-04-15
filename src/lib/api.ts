@@ -16,7 +16,7 @@ import type UserUpdates from "./models/UserUpdates";
 import PasskeyUtils from "./passkeyUtils";
 
 class AuthRsApi {
-    public static baseUrl = import.meta.env.VITE_PUBLIC_API_URL ?? 'http://auth-rs-backend:8000/api';
+    public static baseUrl = import.meta.env.VITE_PUBLIC_API_URL ?? 'http://localhost/api';
     private token: string | null = null;
     private currentMfaFlowId: string | null = null;
 
@@ -130,7 +130,7 @@ class AuthRsApi {
 
         console.log('Start Data:', data.data);
 
-        const credential = await navigator.credentials.get(data.data) as PublicKeyCredential;
+        const credential = await navigator.credentials.get(data.data.challenge) as PublicKeyCredential;
 
         if (!credential) {
             throw new Error('No credential created!');
@@ -141,7 +141,7 @@ class AuthRsApi {
         console.log('New Challenge:', JSON.parse(atob(PasskeyUtils.bufferToBase64URLString(credential.response.clientDataJSON))).challenge);
 
         const clientDataJSON = JSON.parse(atob(PasskeyUtils.bufferToBase64URLString(credential.response.clientDataJSON)))
-        clientDataJSON.challenge = data.data.publicKey.challenge;
+        clientDataJSON.challenge = data.data.challenge.publicKey.challenge;
         // This should not be required in prod, but during development, since the port is different
         if (document.location.origin.includes('localhost:')) {
             clientDataJSON.origin = document.location.origin.replace(`:${document.location.port}`, '');
@@ -295,7 +295,7 @@ class AuthRsApi {
         }
     }
 
-    async registerPasskey(userId: string): Promise<Passkey> {
+    async registerPasskey(): Promise<Passkey> {
         if (!this.token) {
             throw new Error('No token');
         }
@@ -314,9 +314,9 @@ class AuthRsApi {
 
         const data = await startResponse.json();
 
-        data.data.publicKey.user.id = PasskeyUtils.base64URLStringToBuffer(data.data.publicKey.user.id);
+        data.data.challenge.publicKey.user.id = PasskeyUtils.base64URLStringToBuffer(data.data.challenge.publicKey.user.id);
 
-        const credential = await navigator.credentials.create(data.data) as PublicKeyCredential;
+        const credential = await navigator.credentials.create(data.data.challenge) as PublicKeyCredential;
 
         if (!credential) {
             throw new Error('No credential created!');
@@ -331,7 +331,7 @@ class AuthRsApi {
         const clientDataJSON = JSON.parse(atob(PasskeyUtils.bufferToBase64URLString(credential.response.clientDataJSON)))
 
         // TODO: This is very weird and should be fixed
-        clientDataJSON.challenge = data.data.publicKey.challenge;
+        clientDataJSON.challenge = data.data.challenge.publicKey.challenge;
 
         // This should not be required in prod, but during development, since the port is different
         if (document.location.origin.includes('localhost:')) {

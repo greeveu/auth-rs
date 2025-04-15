@@ -60,9 +60,8 @@
     }
 
     async function createPasskey() {
-        const passkey = await api.registerPasskey(user._id);
+        const passkey = await api.registerPasskey();
         if (passkey) {
-            console.log('Passkey created:', passkey);
             passkeys = [...passkeys, passkey];
             editPasskey = passkey;
             editPasskeyName = "";
@@ -77,7 +76,7 @@
     }
 
     onMount(() => {
-        if (user.passkeys || passkeys.length > 0) {
+        if (passkeys.length < 1) {
             api.getUserPasskeys(user._id).then((newPasskeys: Passkey[]) => {
                 passkeys = newPasskeys;
             });

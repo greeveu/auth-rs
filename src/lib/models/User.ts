@@ -5,18 +5,16 @@ export default class User {
     lastName: string;
     roles: string[];
     mfa: boolean;
-    passkeys: boolean;
     disabled: boolean;
     createdAt: any;
 
-    constructor(_id: string, email: string, firstName: string, lastName: string, roles: string[], mfa: boolean, passkeys: boolean, disabled: boolean, createdAt: any) {
+    constructor(_id: string, email: string, firstName: string, lastName: string, roles: string[], mfa: boolean, disabled: boolean, createdAt: any) {
         this._id = _id;
         this.email = email;
         this.firstName = firstName;
         this.lastName = lastName;
         this.roles = roles;
         this.mfa = mfa;
-        this.passkeys = passkeys;
         this.disabled = disabled;
         this.createdAt = createdAt;
     }
