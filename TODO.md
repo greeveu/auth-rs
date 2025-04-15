@@ -8,7 +8,7 @@
 - [x] Require at lease one oauth scope to authorize
 - [ ] Add openid well_known page
 - [ ] We want dedicated get all routes like for the passkeys
-- [ ] Audit Logs for Passkeys
+- [x] Audit Logs for Passkeys
 
 ## Frontend
 
