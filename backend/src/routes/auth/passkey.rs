@@ -115,9 +115,6 @@ pub async fn authenticate_finish(
     }
 }
 
-//TODO: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-// !!!!!!!!VERIFY THIS FOR SECURITY!!!!!!
-// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 async fn process_authenticate_finish(
     db: Connection<AuthRsDatabase>,
     data: PasskeyAuthenticateFinishRequest,
@@ -142,14 +139,14 @@ async fn process_authenticate_finish(
     let user = User::get_by_id(passkey.owner, &db)
         .await
         .map_err(|_| ApiError::NotFound("User not found with this credential".to_string()))?;
-    
+
     let all_passkeys = Passkey::get_by_owner(user.id, &db)
         .await
         .map_err(|_| ApiError::AppError(AppError::PasskeyNotFound(user.id)))?
         .iter()
         .map(|passkey| DiscoverableKey::from(passkey.credential.clone()))
         .collect::<Vec<_>>();
-    
+
 
     // Verify authentication
     let _ = webauthn

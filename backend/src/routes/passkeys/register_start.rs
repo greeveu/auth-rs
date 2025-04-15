@@ -60,7 +60,7 @@ async fn process_register_start(
         .map(|passkey| passkey.credential.cred_id().clone())
         .collect::<Vec<_>>();
 
-    let Ok((challenge, reg_state)) = webauthn.start_passkey_registration(
+    let Ok((challenge, reg_state)) = webauthn.start_google_passkey_in_google_password_manager_only_registration(
         uuid::Uuid::from_slice(&user.id.bytes()).unwrap(),
         &user.email,
         &(user.first_name + " " + &user.last_name),

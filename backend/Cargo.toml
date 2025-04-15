@@ -16,7 +16,7 @@ rocket_cors = "0.6.0"
 rocket_db_pools = { version = "0.2.0", features = ["mongodb"] }
 thiserror = "2.0.12"
 totp-rs = { version = "5.6.0", features = ["gen_secret", "otpauth", "qr"] }
-webauthn-rs = { version = "0.5.1", features = ["conditional-ui", "resident-key-support"] }
+webauthn-rs = { version = "0.5.1", features = ["conditional-ui", "resident-key-support", "workaround-google-passkey-specific-issues"] }
 serde_json = "1.0"
 url = "2.5.0"
 uuid = { version = "1.15.1", features = ["v4"] }
