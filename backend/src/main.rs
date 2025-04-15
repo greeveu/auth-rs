@@ -21,7 +21,7 @@ use rocket::{
 };
 use rocket_cors::{AllowedHeaders, AllowedOrigins, CorsOptions};
 use rocket_db_pools::{mongodb::Collection, Database};
-use webauthn_rs::prelude::{PasskeyAuthentication, PasskeyRegistration};
+use webauthn_rs::prelude::{DiscoverableAuthentication, PasskeyAuthentication, PasskeyRegistration};
 use routes::oauth::token::TokenOAuthData;
 
 // oauth codes stored in memory
@@ -31,7 +31,7 @@ lazy_static::lazy_static! {
     static ref MFA_SESSIONS: Mutex<HashMap<Uuid, MfaHandler>> = Mutex::new(HashMap::new());
     static ref REGISTRATIONS: Mutex<HashMap<Uuid, (Uuid, PasskeyRegistration)>> =
         Mutex::new(HashMap::new());
-    static ref AUTHENTICATIONS: Mutex<HashMap<Uuid, PasskeyAuthentication>> =
+    static ref AUTHENTICATIONS: Mutex<HashMap<Uuid, DiscoverableAuthentication>> =
         Mutex::new(HashMap::new());
     static ref SETTINGS: Mutex<Settings> = Mutex::new(Settings::default());
 

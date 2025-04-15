@@ -19,7 +19,7 @@ use rocket::{
 };
 use rocket_db_pools::Connection;
 use url::Url;
-use webauthn_rs::prelude::{PublicKeyCredential,RequestChallengeResponse};
+use webauthn_rs::prelude::{DiscoverableKey, PasskeyAuthentication, PublicKeyCredential, RequestChallengeResponse};
 use webauthn_rs::{Webauthn, WebauthnBuilder};
 
 //TODO: First create a config file for these values, secondly check if this needs to be instantiated every time or if it can be a static variable
@@ -81,7 +81,7 @@ async fn process_authenticate_start() -> ApiResult<PasskeyAuthenticateStartRespo
     let webauthn = get_webauthn();
 
     let (challenge, auth_state) = webauthn
-        .start_passkey_authentication(&[])
+        .start_discoverable_authentication()
         .map_err(|_| ApiError::AppError(AppError::WebauthnError))?;
 
     // Store authentication state
@@ -142,10 +142,18 @@ async fn process_authenticate_finish(
     let user = User::get_by_id(passkey.owner, &db)
         .await
         .map_err(|_| ApiError::NotFound("User not found with this credential".to_string()))?;
+    
+    let all_passkeys = Passkey::get_by_owner(user.id, &db)
+        .await
+        .map_err(|_| ApiError::AppError(AppError::PasskeyNotFound(user.id)))?
+        .iter()
+        .map(|passkey| DiscoverableKey::from(passkey.credential.clone()))
+        .collect::<Vec<_>>();
+    
 
     // Verify authentication
     let _ = webauthn
-        .finish_passkey_authentication(&data.credential, &auth_state)
+        .finish_discoverable_authentication(&data.credential, auth_state, all_passkeys.as_slice())
         .map_err(|_| ApiError::AppError(AppError::WebauthnError))?;
 
     AuditLog::new(
