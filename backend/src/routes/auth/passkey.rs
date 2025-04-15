@@ -30,6 +30,8 @@ pub fn get_webauthn() -> Webauthn {
     WebauthnBuilder::new(rp_id, &rp_origin)
         .expect("Invalid configuration")
         .rp_name(&"auth-rs")
+        .allow_subdomains(true)
+        .allow_any_port(true)
         .build()
         .unwrap()
 }
