@@ -1,4 +1,5 @@
 use crate::models::passkey::Passkey;
+use crate::AUTHENTICATIONS;
 use crate::{
     db::AuthRsDatabase,
     errors::{ApiError, ApiResult, AppError},
@@ -11,7 +12,6 @@ use crate::{
 };
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use base64::Engine as _;
-use lazy_static::lazy_static;
 use mongodb::bson::Uuid;
 use rocket::{
     get,
@@ -20,19 +20,9 @@ use rocket::{
     serde::{json::Json, Deserialize, Serialize},
 };
 use rocket_db_pools::Connection;
-use std::collections::HashMap;
-use std::sync::Mutex;
 use url::Url;
-use webauthn_rs::prelude::{PasskeyAuthentication, PasskeyRegistration, PublicKeyCredential,RequestChallengeResponse};
+use webauthn_rs::prelude::{PublicKeyCredential,RequestChallengeResponse};
 use webauthn_rs::{Webauthn, WebauthnBuilder};
-
-// In-memory storage for registration and authentication sessions
-lazy_static! {
-    static ref REGISTRATIONS: Mutex<HashMap<Uuid, (Uuid, PasskeyRegistration)>> =
-        Mutex::new(HashMap::new());
-    static ref AUTHENTICATIONS: Mutex<HashMap<Uuid, PasskeyAuthentication>> =
-        Mutex::new(HashMap::new());
-}
 
 //TODO: First create a config file for these values, secondly check if this needs to be instantiated every time or if it can be a static variable
 // Initialize Webauthn instance
@@ -97,9 +87,9 @@ async fn process_authenticate_start() -> ApiResult<PasskeyAuthenticateStartRespo
 
     // Store authentication state
     let authentication_id = Uuid::new();
-    AUTHENTICATIONS
+        AUTHENTICATIONS
         .lock()
-        .unwrap()
+        .await
         .insert(authentication_id, auth_state);
 
     Ok(PasskeyAuthenticateStartResponse {
@@ -136,7 +126,7 @@ async fn process_authenticate_finish(
     // Get the authentication state
     let auth_state = AUTHENTICATIONS
         .lock()
-        .unwrap()
+        .await
         .remove(&data.authentication_id)
         .ok_or(ApiError::InvalidState(
             "Authentication not found".to_string(),
