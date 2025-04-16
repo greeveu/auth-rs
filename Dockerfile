@@ -7,7 +7,7 @@ COPY package.json package-lock.json bun.lockb .npmrc ./
 COPY .prettierrc .prettierignore ./
 
 # Install dependencies
-RUN bun install --frozen-lockfile
+RUN bun install
 
 # Copy source code
 COPY src/ ./src/
