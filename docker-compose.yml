@@ -36,6 +36,7 @@ services:
       - TOTP_ISSUER_NAME=auth-rs # The name of the TOTP issuer that will be displayed to the user !Do not include spaces or special characters!
     networks:
       - auth-rs-network
+      - auth-rs-public
     restart: unless-stopped
 
   frontend:
@@ -49,11 +50,14 @@ services:
       - VITE_PUBLIC_API_URL=https://yourdomain.com/api
     networks:
       - auth-rs-network
+      - auth-rs-public
     restart: unless-stopped
 
 networks:
   auth-rs-network:
     driver: bridge
+  auth-rs-public:
+    driver: host
 
 volumes:
   mongodb_data:
