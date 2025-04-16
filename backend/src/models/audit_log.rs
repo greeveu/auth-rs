@@ -252,6 +252,16 @@ impl AuditLog {
                 }
             };
 
+        let passkey_logs_collection =
+            match Self::get_collection(&AuditLogEntityType::Passkey, connection) {
+                Some(coll) => coll,
+                None => {
+                    return Err(AuditLogError::InvalidEntityType(
+                        "Passkey entity type invalid".to_string(),
+                    ))
+                }
+            };
+
         let system_ = match Self::get_collection(&AuditLogEntityType::Settings, connection) {
             Some(coll) => coll,
             None => {
@@ -367,6 +377,29 @@ impl AuditLog {
             }
         };
 
+        // Fetch passkey logs
+        let passkey_logs = match passkey_logs_collection.find(filter.clone(), None).await {
+            Ok(cursor) => {
+                let mut logs = Vec::new();
+                let mut stream = cursor;
+
+                while let Some(result) = stream.next().await {
+                    match result {
+                        Ok(doc) => logs.push(doc),
+                        Err(err) => return Err(AuditLogError::DatabaseError(err.to_string())),
+                    }
+                }
+
+                logs
+            }
+            Err(err) => {
+                return Err(AuditLogError::DatabaseError(format!(
+                    "Error fetching passkey audit logs: {}",
+                    err
+                )))
+            }
+        };
+
         // Fetch system logs
         let system_logs = match system_.find(filter.clone(), None).await {
             Ok(cursor) => {
@@ -394,6 +427,7 @@ impl AuditLog {
         all_logs.extend(role_logs);
         all_logs.extend(oauth_application_logs);
         all_logs.extend(registration_token_logs);
+        all_logs.extend(passkey_logs);
         all_logs.extend(system_logs);
 
         all_logs.sort_by(|a, b| a.created_at.cmp(&b.created_at));

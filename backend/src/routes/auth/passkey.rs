@@ -157,7 +157,7 @@ async fn process_authenticate_finish(
         user.clone().id.to_string(),
         AuditLogEntityType::User,
         AuditLogAction::Login,
-        "Login successful.".to_string(),
+        format!("Passkey login successful.|{}", passkey.id),
         user.id,
         None,
         None,

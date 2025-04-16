@@ -378,6 +378,27 @@ class AuthRsApi {
         }
     }
 
+    async getAllPasskeys(): Promise<Passkey[]> {
+        if (!this.token) {
+            throw new Error('No token');
+        }
+
+        const response = await fetch(`${AuthRsApi.baseUrl}/passkeys`, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${this.token}`,
+            },
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            return data.data;
+        } else {
+            console.error((await response.json()));
+            throw new Error(`(${response.status}): ${response.statusText}`);
+        }
+    }
+
     async updatePasskey(passkeyId: string, updates: PasskeyUpdates): Promise<Passkey> {
         if (!this.token) {
             throw new Error('No token');
