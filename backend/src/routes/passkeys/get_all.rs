@@ -1,10 +1,7 @@
-use rocket::{
-    get,
-    http::Status,
-    serde::json::Json,
-};
+use rocket::{get, http::Status, serde::json::Json};
 use rocket_db_pools::Connection;
 
+use crate::models::passkey::Passkey;
 use crate::{
     auth::AuthEntity,
     db::AuthRsDatabase,
@@ -12,7 +9,6 @@ use crate::{
     models::{http_response::HttpResponse, passkey::PasskeyDTO},
     utils::response::json_response,
 };
-use crate::models::passkey::Passkey;
 
 #[get("/passkeys")]
 pub async fn list_passkeys(
@@ -33,14 +29,13 @@ pub async fn list_passkeys(
     }
 }
 
-async fn process_list_passkeys(
-    db: Connection<AuthRsDatabase>,
-) -> ApiResult<Vec<PasskeyDTO>> {
+async fn process_list_passkeys(db: Connection<AuthRsDatabase>) -> ApiResult<Vec<PasskeyDTO>> {
     // Get the authenticated user
     let passkeys = Passkey::get_all(&db, None)
         .await
         .map_err(|e| ApiError::NotFound(format!("User not found: {}", e)))?
-        .iter().map(|passkey| passkey.to_dto())
+        .iter()
+        .map(|passkey| passkey.to_dto())
         .collect();
 
     // Get all passkey DTOs

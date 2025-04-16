@@ -1,7 +1,8 @@
+use super::http_response::HttpResponse;
 use crate::db::{get_main_db, AuthRsDatabase};
 use anyhow::Result;
-use base64::Engine;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
+use base64::Engine;
 use mongodb::bson::{doc, DateTime, Document, Uuid};
 use rocket::{
     futures::StreamExt,
@@ -10,7 +11,6 @@ use rocket::{
 use rocket_db_pools::{mongodb::Collection, Connection};
 use thiserror::Error;
 use webauthn_rs::prelude::CredentialID;
-use super::http_response::HttpResponse;
 
 #[derive(Error, Debug)]
 #[allow(unused)]
@@ -38,7 +38,9 @@ impl PasskeyError {
         match self {
             PasskeyError::NotFound(id) => format!("Passkey with ID {} not found", id),
             PasskeyError::NameNotFound(name) => format!("Passkey with name {} not found", name),
-            PasskeyError::NameAlreadyExists(name) => format!("Passkey with name {} already exists", name),
+            PasskeyError::NameAlreadyExists(name) => {
+                format!("Passkey with name {} already exists", name)
+            }
             PasskeyError::DatabaseError(msg) => format!("Database error: {}", msg),
             PasskeyError::InternalServerError(msg) => format!("Internal server error: {}", msg),
         }
@@ -123,13 +125,18 @@ pub struct PasskeyDTO {
 impl Passkey {
     pub const COLLECTION_NAME: &'static str = "passkeys";
 
-    pub fn new(cred_id: &CredentialID, name: String, owner: Uuid, passkey: webauthn_rs::prelude::Passkey) -> Self {
+    pub fn new(
+        cred_id: &CredentialID,
+        name: String,
+        owner: Uuid,
+        passkey: webauthn_rs::prelude::Passkey,
+    ) -> Self {
         Self {
             id: URL_SAFE_NO_PAD.encode(cred_id),
             owner,
             name,
             created_at: DateTime::now(),
-            credential: passkey
+            credential: passkey,
         }
     }
 
@@ -144,7 +151,10 @@ impl Passkey {
     }
 
     #[allow(unused)]
-    pub async fn get_by_id(id: &str, connection: &Connection<AuthRsDatabase>) -> PasskeyResult<Passkey> {
+    pub async fn get_by_id(
+        id: &str,
+        connection: &Connection<AuthRsDatabase>,
+    ) -> PasskeyResult<Passkey> {
         let db = Self::get_collection(connection);
 
         let filter = doc! {
@@ -156,9 +166,12 @@ impl Passkey {
             Err(err) => Err(PasskeyError::DatabaseError(err.to_string())),
         }
     }
-    
+
     #[allow(unused)]
-    pub async fn get_by_owner(owner_id: Uuid, connection: &Connection<AuthRsDatabase>) -> PasskeyResult<Vec<Passkey>> {
+    pub async fn get_by_owner(
+        owner_id: Uuid,
+        connection: &Connection<AuthRsDatabase>,
+    ) -> PasskeyResult<Vec<Passkey>> {
         let db = Self::get_collection(connection);
 
         let filter = doc! {

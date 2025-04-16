@@ -7,14 +7,18 @@ use rocket::{
 };
 use rocket_db_pools::Connection;
 
+use crate::models::passkey::Passkey;
 use crate::{
     auth::AuthEntity,
     db::AuthRsDatabase,
     errors::{ApiError, ApiResult, AppError},
-    models::{audit_log::{AuditLog, AuditLogAction, AuditLogEntityType}, http_response::HttpResponse, passkey::PasskeyDTO},
+    models::{
+        audit_log::{AuditLog, AuditLogAction, AuditLogEntityType},
+        http_response::HttpResponse,
+        passkey::PasskeyDTO,
+    },
     utils::response::json_response,
 };
-use crate::models::passkey::Passkey;
 
 // DTO for updating passkey metadata
 #[derive(Deserialize)]
@@ -24,11 +28,7 @@ pub struct PasskeyUpdateRequest {
     pub name: Option<String>,
 }
 
-#[patch(
-    "/passkeys/<passkey_id>",
-    format = "json",
-    data = "<data>"
-)]
+#[patch("/passkeys/<passkey_id>", format = "json", data = "<data>")]
 pub async fn update_passkey(
     db: Connection<AuthRsDatabase>,
     req_entity: AuthEntity,
@@ -61,7 +61,7 @@ async fn process_update_passkey(
     db: Connection<AuthRsDatabase>,
     passkey_id: &str,
     data: PasskeyUpdateRequest,
-    req_entity: AuthEntity
+    req_entity: AuthEntity,
 ) -> ApiResult<PasskeyDTO> {
     // Get the authenticated user
     let passkey = Passkey::get_by_id(passkey_id, &db)
@@ -74,7 +74,8 @@ async fn process_update_passkey(
     if data.name.is_some() {
         updated_passkey.name = data.name.unwrap();
 
-        updated_passkey.update(&db)
+        updated_passkey
+            .update(&db)
             .await
             .map_err(|e| ApiError::AppError(AppError::DatabaseError(e.to_string())))?;
 
@@ -89,7 +90,7 @@ async fn process_update_passkey(
             "Passkey updated.".to_string(),
             req_entity.user_id,
             Some(old_values),
-            Some(new_values)
+            Some(new_values),
         )
         .insert(&db)
         .await

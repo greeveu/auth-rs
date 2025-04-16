@@ -1,7 +1,13 @@
 use crate::models::http_response::HttpResponse;
 use crate::models::passkey::Passkey;
+use crate::routes::auth::passkey::get_webauthn;
 use crate::utils::response::json_response;
-use crate::{auth::AuthEntity, db::AuthRsDatabase, errors::{ApiError, ApiResult, AppError}, REGISTRATIONS};
+use crate::{
+    auth::AuthEntity,
+    db::AuthRsDatabase,
+    errors::{ApiError, ApiResult, AppError},
+    REGISTRATIONS,
+};
 use mongodb::bson::Uuid;
 use rocket::{
     get,
@@ -10,7 +16,6 @@ use rocket::{
 };
 use rocket_db_pools::Connection;
 use webauthn_rs::prelude::CreationChallengeResponse;
-use crate::routes::auth::passkey::get_webauthn;
 
 // Response for passkey registration start
 #[derive(Serialize)]
@@ -60,12 +65,14 @@ async fn process_register_start(
         .map(|passkey| passkey.credential.cred_id().clone())
         .collect::<Vec<_>>();
 
-    let Ok((challenge, reg_state)) = webauthn.start_google_passkey_in_google_password_manager_only_registration(
-        uuid::Uuid::from_slice(&user.id.bytes()).unwrap(),
-        &user.email,
-        &(user.first_name + " " + &user.last_name),
-        Some(excluded_credentials),
-    ) else {
+    let Ok((challenge, reg_state)) = webauthn
+        .start_google_passkey_in_google_password_manager_only_registration(
+            uuid::Uuid::from_slice(&user.id.bytes()).unwrap(),
+            &user.email,
+            &(user.first_name + " " + &user.last_name),
+            Some(excluded_credentials),
+        )
+    else {
         return Err(ApiError::AppError(AppError::WebauthnError));
     };
 

@@ -1,13 +1,13 @@
-use mongodb::bson::Uuid;
-use rocket::serde;
-use std::env::VarError;
-use thiserror::Error;
-use webauthn_rs::prelude::WebauthnError;
 use crate::models::http_response::HttpResponse;
 use crate::models::oauth_application::OAuthApplicationError;
 use crate::models::role::RoleError;
 use crate::models::settings::SettingsError;
 use crate::models::user_error::UserError;
+use mongodb::bson::Uuid;
+use rocket::serde;
+use std::env::VarError;
+use thiserror::Error;
+use webauthn_rs::prelude::WebauthnError;
 
 #[derive(Error, Debug)]
 #[allow(unused)]

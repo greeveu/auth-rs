@@ -1,4 +1,4 @@
-use std::{collections::HashMap, time::Duration};
+use std::{collections::HashMap, env, time::Duration};
 
 use anyhow::Result;
 use mongodb::bson::{doc, Uuid};
@@ -56,7 +56,7 @@ impl MfaHandler {
                     1,
                     30,
                     Secret::generate_secret().to_bytes().unwrap(),
-                    Some("auth-rs".to_string()), /* CHANGE ME */
+                    Some(env::var("TOTP_ISSUER_NAME").unwrap_or_else(|_| "auth-rs".to_string())),
                     user.email.to_string(),
                 )
                 .unwrap(),
@@ -104,7 +104,7 @@ impl MfaHandler {
                 Secret::Encoded(user.totp_secret.as_ref().unwrap().to_string())
                     .to_bytes()
                     .unwrap(),
-                Some("auth-rs".to_string()), /* CHANGE ME */
+                Some(env::var("TOTP_ISSUER_NAME").unwrap_or_else(|_| "auth-rs".to_string())),
                 user.email.to_string(),
             )
             .unwrap(),
@@ -152,7 +152,7 @@ impl MfaHandler {
             1,
             30,
             Secret::Encoded(secret).to_bytes().unwrap(),
-            Some("auth-rs".to_string()), /* CHANGE ME */
+            Some(env::var("TOTP_ISSUER_NAME").unwrap_or_else(|_| "auth-rs".to_string())),
             user.email.to_string(),
         );
 

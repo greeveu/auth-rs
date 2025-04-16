@@ -1,17 +1,24 @@
 use crate::models::passkey::Passkey;
-use crate::{auth::AuthEntity, db::AuthRsDatabase, errors::{ApiError, ApiResult, AppError}, models::{
-    audit_log::{AuditLog, AuditLogAction, AuditLogEntityType},
-    http_response::HttpResponse,
-}, utils::response::json_response, REGISTRATIONS};
+use crate::routes::auth::passkey::get_webauthn;
+use crate::{
+    auth::AuthEntity,
+    db::AuthRsDatabase,
+    errors::{ApiError, ApiResult, AppError},
+    models::{
+        audit_log::{AuditLog, AuditLogAction, AuditLogEntityType},
+        http_response::HttpResponse,
+    },
+    utils::response::json_response,
+    REGISTRATIONS,
+};
+use mongodb::bson::{DateTime, Uuid};
 use rocket::{
     http::Status,
     post,
     serde::{json::Json, Deserialize, Serialize},
 };
 use rocket_db_pools::Connection;
-use mongodb::bson::{DateTime, Uuid};
 use webauthn_rs::prelude::RegisterPublicKeyCredential;
-use crate::routes::auth::passkey::get_webauthn;
 
 // DTO for passkey registration finish request
 #[derive(Deserialize)]
@@ -87,8 +94,10 @@ async fn process_register_finish(
         "New Passkey".to_string(),
         user_id,
         result.clone(),
-    ).insert(&db).await
-        .map_err(|e| ApiError::AppError(AppError::DatabaseError(e.to_string())))?;
+    )
+    .insert(&db)
+    .await
+    .map_err(|e| ApiError::AppError(AppError::DatabaseError(e.to_string())))?;
 
     AuditLog::new(
         passkey.id.clone(),
@@ -97,7 +106,7 @@ async fn process_register_finish(
         "Registered passkey.".to_string(),
         user_id,
         None,
-        None
+        None,
     )
     .insert(&db)
     .await

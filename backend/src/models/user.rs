@@ -1,3 +1,7 @@
+use super::user_error::{UserError, UserResult};
+use super::{
+    http_response::HttpResponse, oauth_application::OAuthApplication, oauth_token::OAuthToken,
+};
 use crate::{
     db::{get_main_db, AuthRsDatabase},
     ADMIN_ROLE_ID, DEFAULT_ROLE_ID, SYSTEM_USER_ID,
@@ -16,10 +20,6 @@ use rocket::{
 use rocket_db_pools::{
     mongodb::{Collection, Database},
     Connection,
-};
-use super::user_error::{UserError, UserResult};
-use super::{
-    http_response::HttpResponse, oauth_application::OAuthApplication, oauth_token::OAuthToken,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

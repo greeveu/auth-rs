@@ -1,18 +1,17 @@
-use rocket::{
-    delete,
-    http::Status,
-    serde::json::Json,
-};
+use rocket::{delete, http::Status, serde::json::Json};
 use rocket_db_pools::Connection;
 
+use crate::models::passkey::Passkey;
 use crate::{
     auth::AuthEntity,
     db::AuthRsDatabase,
     errors::{ApiError, ApiResult, AppError},
-    models::{audit_log::{AuditLog, AuditLogAction, AuditLogEntityType}, http_response::HttpResponse},
+    models::{
+        audit_log::{AuditLog, AuditLogAction, AuditLogEntityType},
+        http_response::HttpResponse,
+    },
     utils::response::json_response,
 };
-use crate::models::passkey::Passkey;
 
 #[delete("/passkeys/<passkey_id>")]
 pub async fn delete_passkey(
@@ -45,7 +44,7 @@ pub async fn delete_passkey(
 async fn process_delete_passkey(
     db: Connection<AuthRsDatabase>,
     passkey_id: &str,
-    req_entity: AuthEntity
+    req_entity: AuthEntity,
 ) -> ApiResult<()> {
     // Get the authenticated user
     let passkey = Passkey::get_by_id(passkey_id, &db)
@@ -53,7 +52,8 @@ async fn process_delete_passkey(
         .map_err(|e| ApiError::NotFound(format!("User not found: {}", e)))?;
 
     // Update the user
-    passkey.delete(&db)
+    passkey
+        .delete(&db)
         .await
         .map_err(|e| ApiError::AppError(AppError::DatabaseError(e.to_string())))?;
 
@@ -64,7 +64,7 @@ async fn process_delete_passkey(
         "Passkey deleted.".to_string(),
         req_entity.user_id,
         None,
-        None
+        None,
     )
     .insert(&db)
     .await
