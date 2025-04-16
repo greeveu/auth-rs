@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { Circle } from 'svelte-loading-spinners';
 	import TotpInput from '../../lib/components/auth/TotpInput.svelte';
 	import Popup from '../../lib/components/global/Popup.svelte';
 	import { ClockFading, KeyRound, Pen, Search, ShieldCheck, ShieldX, Trash } from 'lucide-svelte';
@@ -22,6 +23,7 @@
         { name: 'Passkeys', icon: KeyRound }
     ];
     let supportsPasskeys = false;
+    let registeringPasskey = false;
 
     let startEnable2FAPopup = false;
     let completeEnable2FAPopup = false;
@@ -69,13 +71,18 @@
     }
 
     async function createPasskey() {
-        const passkey = await api.registerPasskey();
-        if (passkey) {
+        if (registeringPasskey) return;
+        registeringPasskey = true;
+        api.registerPasskey().then(passkey => {
+            registeringPasskey = false;
             passkeys = [...passkeys, passkey];
             editPasskey = passkey;
             editPasskeyName = "";
             editPasskeyPopup = true;
-        }
+        }).catch(e => {
+            console.error(e);
+            registeringPasskey = false;
+        });
     }
 
     async function showDisableMFAPopup() {
@@ -179,7 +186,7 @@
         </div>
     {:else if activeTabIndex == 1}
         <div class="flex flex-col h-full w-full" style="margin-top: 25px;">
-            {#if passkeys.length < 1}
+            {#if passkeys.filter(p => p.owner == user._id).length < 1}
                 <div class="flex flex-col items-center justify-center gap-[25px] h-full w-full">
                     <Search size="75" class="opacity-40" />
                     <p class="text-[20px] text-center opacity-50">You dont have any passkeys registered.</p>
@@ -204,61 +211,78 @@
                     {/if}
                 </div>
             {:else}
-                <div class="absolute flex flex-col min-h-[70px] items-center justify-center self-end" style="margin-right: 50px;">
-                    <!-- svelte-ignore a11y_click_events_have_key_events -->
-                    <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-                    <p
-                        class="border-blue-500 text-blue-500 transition-all border-[1.5px] cursor-default rounded-md"
-                        class:opacity-50={!supportsPasskeys}
-                        class:hover:bg-blue-500={supportsPasskeys}
-                        class:hover:text-white={supportsPasskeys}
-                        class:hover:cursor-pointer={supportsPasskeys}
-                        style="padding: 10px;"
-                        on:click={supportsPasskeys ? createPasskey : () => {}}
-                    >Create Passkey</p>
-                    {#if !supportsPasskeys}
-                        <Tooltip tip="Your browser doesn't support passkeys." bottom color="var(--color-red-600)">
-                            <!-- svelte-ignore element_invalid_self_closing_tag -->
-                            <div class="absolute w-[160px] h-[45px] z-10" style="top: -45px; left: -80px;" />
-                        </Tooltip>
-                    {/if}
-                </div>
                 <div class="flex flex-wrap overflow-y-scroll overflow-x-hidden gap-[25px]">
-                    {#each passkeys as passkey}
-                        <div class="flex flex-col items-start justify start gap-[25px] min-w-[250px] max-w-[200px] min-h-[100px] border-[2px] border-[#333] rounded-md" style="padding: 15px;">
-                            <div class="flex flex-row justify-between w-full">
-                                <p class="text-[20px] font-bold h-[20px]">{passkey.name}</p>
-                                <div class="flex flex-row">
-                                    <Tooltip tip="Edit Passkey" bottom>
-                                        <!-- svelte-ignore a11y_click_events_have_key_events -->
-                                        <!-- svelte-ignore a11y_no_static_element_interactions -->
-                                        <div class="flex self-end" style="margin-right: 12.5px;" on:click={() => {
-                                            editPasskey = passkey;
-                                            editPasskeyName = passkey.name;
-                                            editPasskeyPopup = true;
-                                        }}>
-                                            <Pen
-                                                class="cursor-pointer hover:text-blue-500 transition-all"
-                                                size=20
-                                            />
-                                        </div>
-                                    </Tooltip>
-                                    <Tooltip tip="Delete Passkey" bottom color="var(--color-red-600)">
-                                        <!-- svelte-ignore a11y_click_events_have_key_events -->
-                                        <!-- svelte-ignore a11y_no_static_element_interactions -->
-                                        <div class="flex self-end" on:click={() => {
-                                            deletePasskey = passkey;
-                                            deletePasskeyPopup = true;
-                                        }}>
-                                            <Trash
-                                                class="cursor-pointer hover:text-red-600 transition-all"
-                                                size=20
-                                            />
-                                        </div>
-                                    </Tooltip>
+                    {#each (() => {
+                        const base = passkeys.filter(p => p.owner == user._id);
+                        const REGISTER_BUTTON = new Passkey("REGISTER_BUTTON", user._id, "Register Passkey", {$date:{$numberLong: 0}});
+                        if (supportsPasskeys) {
+                            base.push(REGISTER_BUTTON);
+                        }
+                        return base;
+                    })() as passkey}
+                        <!-- svelte-ignore a11y_no_static_element_interactions -->
+                        <!-- svelte-ignore a11y_click_events_have_key_events -->
+                        <div
+                            class="flex flex-col gap-[25px] min-w-[250px] max-w-[200px] min-h-[100px] border-[2px] border-[#333] rounded-md transition-all"
+                            class:items-start={passkey.id != 'REGISTER_BUTTON'}
+                            class:items-center={passkey.id == 'REGISTER_BUTTON'}
+                            class:justify-center={passkey.id == 'REGISTER_BUTTON'}
+                            class:cursor-pointer={passkey.id == 'REGISTER_BUTTON'}
+                            class:border-dashed={passkey.id == 'REGISTER_BUTTON'}
+                            class:hover:border-blue-500={passkey.id == 'REGISTER_BUTTON'}
+                            class:hover:text-blue-500={passkey.id == 'REGISTER_BUTTON'}
+                            class:hover:border-solid={passkey.id == 'REGISTER_BUTTON'}
+                            class:border-blue-500={passkey.id == 'REGISTER_BUTTON' && registeringPasskey}
+                            class:text-blue-500={passkey.id == 'REGISTER_BUTTON' && registeringPasskey}
+                            class:border-solid={passkey.id == 'REGISTER_BUTTON' && registeringPasskey}
+                            on:click={passkey.id == 'REGISTER_BUTTON' ? createPasskey : () => {}}
+                            style="padding: 15px;"
+                        >
+                            {#if passkey.id == 'REGISTER_BUTTON'}
+                                <div class="flex flex-row items-center gap-[10px]">
+                                    {#if registeringPasskey}
+                                        <Circle size=17.5 color="var(--color-blue-500)" />
+                                        <p class="text-[17px]">Register Passkey</p>
+                                    {:else}
+                                        <KeyRound size=20 class="hover:text-blue-500" />
+                                        <p class="text-[17px]">Register Passkey</p>
+                                    {/if}
                                 </div>
-                            </div>
-                            <p class="text-[14px] opacity-35 h-[20px]">Created at {DateUtils.getDateString(Passkey.getCreatedAt(passkey))}</p>
+                            {:else}
+                                <div class="flex flex-row justify-between w-full">
+                                    <p class="text-[20px] font-bold h-[20px]">{passkey.name}</p>
+                                    <div class="flex flex-row">
+                                        <Tooltip tip="Edit Passkey" bottom>
+                                            <!-- svelte-ignore a11y_click_events_have_key_events -->
+                                            <!-- svelte-ignore a11y_no_static_element_interactions -->
+                                            <div class="flex self-end" style="margin-right: 12.5px;" on:click={() => {
+                                                editPasskey = passkey;
+                                                editPasskeyName = passkey.name;
+                                                editPasskeyPopup = true;
+                                            }}>
+                                                <Pen
+                                                    class="cursor-pointer hover:text-blue-500 transition-all"
+                                                    size=20
+                                                />
+                                            </div>
+                                        </Tooltip>
+                                        <Tooltip tip="Delete Passkey" bottom color="var(--color-red-600)">
+                                            <!-- svelte-ignore a11y_click_events_have_key_events -->
+                                            <!-- svelte-ignore a11y_no_static_element_interactions -->
+                                            <div class="flex self-end" on:click={() => {
+                                                deletePasskey = passkey;
+                                                deletePasskeyPopup = true;
+                                            }}>
+                                                <Trash
+                                                    class="cursor-pointer hover:text-red-600 transition-all"
+                                                    size=20
+                                                />
+                                            </div>
+                                        </Tooltip>
+                                    </div>
+                                </div>
+                                <p class="text-[14px] opacity-35 h-[20px]">Created at {DateUtils.getDateString(Passkey.getCreatedAt(passkey))}</p>
+                            {/if}
                         </div>
                     {/each}
                 </div>
