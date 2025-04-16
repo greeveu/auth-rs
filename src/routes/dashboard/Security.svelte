@@ -25,6 +25,15 @@
     let supportsPasskeys = false;
     let registeringPasskey = false;
 
+    $: passkeyList = () => {
+        const base = passkeys.filter(p => p.owner == user._id);
+        const REGISTER_BUTTON = new Passkey("REGISTER_BUTTON", user._id, "Register Passkey", {$date:{$numberLong: 0}});
+        if (supportsPasskeys) {
+            base.push(REGISTER_BUTTON);
+        }
+        return base;
+    }
+
     let startEnable2FAPopup = false;
     let completeEnable2FAPopup = false;
     let disable2FAPopup = false;
@@ -223,14 +232,7 @@
                 </div>
             {:else}
                 <div class="flex flex-wrap overflow-y-scroll overflow-x-hidden gap-[25px]">
-                    {#each (() => {
-                        const base = passkeys.filter(p => p.owner == user._id);
-                        const REGISTER_BUTTON = new Passkey("REGISTER_BUTTON", user._id, "Register Passkey", {$date:{$numberLong: 0}});
-                        if (supportsPasskeys) {
-                            base.push(REGISTER_BUTTON);
-                        }
-                        return base;
-                    })() as passkey}
+                    {#each passkeyList() as passkey}
                         <!-- svelte-ignore a11y_no_static_element_interactions -->
                         <!-- svelte-ignore a11y_click_events_have_key_events -->
                         <div

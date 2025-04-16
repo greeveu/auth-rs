@@ -287,12 +287,12 @@ class AuthRsApi {
         }
     }
 
-    async registerPasskey(): Promise<Passkey> {
+    async registerPasskey(type: string = "virtual"): Promise<Passkey> {
         if (!this.token) {
             throw new Error('No token');
         }
 
-        const startResponse = await fetch(`${AuthRsApi.baseUrl}/passkeys/register/start`, {
+        const startResponse = await fetch(`${AuthRsApi.baseUrl}/passkeys/register/start?type=${type}`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${this.token}`,
@@ -309,6 +309,8 @@ class AuthRsApi {
         const registrationId = data.data.registrationId;
         const publicKey = data.data.challenge.publicKey;
 
+        // The next line makes the registration of physical keys work!
+        delete publicKey.authenticatorSelection.authenticatorAttachment;
         publicKey.user.id = PasskeyUtils.base64URLStringToBuffer(publicKey.user.id);
         publicKey.challenge = PasskeyUtils.base64URLStringToBuffer(publicKey.challenge);
         publicKey.excludeCredentials = publicKey.excludeCredentials.map((credential: any) => {
