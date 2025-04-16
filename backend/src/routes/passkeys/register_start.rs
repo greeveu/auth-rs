@@ -21,12 +21,13 @@ pub struct PasskeyRegisterStartResponse {
     pub challenge: CreationChallengeResponse,
 }
 
-#[get("/passkeys/register/start")]
+#[get("/passkeys/register/start?<type>")]
 pub async fn register_start(
     db: Connection<AuthRsDatabase>,
     req_entity: AuthEntity,
+    r#type: &str,
 ) -> (Status, Json<HttpResponse<PasskeyRegisterStartResponse>>) {
-    match process_register_start(db, req_entity).await {
+    match process_register_start(db, req_entity, r#type).await {
         Ok(response) => json_response(HttpResponse {
             status: 200,
             message: "Passkey registration initiated".to_string(),
@@ -39,6 +40,7 @@ pub async fn register_start(
 async fn process_register_start(
     db: Connection<AuthRsDatabase>,
     req_entity: AuthEntity,
+    auth_type: &str,
 ) -> ApiResult<PasskeyRegisterStartResponse> {
     if req_entity.is_token() {
         return Err(ApiError::Forbidden("Forbidden".to_string()));
@@ -60,13 +62,30 @@ async fn process_register_start(
         .map(|passkey| passkey.credential.cred_id().clone())
         .collect::<Vec<_>>();
 
-    let Ok((challenge, reg_state)) = webauthn.start_google_passkey_in_google_password_manager_only_registration(
-        uuid::Uuid::from_slice(&user.id.bytes()).unwrap(),
-        &user.email,
-        &(user.first_name + " " + &user.last_name),
-        Some(excluded_credentials),
-    ) else {
-        return Err(ApiError::AppError(AppError::WebauthnError));
+    // Prepare user identifier and display name
+    let user_id = uuid::Uuid::from_slice(&user.id.bytes()).unwrap();
+    let user_email = &user.email;
+    let display_name = &(user.first_name.clone() + " " + &user.last_name);
+    
+    // Get challenge and registration state based on auth type
+    let (challenge, reg_state) = if auth_type == "virtual" {
+        webauthn.start_google_passkey_in_google_password_manager_only_registration(
+            user_id,
+            user_email,
+            display_name,
+            Some(excluded_credentials),
+        )
+        .map_err(|_| ApiError::AppError(AppError::WebauthnError))?
+    } else if auth_type == "physical" {
+        webauthn.start_passkey_registration(
+            user_id,
+            user_email,
+            display_name,
+            Some(excluded_credentials),
+        )
+        .map_err(|_| ApiError::AppError(AppError::WebauthnError))?
+    } else {
+        return Err(ApiError::BadRequest(format!("Unsupported auth type: {}", auth_type)));
     };
 
     // Store registration state
