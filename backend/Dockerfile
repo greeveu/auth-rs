@@ -5,6 +5,12 @@ WORKDIR /app
 # Copy the actual source code
 COPY src ./src
 COPY Cargo.toml Cargo.lock Rocket.toml ./
+
+# install required packages
+RUN apt-get update -y && \
+    apt-get install -y pkg-config make g++ libssl-dev && \
+    rustup target add x86_64-unknown-linux-gnu
+
 # Build the application
 RUN cargo build --release
 
