@@ -22,7 +22,7 @@ services:
     image: auth-rs-backend:latest
     container_name: auth-rs-backend
     ports:
-      - "80:8000"
+      - "8000:80"
     depends_on:
       mongodb:
         condition: service_healthy
@@ -46,7 +46,7 @@ services:
     depends_on:
       - backend
     environment:
-      - VITE_PUBLIC_API_URL=https://oauth.timlohrer.de/api
+      - VITE_PUBLIC_API_URL=https://yourdomain.com/api
     networks:
       - auth-rs-network
     restart: unless-stopped
