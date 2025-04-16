@@ -218,7 +218,7 @@ impl User {
         };
         match db.find_one(filter, None).await {
             Ok(Some(user)) => Ok(user),
-            Ok(None) => Err(UserError::EmailAlreadyExists(email.to_string())),
+            Ok(None) => Err(UserError::InvalidEmail),
             Err(err) => Err(UserError::DatabaseError(err.to_string())),
         }
     }
