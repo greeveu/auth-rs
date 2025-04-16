@@ -191,18 +191,29 @@
                     <Search size="75" class="opacity-40" />
                     <p class="text-[20px] text-center opacity-50">You dont have any passkeys registered.</p>
                     <!-- svelte-ignore a11y_click_events_have_key_events -->
-                    <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-                    <p
+                    <!-- svelte-ignore a11y_no_static_element_interactions -->
+                    <div
                         class="border-blue-500 text-blue-500 transition-all border-[1.5px] cursor-default rounded-md"
                         class:opacity-50={!supportsPasskeys}
                         class:hover:bg-blue-500={supportsPasskeys}
                         class:hover:text-white={supportsPasskeys}
                         class:hover:cursor-pointer={supportsPasskeys}
+                        class:bg-blue-500={supportsPasskeys && registeringPasskey}
+                        class:text-white={supportsPasskeys && registeringPasskey}
+                        class:cursor-pointer={supportsPasskeys && registeringPasskey}
                         style="padding: 10px; margin-top: 25px;"
                         on:click={supportsPasskeys ? createPasskey : () => {}}
                     >
-                        Create Passkey
-                    </p>
+                        <div class="flex flex-row items-center gap-[10px]">
+                            {#if registeringPasskey}
+                                <Circle size=17.5 color="white" />
+                                <p class="text-[17px]">Waiting for browser</p>
+                            {:else}
+                                <KeyRound size=20 />
+                                <p class="text-[17px]">Register Passkey</p>
+                            {/if}
+                        </div>
+                    </div>
                     {#if !supportsPasskeys}
                         <Tooltip tip="Your browser doesn't support passkeys." bottom color="var(--color-red-600)">
                             <!-- svelte-ignore element_invalid_self_closing_tag -->
@@ -242,7 +253,7 @@
                                 <div class="flex flex-row items-center gap-[10px]">
                                     {#if registeringPasskey}
                                         <Circle size=17.5 color="var(--color-blue-500)" />
-                                        <p class="text-[17px]">Register Passkey</p>
+                                        <p class="text-[15px]">Waiting for browser</p>
                                     {:else}
                                         <KeyRound size=20 class="hover:text-blue-500" />
                                         <p class="text-[17px]">Register Passkey</p>
