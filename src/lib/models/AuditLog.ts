@@ -66,6 +66,7 @@ enum AuditLogEntityType {
     Role = 'Role',
     OAuthApplication = 'OAuthApplication',
     RegistrationToken = 'RegistrationToken',
+    Passkey = 'Passkey',
     Settings = 'Settings',
     Unknown = 'Unknown',
 }

@@ -7,7 +7,7 @@ use rocket_db_pools::Connection;
 
 use crate::utils::response::json_response;
 use crate::{
-    auth::auth::AuthEntity,
+    auth::AuthEntity,
     db::AuthRsDatabase,
     models::{
         audit_log::{AuditLog, AuditLogAction, AuditLogEntityType},
@@ -53,7 +53,7 @@ pub async fn create_role(
     match role.insert(&db).await {
         Ok(role) => {
             match AuditLog::new(
-                role.id,
+                role.id.to_string(),
                 AuditLogEntityType::Role,
                 AuditLogAction::Create,
                 "Role created.".to_string(),

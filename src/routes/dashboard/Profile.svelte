@@ -50,15 +50,15 @@
 {#if editUserPopup}
     <Popup title="Edit User" onClose={() => editUserPopup = false}>
         <div class="flex flex-col items-center justify-center min-w-[350px]">
-            <TextInput type="email" label="Email" bind:value={editUserEmail} autofocus />
-            <TextInput label="First Name" bind:value={editUserFirstName} />
-            <TextInput label="Last Name" bind:value={editUserLastName} />
-            <TextInput type="password" label="Password" bind:value={editUserPassword} />
-            <TextInput type="password" label="Confirm Password" bind:value={editUserPasswordConfirm} />
+            <TextInput type="email" label="Email" bind:value={editUserEmail} autocomplete="email" autofocus />
+            <TextInput label="First Name" bind:value={editUserFirstName} autocomplete="name" />
+            <TextInput label="Last Name" bind:value={editUserLastName} autocomplete="family-name" />
+            <TextInput type="password" label="Password" bind:value={editUserPassword} autocomplete="new-password" />
+            <TextInput type="password" label="Confirm Password" bind:value={editUserPasswordConfirm} autocomplete="new-password" />
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
-                class="text-green-600 rounded-md {editUserDataIsValid() ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px] button green-button"
+                class="text-green-600 rounded-md {editUserDataIsValid() ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px]"
                 style="margin-top: 20px; margin-bottom: 10px;"
                 on:click={editUserDataIsValid() ? () => {
                     editUserPopup = false;
@@ -77,7 +77,7 @@
 <div class="absolute flex flex-col min-h-[70px] items-center justify-center self-end" style="margin-right: 50px;">
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <p
-        class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md button"
+        class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md"
         style="padding: 10px;"
         on:click={showEditUserPopup}
     >Edit Profile</p>

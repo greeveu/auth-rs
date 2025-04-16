@@ -1,7 +1,7 @@
 use crate::utils::parse_uuid::parse_uuid;
 use crate::utils::response::json_response;
 use crate::{
-    auth::auth::AuthEntity,
+    auth::AuthEntity,
     db::AuthRsDatabase,
     errors::ApiError,
     models::{
@@ -87,7 +87,7 @@ impl RoleUpdate {
 
         // Create audit log
         if let Err(err) = AuditLog::new(
-            updated_role.id,
+            updated_role.id.to_string(),
             AuditLogEntityType::Role,
             AuditLogAction::Update,
             "Role updated.".to_string(),

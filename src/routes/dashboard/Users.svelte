@@ -92,15 +92,15 @@
 {#if showNewUserPopup}
     <Popup title="Create User" onClose={() => showNewUserPopup = false}>
         <div class="flex flex-col items-center justify-center min-w-[350px] max-w-[400px]">
-            <TextInput type="email" label="Email" bind:value={newUserEmail} autofocus />
-            <TextInput label="First Name" bind:value={newUserFirstName} />
-            <TextInput label="Last Name" bind:value={newUserLastName} />
-            <TextInput type="password" label="Password" bind:value={newUserPassword} />
-            <TextInput type="password" label="Confirm Password" bind:value={newUserPasswordConfirm} />
+            <TextInput type="email" label="Email" bind:value={newUserEmail} autocomplete="email" autofocus />
+            <TextInput label="First Name" bind:value={newUserFirstName} autocomplete="name" />
+            <TextInput label="Last Name" bind:value={newUserLastName} autocomplete="family-name" />
+            <TextInput type="password" label="Password" bind:value={newUserPassword} autocomplete="new-password" />
+            <TextInput type="password" label="Confirm Password" bind:value={newUserPasswordConfirm} autocomplete="new-password" />
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
-                class="text-green-600 rounded-md {newUserDataIsValid() ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px] button green-button"
+                class="text-green-600 rounded-md {newUserDataIsValid() ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px]"
                 style="margin-top: 25px; margin-bottom: 10px;"
                 on:click={newUserDataIsValid() ? () => {
                     showNewUserPopup = false;
@@ -126,7 +126,7 @@
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
-                class="text-green-600 rounded-md {editUserDataIsValid() ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px] button green-button"
+                class="text-green-600 rounded-md {editUserDataIsValid() ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px]"
                 style="margin-top: 20px; margin-bottom: 10px;"
                 on:click={editUserDataIsValid() ? () => {
                     editUserPopup = false;
@@ -149,7 +149,7 @@
                 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <p
-                    class="text-red-600 rounded-md cursor-pointer text-[18px] button red-button"
+                    class="text-red-600 rounded-md cursor-pointer text-[18px]"
                     style="margin-top: 20px; margin-bottom: 10px;"
                     on:click={() => showAddUserRolesPopup = null}
                 >Close</p>
@@ -178,7 +178,7 @@
                 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                 <p
-                    class="text-green-600 rounded-md {addUserRoles.length > 0 ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px] button green-button"
+                    class="text-green-600 rounded-md {addUserRoles.length > 0 ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px]"
                     style="margin-top: 20px; margin-bottom: 10px;"
                     on:click={addUserRoles.length > 0 ? () => {
                         api.updateUser(showAddUserRolesPopup!, new UserUpdates({
@@ -212,7 +212,7 @@
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
-                class="text-red-600 cursor-pointer rounded-md text-[18px] button red-button"
+                class="text-red-600 cursor-pointer rounded-md text-[18px]"
                 style="margin-top: 25px;"
                 on:click={() => {
                     disableUserPopup = false;
@@ -234,7 +234,7 @@
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
-                class="text-green-600 cursor-pointer rounded-md text-[18px] button red-button"
+                class="text-green-600 cursor-pointer rounded-md text-[18px]"
                 style="margin-top: 25px;"
                 on:click={() => {
                     enableUserPopup = false;
@@ -256,7 +256,7 @@
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
-                class="text-red-600 cursor-pointer rounded-md text-[18px] button red-button"
+                class="text-red-600 cursor-pointer rounded-md text-[18px]"
                 style="margin-top: 25px;"
                 on:click={() => {
                     deleteUserPopup = false;
@@ -276,7 +276,7 @@
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <p
-                class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md button"
+                class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md"
                 style="padding: 10px; margin-top: 25px;"
                 on:click={openCreateUserPopup}
             >Create User</p>
@@ -286,12 +286,12 @@
     <div class="absolute flex flex-col min-h-[70px] items-center justify-center self-end" style="margin-right: 50px;">
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <p
-            class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md button"
+            class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md"
             style="padding: 10px;"
             on:click={openCreateUserPopup}
         >Create User</p>
     </div>
-    <div class="flex flex-wrap overflow-y-scroll gap-[25px]">
+    <div class="flex flex-wrap overflow-y-scroll overflow-x-hidden gap-[25px]">
         {#each users.filter(u => u._id != User.DEFAULT_USER_ID) as user}
             <div
                 class="flex flex-col items-start justify start gap-[10px] min-w-[300px] border-[2px] border-[#333] rounded-md"

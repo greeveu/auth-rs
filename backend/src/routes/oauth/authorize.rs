@@ -9,7 +9,7 @@ use rocket::{
 use rocket_db_pools::Connection;
 
 use crate::{
-    auth::auth::AuthEntity,
+    auth::AuthEntity,
     db::AuthRsDatabase,
     models::{oauth_application::OAuthApplication, oauth_scope::OAuthScope},
     OAUTH_CODES,
@@ -52,7 +52,7 @@ pub async fn authorize_oauth_application(
         return (Status::Unauthorized, None);
     }
 
-    if data.scope.len() < 1 {
+    if data.scope.is_empty() {
         return (Status::BadRequest, None);
     }
 

@@ -1,13 +1,13 @@
+use crate::models::http_response::HttpResponse;
+use crate::models::oauth_application::OAuthApplicationError;
+use crate::models::role::RoleError;
+use crate::models::settings::SettingsError;
+use crate::models::user_error::UserError;
 use mongodb::bson::Uuid;
 use rocket::serde;
 use std::env::VarError;
 use thiserror::Error;
-
-use crate::models::http_response::HttpResponse;
-use crate::models::oauth_application::OAuthApplicationError;
-use crate::models::role::RoleError;
-use crate::models::setttings::SettingsError;
-use crate::models::user_error::UserError;
+use webauthn_rs::prelude::WebauthnError;
 
 #[derive(Error, Debug)]
 #[allow(unused)]
@@ -29,6 +29,9 @@ pub enum AppError {
 
     #[error("Role not found: {0}")]
     RoleNotFound(Uuid),
+
+    #[error("Passkey(s) not found via id: {0}")]
+    PasskeyNotFound(Uuid),
 
     #[error("Missing permissions")]
     MissingPermissions,
@@ -80,6 +83,18 @@ pub enum AppError {
 
     #[error("HTTP response error: {0}")]
     HttpResponseError(String),
+
+    #[error("Webauthn error")]
+    WebauthnError,
+
+    #[error("Invalid state: {0}")]
+    InvalidState(String),
+
+    #[error("Invalid UUID")]
+    InvalidUUID,
+
+    #[error("JSON serialization error: {0}")]
+    JsonSerializationError(#[from] serde_json::Error),
 }
 
 // Implement From<HttpResponse<T>> for AppError
@@ -126,6 +141,11 @@ impl<T> From<AppError> for HttpResponse<T> {
             AppError::RoleNotFound(id) => HttpResponse {
                 status: 400,
                 message: format!("Role with ID {} does not exist", id),
+                data: None,
+            },
+            AppError::PasskeyNotFound(id) => HttpResponse {
+                status: 400,
+                message: format!("Passkey with ID {} does not exist", id),
                 data: None,
             },
             AppError::MissingPermissions => HttpResponse {
@@ -203,15 +223,34 @@ impl<T> From<AppError> for HttpResponse<T> {
                 message: format!("Validation error: {}", msg),
                 data: None,
             },
-            AppError::HttpResponseError(msg) => HttpResponse {
-                status: 500,
-                message: msg,
-                data: None,
-            },
-
             AppError::InvalidOrMissingFields(msg) => HttpResponse {
                 status: 400,
                 message: format!("Invalid or missing fields: {}", msg),
+                data: None,
+            },
+            AppError::HttpResponseError(msg) => HttpResponse {
+                status: 500,
+                message: format!("HTTP error: {}", msg),
+                data: None,
+            },
+            AppError::WebauthnError => HttpResponse {
+                status: 400,
+                message: "Passkey error".to_string(),
+                data: None,
+            },
+            AppError::InvalidState(msg) => HttpResponse {
+                status: 400,
+                message: format!("Invalid state: {}", msg),
+                data: None,
+            },
+            AppError::InvalidUUID => HttpResponse {
+                status: 400,
+                message: "Invalid UUID".to_string(),
+                data: None,
+            },
+            AppError::JsonSerializationError(err) => HttpResponse {
+                status: 500,
+                message: format!("JSON serialization error: {}", err),
                 data: None,
             },
         }
@@ -241,6 +280,12 @@ pub enum ApiError {
 
     #[error("App error: {0}")]
     AppError(#[from] AppError),
+
+    #[error("Invalid state: {0}")]
+    InvalidState(String),
+
+    #[error("Invalid UUID")]
+    InvalidUUID,
 }
 
 // Implement conversion from ApiError to HttpResponse
@@ -252,7 +297,17 @@ impl<T> From<ApiError> for HttpResponse<T> {
             ApiError::Unauthorized(msg) => HttpResponse::unauthorized(&msg),
             ApiError::Forbidden(msg) => HttpResponse::forbidden(&msg),
             ApiError::InternalError(msg) => HttpResponse::internal_error(&msg),
-            ApiError::AppError(err) => HttpResponse::from(err),
+            ApiError::AppError(err) => err.into(),
+            ApiError::InvalidState(msg) => HttpResponse {
+                status: 400,
+                message: format!("Invalid state: {}", msg),
+                data: None,
+            },
+            ApiError::InvalidUUID => HttpResponse {
+                status: 400,
+                message: "Invalid UUID".to_string(),
+                data: None,
+            },
         }
     }
 }
@@ -265,7 +320,9 @@ impl From<UserError> for AppError {
     fn from(error: UserError) -> Self {
         match error {
             UserError::NotFound(id) => AppError::UserNotFound(id),
-            UserError::EmailAlreadyExists(email) => AppError::ValidationError(format!("User with email {} already exists", email)),
+            UserError::EmailAlreadyExists(email) => {
+                AppError::ValidationError(format!("User with email {} already exists", email))
+            }
             UserError::InvalidUuid(msg) => AppError::InvalidUuid(msg),
             UserError::MissingPermissions => AppError::MissingPermissions,
             UserError::SystemUserModification => AppError::SystemUserModification,
@@ -276,11 +333,19 @@ impl From<UserError> for AppError {
             UserError::NoUpdatesApplied => AppError::NoUpdatesApplied,
             UserError::DatabaseError(msg) => AppError::DatabaseError(msg),
             UserError::InternalServerError(msg) => AppError::InternalServerError(msg),
-            UserError::InvalidEmail => AppError::InvalidOrMissingFields("Invalid email".to_string()),
-            UserError::FirstNameRequired => AppError::InvalidOrMissingFields("First name required".to_string()),
-            UserError::PasswordToShort => AppError::InvalidOrMissingFields("Password too short".to_string()),
+            UserError::InvalidEmail => {
+                AppError::InvalidOrMissingFields("Invalid email".to_string())
+            }
+            UserError::FirstNameRequired => {
+                AppError::InvalidOrMissingFields("First name required".to_string())
+            }
+            UserError::PasswordToShort => {
+                AppError::InvalidOrMissingFields("Password too short".to_string())
+            }
             UserError::RegistrationClosed => AppError::MissingPermissions,
-            UserError::RegistrationCodeInvalid => AppError::InvalidOrMissingFields("Registration code invalid".to_string())
+            UserError::RegistrationCodeInvalid => {
+                AppError::InvalidOrMissingFields("Registration code invalid".to_string())
+            }
         }
     }
 }
@@ -327,6 +392,8 @@ impl From<ApiError> for RoleError {
             ApiError::Unauthorized(_) => RoleError::SystemRoleModification,
             ApiError::InternalError(msg) => RoleError::InternalServerError(msg),
             ApiError::AppError(err) => err.into(),
+            ApiError::InvalidState(msg) => RoleError::DatabaseError(msg),
+            ApiError::InvalidUUID => RoleError::NotFound(Uuid::new()),
         }
     }
 }
@@ -340,7 +407,24 @@ impl From<ApiError> for OAuthApplicationError {
             ApiError::Unauthorized(msg) => OAuthApplicationError::InvalidData(msg),
             ApiError::InternalError(msg) => OAuthApplicationError::InternalServerError(msg),
             ApiError::AppError(err) => err.into(),
+            ApiError::InvalidState(msg) => OAuthApplicationError::InvalidData(msg),
+            ApiError::InvalidUUID => OAuthApplicationError::NotFound(Uuid::new()),
         }
+    }
+}
+
+// Add implementation for converting from a string to AppError for WebAuthnError
+impl From<String> for AppError {
+    fn from(error: String) -> Self {
+        AppError::InternalServerError(error)
+    }
+}
+
+// Now we can properly convert WebAuthnError to a string and then to AppError
+impl From<WebauthnError> for ApiError {
+    #[allow(unused)]
+    fn from(error: WebauthnError) -> Self {
+        ApiError::AppError(AppError::WebauthnError)
     }
 }
 
@@ -354,6 +438,8 @@ impl From<ApiError> for SettingsError {
             ApiError::Unauthorized(_) => SettingsError::Unauthorized("Unauthorized".to_string()),
             ApiError::InternalError(msg) => SettingsError::InternalServerError(msg),
             ApiError::AppError(err) => err.into(),
+            ApiError::InvalidState(msg) => SettingsError::DatabaseError(msg),
+            ApiError::InvalidUUID => SettingsError::DatabaseError("Invalid UUID".to_string()),
         }
     }
 }

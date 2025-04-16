@@ -1,4 +1,4 @@
-use std::{collections::HashMap, time::Duration};
+use std::{collections::HashMap, env, time::Duration};
 
 use anyhow::Result;
 use mongodb::bson::{doc, Uuid};
@@ -15,7 +15,7 @@ use crate::{
     MFA_SESSIONS,
 };
 
-use super::auth::AuthEntity;
+use super::AuthEntity;
 
 #[derive(Debug, Clone)]
 pub enum MfaState {
@@ -25,8 +25,8 @@ pub enum MfaState {
 
 #[derive(Debug, Clone)]
 pub enum MfaType {
-    TOTP,
-    EnableTOTP,
+    Totp,
+    EnableTotp,
 }
 
 #[derive(Debug, Clone)]
@@ -47,7 +47,7 @@ impl MfaHandler {
         let flow = Self {
             flow_id: Uuid::new(),
             state: MfaState::Pending,
-            r#type: MfaType::EnableTOTP,
+            r#type: MfaType::EnableTotp,
             user: user.clone(),
             totp: Some(
                 TOTP::new(
@@ -56,7 +56,7 @@ impl MfaHandler {
                     1,
                     30,
                     Secret::generate_secret().to_bytes().unwrap(),
-                    Some("auth-rs".to_string()), /* CHANGE ME */
+                    Some(env::var("TOTP_ISSUER_NAME").unwrap_or_else(|_| "auth-rs".to_string())),
                     user.email.to_string(),
                 )
                 .unwrap(),
@@ -90,7 +90,7 @@ impl MfaHandler {
         let mut flow = Self {
             flow_id: Uuid::new(),
             state: MfaState::Pending,
-            r#type: MfaType::TOTP,
+            r#type: MfaType::Totp,
             user: user.clone(),
             totp: None,
         };
@@ -104,7 +104,7 @@ impl MfaHandler {
                 Secret::Encoded(user.totp_secret.as_ref().unwrap().to_string())
                     .to_bytes()
                     .unwrap(),
-                Some("auth-rs".to_string()), /* CHANGE ME */
+                Some(env::var("TOTP_ISSUER_NAME").unwrap_or_else(|_| "auth-rs".to_string())),
                 user.email.to_string(),
             )
             .unwrap(),
@@ -152,7 +152,7 @@ impl MfaHandler {
             1,
             30,
             Secret::Encoded(secret).to_bytes().unwrap(),
-            Some("auth-rs".to_string()), /* CHANGE ME */
+            Some(env::var("TOTP_ISSUER_NAME").unwrap_or_else(|_| "auth-rs".to_string())),
             user.email.to_string(),
         );
 
@@ -168,8 +168,10 @@ impl MfaHandler {
         req_user: AuthEntity,
         db: &Connection<AuthRsDatabase>,
     ) -> Result<User, String> {
-        let mut new_values = HashMap::from([("totp_secret".to_string(), "***********".to_string())]);
-        let mut old_values = HashMap::from([("totp_secret".to_string(), "***********".to_string())]);
+        let mut new_values =
+            HashMap::from([("totp_secret".to_string(), "***********".to_string())]);
+        let mut old_values =
+            HashMap::from([("totp_secret".to_string(), "***********".to_string())]);
 
         user.totp_secret = None;
 
@@ -189,7 +191,7 @@ impl MfaHandler {
         {
             Ok(_) => {
                 match AuditLog::new(
-                    user.id,
+                    user.id.to_string(),
                     AuditLogEntityType::User,
                     AuditLogAction::Update,
                     "Disable TOTP.".to_string(),
@@ -223,7 +225,7 @@ impl PartialEq for MfaType {
     fn eq(&self, other: &Self) -> bool {
         matches!(
             (self, other),
-            (MfaType::TOTP, MfaType::TOTP) | (MfaType::EnableTOTP, MfaType::EnableTOTP)
+            (MfaType::Totp, MfaType::Totp) | (MfaType::EnableTotp, MfaType::EnableTotp)
         )
     }
 }

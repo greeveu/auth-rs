@@ -19,7 +19,7 @@
     let editRolePopup: boolean = false;
     let editRole: Role | null = null;
     let editRoleName: string = '';
-    let editRoleDescription: string = '';
+    // let editRoleDescription: string = '';
 
     let deleteRolePopup: boolean = false;
     let deleteRole: Role | null = null;
@@ -44,7 +44,7 @@
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
-                class="text-green-600 rounded-md {newRoleName.length > 3 ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px] button green-button"
+                class="text-green-600 rounded-md {newRoleName.length > 3 ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px]"
                 style="margin-top: 25px; margin-bottom: 10px;"
                 on:click={newRoleName.length > 3 ? () => {
                     showNewRolePopup = false;
@@ -67,7 +67,7 @@
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
-                class="text-green-600 rounded-md {editRoleName.length > 3 ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px] button green-button"
+                class="text-green-600 rounded-md {editRoleName.length > 3 ? 'cursor-pointer' : 'cursor-default opacity-50'} text-[18px]"
                 style="margin-top: 20px; margin-bottom: 10px;"
                 on:click={editRoleName.length > 3 ? () => {
                     editRolePopup = false;
@@ -89,7 +89,7 @@
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
-                class="text-red-600 cursor-pointer rounded-md text-[18px] button red-button"
+                class="text-red-600 cursor-pointer rounded-md text-[18px]"
                 style="margin-top: 25px;"
                 on:click={() => {
                     deleteRolePopup = false;
@@ -109,7 +109,7 @@
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <p
-                class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md button"
+                class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md"
                 style="padding: 10px; margin-top: 25px;"
                 on:click={openCreateRolePopup}
             >Create Role</p>
@@ -119,12 +119,12 @@
     <div class="absolute flex flex-col min-h-[70px] items-center justify-center self-end" style="margin-right: 50px;">
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <p
-            class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md button"
+            class="border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all border-[1.5px] cursor-pointer rounded-md"
             style="padding: 10px;"
             on:click={openCreateRolePopup}
         >Create Role</p>
     </div>
-    <div class="flex flex-wrap overflow-y-scroll gap-[25px]">
+    <div class="flex flex-wrap overflow-y-scroll overflow-x-hidden gap-[25px]">
         {#each roles as role}
             <div class="flex flex-col items-start justify start gap-[10px] min-w-[250px] max-w-[200px] min-h-[135px] border-[2px] border-[#333] rounded-md" style="padding: 15px;">
                 <div class="flex flex-row justify-between w-full">

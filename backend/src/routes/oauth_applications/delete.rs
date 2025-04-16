@@ -4,7 +4,7 @@ use rocket_db_pools::Connection;
 
 use crate::utils::response::json_response;
 use crate::{
-    auth::auth::AuthEntity,
+    auth::AuthEntity,
     db::AuthRsDatabase,
     models::{
         audit_log::{AuditLog, AuditLogAction, AuditLogEntityType},
@@ -42,7 +42,7 @@ pub async fn delete_oauth_application(
     match oauth_application.delete(&db).await {
         Ok(oauth_application) => {
             match AuditLog::new(
-                oauth_application.id,
+                oauth_application.id.to_string(),
                 AuditLogEntityType::OAuthApplication,
                 AuditLogAction::Delete,
                 "OAuthApplication deleted.".to_string(),

@@ -30,7 +30,7 @@
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
-                class="text-red-600 cursor-pointer rounded-md text-[18px] button red-button"
+                class="text-red-600 cursor-pointer rounded-md text-[18px]"
                 style="margin-top: 25px;"
                 on:click={() => {
                     unlinkConnectionPopup = false;
@@ -49,7 +49,7 @@
         <p class="text-[20px] opacity-50">You don't have any connected Apps.</p>
     </div>
 {:else}
-    <div class="flex flex-wrap w-full overflow-y-scroll gap-[25px]">
+    <div class="flex flex-wrap w-full overflow-y-scroll overflow-x-hidden gap-[25px]">
         {#each connections as connection}
             <div class="flex flex-col items-start justify start gap-[10px] w-[350px] min-h-[200px] border-[2px] border-[#333] rounded-md" style="padding: 15px;">
                 <div class="flex flex-row justify-between w-full">

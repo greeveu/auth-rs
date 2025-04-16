@@ -11,7 +11,7 @@ use auth::mfa::MfaHandler;
 use db::AuthRsDatabase;
 use dotenv::dotenv;
 use errors::{AppError, AppResult};
-use models::{role::Role, setttings::Settings, user::User};
+use models::{role::Role, settings::Settings, user::User};
 use mongodb::bson::{doc, Uuid};
 use rocket::{
     fairing::AdHoc,
@@ -22,12 +22,17 @@ use rocket::{
 use rocket_cors::{AllowedHeaders, AllowedOrigins, CorsOptions};
 use rocket_db_pools::{mongodb::Collection, Database};
 use routes::oauth::token::TokenOAuthData;
+use webauthn_rs::prelude::{DiscoverableAuthentication, PasskeyRegistration};
 
 // oauth codes stored in memory
 lazy_static::lazy_static! {
     //TODO: Replace with Redis or other cache, so this application can be stateless
     static ref OAUTH_CODES: Mutex<HashMap<u32, TokenOAuthData>> = Mutex::new(HashMap::new());
     static ref MFA_SESSIONS: Mutex<HashMap<Uuid, MfaHandler>> = Mutex::new(HashMap::new());
+    static ref REGISTRATIONS: Mutex<HashMap<Uuid, (Uuid, PasskeyRegistration)>> =
+        Mutex::new(HashMap::new());
+    static ref AUTHENTICATIONS: Mutex<HashMap<Uuid, DiscoverableAuthentication>> =
+        Mutex::new(HashMap::new());
     static ref SETTINGS: Mutex<Settings> = Mutex::new(Settings::default());
 
     static ref SETTINGS_ID: Uuid = Uuid::parse_str("00000000-0000-0000-0000-000000000000")
@@ -203,7 +208,16 @@ fn rocket() -> _ {
                 // Auth Routes
                 routes::auth::register::register,
                 routes::auth::login::login,
-                routes::auth::mfa::mfa
+                routes::auth::mfa::mfa,
+                // Passkey Routes
+                routes::auth::passkey::authenticate_start,
+                routes::auth::passkey::authenticate_finish,
+                routes::users::passkeys::list_passkeys,
+                routes::passkeys::register_start::register_start,
+                routes::passkeys::register_finish::register_finish,
+                routes::passkeys::get_all::list_passkeys,
+                routes::passkeys::delete::delete_passkey,
+                routes::passkeys::update::update_passkey
             ],
         )
 }

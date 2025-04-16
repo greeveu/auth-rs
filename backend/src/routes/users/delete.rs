@@ -4,7 +4,7 @@ use rocket_db_pools::Connection;
 
 use crate::utils::response::json_response;
 use crate::{
-    auth::auth::AuthEntity,
+    auth::AuthEntity,
     db::AuthRsDatabase,
     models::{
         audit_log::{AuditLog, AuditLogAction, AuditLogEntityType},
@@ -47,7 +47,7 @@ pub async fn delete_user(
     match user.delete(&db).await {
         Ok(user) => {
             match AuditLog::new(
-                user.id,
+                user.id.to_string(),
                 AuditLogEntityType::User,
                 AuditLogAction::Delete,
                 "User deleted.".to_string(),

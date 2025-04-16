@@ -1,3 +1,7 @@
+use super::user_error::{UserError, UserResult};
+use super::{
+    http_response::HttpResponse, oauth_application::OAuthApplication, oauth_token::OAuthToken,
+};
 use crate::{
     db::{get_main_db, AuthRsDatabase},
     ADMIN_ROLE_ID, DEFAULT_ROLE_ID, SYSTEM_USER_ID,
@@ -18,9 +22,6 @@ use rocket_db_pools::{
     Connection,
 };
 
-use super::{http_response::HttpResponse, oauth_application::OAuthApplication, oauth_token::OAuthToken};
-use super::user_error::{UserError, UserResult};
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
 #[serde(rename_all = "camelCase")]
@@ -33,7 +34,6 @@ pub struct User {
     pub password_hash: String,
     pub salt: String,
     pub totp_secret: Option<String>,
-    pub passkeys: Option<String>, // replace this with the actual DTO, this is just a placeholder so the database can already generate the field.
     pub token: String,
     pub roles: Vec<Uuid>,
     pub disabled: bool,
@@ -51,7 +51,6 @@ pub struct UserDTO {
     pub last_name: String,
     pub roles: Vec<Uuid>,
     pub mfa: bool,
-    pub passkeys: bool,
     pub disabled: bool,
     pub created_at: DateTime,
 }
@@ -85,7 +84,6 @@ impl User {
             last_name: self.last_name.clone(),
             roles: self.roles.clone(),
             mfa: self.totp_secret.is_some(),
-            passkeys: self.passkeys.is_some(),
             disabled: self.disabled,
             created_at: self.created_at,
         }
@@ -112,7 +110,6 @@ impl User {
             password_hash,
             salt: salt.as_str().to_string(),
             totp_secret: None,
-            passkeys: None,
             token: Self::generate_token(),
             roles: Vec::from([*DEFAULT_ROLE_ID]),
             disabled: false,
@@ -143,7 +140,6 @@ impl User {
             password_hash,
             salt: salt.as_str().to_string(),
             totp_secret: None,
-            passkeys: None,
             token: Self::generate_token(),
             roles: roles
                 .iter()
@@ -222,7 +218,7 @@ impl User {
         };
         match db.find_one(filter, None).await {
             Ok(Some(user)) => Ok(user),
-            Ok(None) => Err(UserError::EmailAlreadyExists(email.to_string())),
+            Ok(None) => Err(UserError::InvalidEmail),
             Err(err) => Err(UserError::DatabaseError(err.to_string())),
         }
     }
@@ -359,12 +355,14 @@ impl User {
         let db = Self::get_collection(connection);
 
         // Delete all owned OAuth applications
-        OAuthApplication::delete_all_matching(doc! { "owner": self.id.clone() }, &connection)
+        OAuthApplication::delete_all_matching(doc! { "owner": self.id }, connection)
             .await
-            .map_err(|err| UserError::DatabaseError(format!("Error deleting owned oauth apps data: {:?}", err)))?;
+            .map_err(|err| {
+                UserError::DatabaseError(format!("Error deleting owned oauth apps data: {:?}", err))
+            })?;
 
         // Delete all OAuth tokens that belong to this user
-        OAuthToken::delete_all_matching(doc! { "userId": self.id.clone() }, &connection)
+        OAuthToken::delete_all_matching(doc! { "userId": self.id }, connection)
             .await
             .map_err(|err| UserError::DatabaseError(err.to_string()))?;
 

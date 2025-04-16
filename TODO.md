@@ -7,6 +7,8 @@
 - [x] Emails are not unique??? -> Fixed
 - [x] Require at lease one oauth scope to authorize
 - [ ] Add openid well_known page
+- [ ] We want dedicated get all routes like for the passkeys
+- [x] Audit Logs for Passkeys
 
 ## Frontend
 
@@ -22,6 +24,7 @@
 - [x] show code users used to join in logs
 - [x] show code full warning
 - [x] add copy join url button to registration codes
+- [ ] "notification" popups in the bottom right corner -> success and error messages
 
 ## Both
 

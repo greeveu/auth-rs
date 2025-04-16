@@ -22,14 +22,18 @@ services:
     image: auth-rs-backend:latest
     container_name: auth-rs-backend
     ports:
-      - "8000:8000"
+      - "80:8000"
     depends_on:
       mongodb:
         condition: service_healthy
     environment:
       - ROCKET_DATABASES={auth-rs-db={url="mongodb://mongodb:27017"}} # adjust the url="" part if needed
       - SYSTEM_EMAIL=admin@example.com
-      - SYSTEM_PASSWORD=admin # Create a strong system user password here
+      - SYSTEM_PASSWORD= # Create a strong system user password here
+      - WEBAUTHN_RP_ID= # yourdomain.com !Do not include http:// or https:// or any subdomains.
+      - WEBAUTHN_RP_ORIGIN= # https://subdomain.yourdomain.com -> enter the url of your frontend
+      - WEBAUTHN_RP_NAME=auth-rs # The name of the RP (Relying Party) that will be displayed to the user !Do not include spaces or special characters!
+      - TOTP_ISSUER_NAME=auth-rs # The name of the TOTP issuer that will be displayed to the user !Do not include spaces or special characters!
     networks:
       - auth-rs-network
     restart: unless-stopped

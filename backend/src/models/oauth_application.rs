@@ -227,7 +227,7 @@ impl OAuthApplication {
     ) -> OAuthApplicationResult<OAuthApplication> {
         let db = Self::get_collection(connection);
 
-        OAuthToken::delete_all_matching(doc! { "applicationId": self.id.clone() }, connection)
+        OAuthToken::delete_all_matching(doc! { "applicationId": self.id }, connection)
             .await
             .map_err(|err| OAuthApplicationError::DatabaseError(err.to_string()))?;
 

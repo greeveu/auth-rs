@@ -6,19 +6,19 @@ use rocket::{
 };
 use rocket_db_pools::Connection;
 
-use crate::auth::auth::OptionalAuthEntity;
-use crate::models::registration_token::RegistrationToken;
-use crate::models::user::UserDTO;
-use crate::utils::response::json_response;
-use crate::SETTINGS;
 use crate::{
+    auth::OptionalAuthEntity,
     db::AuthRsDatabase,
+    models::registration_token::RegistrationToken,
+    models::user::UserDTO,
     models::{
         audit_log::{AuditLog, AuditLogAction, AuditLogEntityType},
         http_response::HttpResponse,
         user::User,
         user_error::{UserError, UserResult},
     },
+    utils::response::json_response,
+    SETTINGS,
 };
 
 #[derive(Deserialize)]
@@ -56,7 +56,8 @@ async fn create_user_internal(
     auth_entity: Option<OptionalAuthEntity>,
     data: CreateUserData,
 ) -> UserResult<User> {
-    let req_user = if auth_entity.as_ref().is_some() && auth_entity.as_ref().unwrap().user.is_some() {
+    let req_user = if auth_entity.as_ref().is_some() && auth_entity.as_ref().unwrap().user.is_some()
+    {
         Some(auth_entity.unwrap().user.unwrap())
     } else {
         None
@@ -66,17 +67,19 @@ async fn create_user_internal(
 
     // Handle closed registration
     let settings = (*SETTINGS).lock().await;
-    if !settings.open_registration && (!req_user.is_some() || !req_user.as_ref().unwrap().is_admin()) {
+    if !settings.open_registration && (req_user.is_none() || !req_user.as_ref().unwrap().is_admin())
+    {
         if data.registration_code.is_none() || data.registration_code.len() < 1 {
             return Err(UserError::RegistrationClosed);
         }
 
-        registration_token = match RegistrationToken::get_by_code(data.registration_code.unwrap(), &db).await {
-            Ok(token) => Some(token),
-            Err(_) => {
-                return Err(UserError::RegistrationCodeInvalid);
+        registration_token =
+            match RegistrationToken::get_by_code(data.registration_code.unwrap(), &db).await {
+                Ok(token) => Some(token),
+                Err(_) => {
+                    return Err(UserError::RegistrationCodeInvalid);
+                }
             }
-        }
     }
 
     // Check if user with email already exists
@@ -87,7 +90,7 @@ async fn create_user_internal(
     if !data.email.contains('@') || !data.email.contains('.') || data.email.len() < 5 {
         return Err(UserError::InvalidEmail);
     }
-    if data.first_name.len() < 1 {
+    if data.first_name.is_empty() {
         return Err(UserError::FirstNameRequired);
     }
     if data.password.len() < 8 {
@@ -105,7 +108,8 @@ async fn create_user_internal(
     // Handle registration token
     if registration_token.is_some() {
         let token = registration_token.clone().unwrap();
-        token.use_token(&db, user.id)
+        token
+            .use_token(&db, user.id)
             .await
             .map_err(|_| UserError::RegistrationCodeInvalid)?;
 
@@ -119,7 +123,7 @@ async fn create_user_internal(
 
     // Create audit log
     if let Err(err) = AuditLog::new(
-        inserted_user.id,
+        inserted_user.id.to_string(),
         AuditLogEntityType::User,
         AuditLogAction::Create,
         format!(
@@ -131,14 +135,14 @@ async fn create_user_internal(
             },
             if registration_token.is_some() {
                 registration_token.as_ref().unwrap().id
-            } else if req_user.is_some() {
-                req_user.as_ref().unwrap().id
+            } else if let Some(req_user) = &req_user {
+                req_user.id
             } else {
                 inserted_user.id
             }
         ),
-        if req_user.is_some() {
-            req_user.as_ref().unwrap().id
+        if let Some(req_user) = &req_user {
+            req_user.id
         } else {
             inserted_user.id
         },

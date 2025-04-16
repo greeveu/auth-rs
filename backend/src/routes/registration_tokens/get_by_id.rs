@@ -4,12 +4,9 @@ use rocket_db_pools::Connection;
 
 use crate::utils::response::json_response;
 use crate::{
-    auth::auth::AuthEntity,
+    auth::AuthEntity,
     db::AuthRsDatabase,
-    models::{
-        http_response::HttpResponse,
-        registration_token::RegistrationToken
-    },
+    models::{http_response::HttpResponse, registration_token::RegistrationToken},
     utils::parse_uuid::parse_uuid,
 };
 
@@ -21,7 +18,9 @@ pub async fn get_registration_token_by_id(
     id: &str,
 ) -> (Status, Json<HttpResponse<RegistrationToken>>) {
     if !req_entity.is_user() || !req_entity.user.unwrap().is_admin() {
-        return json_response(HttpResponse::forbidden("Only admins can get registration tokens"));
+        return json_response(HttpResponse::forbidden(
+            "Only admins can get registration tokens",
+        ));
     }
 
     let uuid = match parse_uuid(id) {

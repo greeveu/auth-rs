@@ -1,10 +1,12 @@
-use crate::models::registration_token::{RegistrationToken, RegistrationTokenError, RegistrationTokenResult};
+use crate::models::registration_token::{
+    RegistrationToken, RegistrationTokenError, RegistrationTokenResult,
+};
 use crate::models::role::Role;
 use crate::utils::parse_uuid::parse_uuid;
 use crate::utils::response::json_response;
 use crate::DEFAULT_ROLE_ID;
 use crate::{
-    auth::auth::AuthEntity,
+    auth::AuthEntity,
     db::AuthRsDatabase,
     errors::ApiError,
     models::{
@@ -41,10 +43,7 @@ pub async fn update_registration_token(
     let result = update_registration_token_internal(db, req_entity, id, data.into_inner()).await;
 
     match result {
-        Ok(app) => json_response(HttpResponse::success(
-            "Registration token updated",
-            app,
-        )),
+        Ok(app) => json_response(HttpResponse::success("Registration token updated", app)),
         Err(err) => json_response(err.into()),
     }
 }
@@ -97,8 +96,12 @@ impl RegistrationTokenUpdate {
             };
             self.update_field(
                 "expires_in",
-                old_expires_in.map(|v| v.to_string()).unwrap_or("None".to_string()),
-                Some(new_expires_in).map(|v| v.to_string()).unwrap_or("None".to_string()),
+                old_expires_in
+                    .map(|v| v.to_string())
+                    .unwrap_or("None".to_string()),
+                Some(new_expires_in)
+                    .map(|v| v.to_string())
+                    .unwrap_or("None".to_string()),
             );
         }
     }
@@ -123,12 +126,11 @@ impl RegistrationTokenUpdate {
             }
         }
 
-        let final_roles = 
-            new_auto_roles
-                .iter()
-                .filter(|role_id| **role_id != *DEFAULT_ROLE_ID)
-                .cloned()
-                .collect::<Vec<Uuid>>();
+        let final_roles = new_auto_roles
+            .iter()
+            .filter(|role_id| **role_id != *DEFAULT_ROLE_ID)
+            .cloned()
+            .collect::<Vec<Uuid>>();
 
         let old_roles = self
             .token
@@ -160,7 +162,7 @@ impl RegistrationTokenUpdate {
 
         // Create audit log
         if let Err(err) = AuditLog::new(
-            updated_token.id,
+            updated_token.id.to_string(),
             AuditLogEntityType::RegistrationToken,
             AuditLogAction::Update,
             "Registration token updated.".to_string(),
@@ -186,12 +188,14 @@ async fn update_registration_token_internal(
 ) -> RegistrationTokenResult<RegistrationToken> {
     // Basic permission checks
     if !req_entity.is_user() || !req_entity.user.clone().unwrap().is_admin() {
-        return Err(ApiError::Forbidden("Only admins can update registration tokens".to_string()).into());
+        return Err(
+            ApiError::Forbidden("Only admins can update registration tokens".to_string()).into(),
+        );
     }
-    
+
     let uuid = parse_uuid(id).map_err(|e| ApiError::BadRequest(e.to_string()))?;
     let token = RegistrationToken::get_by_id(uuid, &db).await?;
-    
+
     let mut update = RegistrationTokenUpdate::new(token);
 
     // Apply updates

@@ -8,7 +8,7 @@ use rocket_db_pools::Connection;
 use crate::utils::response::json_response;
 use crate::SETTINGS;
 use crate::{
-    auth::auth::AuthEntity,
+    auth::AuthEntity,
     db::AuthRsDatabase,
     models::{
         audit_log::{AuditLog, AuditLogAction, AuditLogEntityType},
@@ -36,7 +36,9 @@ pub async fn create_oauth_application(
     let data = data.into_inner();
 
     if !req_entity.is_user() {
-        return json_response(HttpResponse::forbidden("Only users can create OAuth Applications"));
+        return json_response(HttpResponse::forbidden(
+            "Only users can create OAuth Applications",
+        ));
     }
 
     // Handle only admins can create OAuth Applications check
@@ -60,7 +62,7 @@ pub async fn create_oauth_application(
     match oauth_application.insert(&db).await {
         Ok(oauth_application) => {
             match AuditLog::new(
-                oauth_application.id,
+                oauth_application.id.to_string(),
                 AuditLogEntityType::OAuthApplication,
                 AuditLogAction::Create,
                 "OAuth Application created.".to_string(),

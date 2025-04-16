@@ -1,11 +1,12 @@
 <script lang="ts">
-    import { LogIn, MinusCircle, Pencil, PlusCircle, ShieldCheck, ShieldX } from 'lucide-svelte';
+    import { LogIn, MinusCircle, Pencil, PlusCircle, ShieldCheck, ShieldX, KeyRound } from 'lucide-svelte';
 	import DateUtils from "$lib/dateUtils";
 	import { AuditLog, AuditLogAction, AuditLogEntityType } from "$lib/models/AuditLog";
 	import type OAuthApplication from "$lib/models/OAuthApplication";
 	import type RegistrationToken from '$lib/models/RegistrationToken';
 	import type Role from "$lib/models/Role";
 	import type User from "$lib/models/User";
+	import type Passkey from '$lib/models/Passkey';
 
     export let user: User;
     export let auditLog: AuditLog;
@@ -13,6 +14,7 @@
     export let roles: Role[];
     export let applications: OAuthApplication[];
     export let registrationTokens: RegistrationToken[];
+    export let passkeys: Passkey[];
 
     $: isOpen = false;
 
@@ -32,6 +34,8 @@
             return applications.find(a => a._id == entityId)?.name ?? entityId;
         } else if (entityType == AuditLogEntityType.RegistrationToken) {
             return registrationTokens.find(t => t._id == entityId)?.code ?? entityId;
+        } else if (entityType == AuditLogEntityType.Passkey) {
+            return passkeys.find(p => p.id == entityId)?.name ?? entityId;
         } else if (entityType == AuditLogEntityType.Settings) {
             return "SETTINGS";
         } else {
@@ -48,17 +52,22 @@
             return `${target} enabled 2FA.`;
         } else if (auditLog.reason.toUpperCase().includes('DISABLE TOTP')) {
             return `${target} disabled 2FA.`;
+        } else if (auditLog.reason.toUpperCase().includes("PASSKEY LOGIN SUCCESSFUL")) {
+            const passkeyId = auditLog.reason.split('|')[1];
+            return `${author} logged ${target.toUpperCase() == 'YOU' ? 'in' : `into ${target}\'s account`} using the passkey <span class="text-[14px] opacity-75">${getEntityName(AuditLogEntityType.Passkey, passkeyId)}</span>.`;
         } else if (auditLog.reason.toUpperCase().includes("LOGIN SUCCESSFUL")) {
-            return `New login on ${target.toUpperCase() == 'YOU' ? 'your' : `${target}\'s`} account.`;
+            return `New ${auditLog.reason.toUpperCase().includes('MFA') ? '2FA ': ''}login on ${target.toUpperCase() == 'YOU' ? 'your' : `${target}\'s`} account.`;
         } if (auditLog.entityType == AuditLogEntityType.User && auditLog.action == AuditLogAction.Create && auditLog.reason.split('|').length >= 3 && auditLog.reason.split('|')[1].toUpperCase() == 'REGISTRATION_TOKEN') {
             const tokenId = auditLog.reason.split('|')[2];
             return `${target} ${action} ${target.toUpperCase() == 'YOU' ? 'your' : 'their'} profile using the registration code <span class="text-[14px] opacity-75">${getEntityName(AuditLogEntityType.RegistrationToken, tokenId)}</span>.`;
+        } else if (auditLog.entityType == AuditLogEntityType.Passkey) {
+            return `${author} ${auditLog.action == AuditLogAction.Create ? 'registered' : auditLog.action == AuditLogAction.Update ? 'updated ' : 'deleted'} the passkey <span class="text-[14px] opacity-75">${getEntityName(AuditLogEntityType.Passkey, auditLog.entityId)}</span>`;
         } else if (target.toUpperCase() == 'YOU') {
             return `${author} ${action} your profile.`;
         } else if (target == 'SETTINGS') {
             return `${author} ${action} the settings.`;
         } else {
-            return `${author} ${action} the ${log.entityType == AuditLogEntityType.OAuthApplication ? 'OAuth Application' : log.entityType == AuditLogEntityType.RegistrationToken ? 'Registration Token' : log.entityType.toLowerCase()} ${target.length == 36 && target.includes('-') ? `<span class="text-[14px] opacity-75">${target}</span>` : target}`;
+            return `${author} ${action} the ${log.entityType == AuditLogEntityType.OAuthApplication ? 'OAuth Application' : log.entityType == AuditLogEntityType.RegistrationToken ? 'Registration Token' : log.entityType.toLowerCase()} <span class="text-[14px] opacity-75">${target}</span>`;
         }
     }
 
@@ -115,27 +124,35 @@
         // Don't  question this, is doesnt work the 'normal' way ok?
         return getContainer().replace('{{VALUE}}', result);
     }
+
+    function isAuditLogExpandable(log: AuditLog): boolean {
+        return log.oldValues && log.newValues && !log.reason.toUpperCase().includes('TOTP');
+    }
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <div
-    class="flex flex-col items-start border-[1px] border-[#333] rounded-md {auditLog.oldValues && auditLog.newValues && !auditLog.reason.toUpperCase().includes('TOTP') ? 'cursor-pointer' : ''}"
+    class="flex flex-col items-start border-[1px] border-[#333] rounded-md {isAuditLogExpandable(auditLog) ? 'cursor-pointer' : ''}"
     style="padding: 15px;"
-    on:click={auditLog.oldValues && auditLog.newValues && !auditLog.reason.toUpperCase().includes('TOTP') ? () => isOpen = !isOpen : () => {}}
+    on:click={isAuditLogExpandable(auditLog) ? () => isOpen = !isOpen : () => {}}
 >
     <div class="flex flex-row justify-between w-full">
         <div class="flex flex-row gap-[15px]">
-            {#if auditLog.reason.toUpperCase().includes('CREATE')}
-                <PlusCircle height="30" width="30" class="text-green-500" />
-            {:else if auditLog.reason.toUpperCase().includes('DELETE')}
-                <MinusCircle height="30" width="30" class="text-red-500" />
-            {:else if auditLog.reason.toUpperCase().includes("LOGIN SUCCESSFUL")}
+            {#if auditLog.reason.toUpperCase().includes("LOGIN SUCCESSFUL")}
                 <LogIn height="30" width="30" class="text-blue-500" />
             {:else if auditLog.reason.toUpperCase().includes('ENABLE TOTP')}
                 <ShieldCheck height="30" width="30" class="text-green-500" />
             {:else if auditLog.reason.toUpperCase().includes('DISABLE TOTP')}
                 <ShieldX height="30" width="30" class="text-red-500" />
+            {:else if auditLog.entityType == AuditLogEntityType.Passkey && auditLog.action == AuditLogAction.Create}
+                <KeyRound height="30" width="30" class="text-green-500" />
+            {:else if auditLog.entityType == AuditLogEntityType.Passkey && auditLog.action == AuditLogAction.Delete}
+                <KeyRound height="30" width="30" class="text-red-500" />
+            {:else if auditLog.reason.toUpperCase().includes('CREATE')}
+                <PlusCircle height="30" width="30" class="text-green-500" />
+            {:else if auditLog.reason.toUpperCase().includes('DELETE')}
+                <MinusCircle height="30" width="30" class="text-red-500" />
             {:else}
                 <Pencil height="30" width="30" class="text-yellow-400" />
             {/if}

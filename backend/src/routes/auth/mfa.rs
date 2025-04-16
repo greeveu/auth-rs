@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use mongodb::bson::Uuid;
 use rocket::http::Status;
 use rocket::{
@@ -7,6 +5,7 @@ use rocket::{
     serde::{json::Json, Deserialize, Serialize},
 };
 use rocket_db_pools::Connection;
+use std::collections::HashMap;
 use totp_rs::TOTP;
 
 use super::login::LoginResponse;
@@ -50,7 +49,7 @@ async fn process_mfa(
         ));
     }
 
-    if flow.r#type != MfaType::TOTP && flow.r#type != MfaType::EnableTOTP {
+    if flow.r#type != MfaType::Totp && flow.r#type != MfaType::EnableTotp {
         return Err(ApiError::BadRequest("Invalid MFA type".to_string()));
     }
 
@@ -58,7 +57,7 @@ async fn process_mfa(
         return Err(ApiError::Unauthorized("Invalid TOTP code".to_string()));
     }
 
-    if flow.r#type == MfaType::EnableTOTP && flow.totp.is_some() && flow.user.totp_secret.is_none()
+    if flow.r#type == MfaType::EnableTotp && flow.totp.is_some() && flow.user.totp_secret.is_none()
     {
         let mut user = flow.user.clone();
         user.totp_secret = Some(flow.totp.as_ref().unwrap().get_secret_base32());
@@ -67,14 +66,11 @@ async fn process_mfa(
             .await
             .map_err(|err| ApiError::InternalError(format!("Failed to enable TOTP: {:?}", err)))?;
 
-        let new_values = HashMap::from([(
-            "totp_secret".to_string(),
-            "*************".to_string(),
-        )]);
+        let new_values = HashMap::from([("totp_secret".to_string(), "*************".to_string())]);
         let old_values = HashMap::from([("totp_secret".to_string(), "".to_string())]);
 
-        if let Err(err) = AuditLog::new(
-            user.id,
+        AuditLog::new(
+            user.id.to_string(),
             AuditLogEntityType::User,
             AuditLogAction::Update,
             "Enable TOTP.".to_string(),
@@ -84,9 +80,7 @@ async fn process_mfa(
         )
         .insert(db)
         .await
-        {
-            eprintln!("{:?}", err);
-        }
+        .ok();
 
         Ok((
             "TOTP enabled".to_string(),
@@ -122,7 +116,7 @@ pub async fn mfa(
         Ok((message, response)) => {
             if message == "MFA complete" {
                 AuditLog::new(
-                    response.user.clone().unwrap().id,
+                    response.user.clone().unwrap().id.to_string(),
                     AuditLogEntityType::User,
                     AuditLogAction::Login,
                     "MFA login successful.".to_string(),
@@ -136,7 +130,7 @@ pub async fn mfa(
             }
 
             json_response(HttpResponse::success(&message, response))
-        },
+        }
         Err(err) => json_response(err.into()),
     }
 }

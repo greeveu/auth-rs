@@ -5,7 +5,7 @@ use rocket_db_pools::Connection;
 use crate::models::registration_token::RegistrationToken;
 use crate::utils::response::json_response;
 use crate::{
-    auth::auth::AuthEntity,
+    auth::AuthEntity,
     db::AuthRsDatabase,
     models::{
         audit_log::{AuditLog, AuditLogAction, AuditLogEntityType},
@@ -22,7 +22,9 @@ pub async fn delete_registration_token(
     id: &str,
 ) -> (Status, Json<HttpResponse<()>>) {
     if !req_entity.is_user() || !req_entity.user.unwrap().is_admin() {
-        return json_response(HttpResponse::forbidden("Only admins can delete registration tokens"));
+        return json_response(HttpResponse::forbidden(
+            "Only admins can delete registration tokens",
+        ));
     }
 
     let uuid = match parse_uuid(id) {
@@ -38,7 +40,7 @@ pub async fn delete_registration_token(
     match registration_token.delete(&db).await {
         Ok(registration_token) => {
             match AuditLog::new(
-                registration_token.id,
+                registration_token.id.to_string(),
                 AuditLogEntityType::RegistrationToken,
                 AuditLogAction::Delete,
                 "Registration token deleted.".to_string(),

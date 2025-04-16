@@ -46,7 +46,7 @@ impl<T> From<AuditLogError> for HttpResponse<T> {
 pub struct AuditLog {
     #[serde(rename = "_id")]
     pub id: Uuid,
-    pub entity_id: Uuid,
+    pub entity_id: String,
     pub entity_type: AuditLogEntityType,
     pub action: AuditLogAction,
     pub reason: String,
@@ -73,6 +73,7 @@ pub enum AuditLogEntityType {
     OAuthApplication,
     Settings,
     RegistrationToken,
+    Passkey,
     Unknown,
 }
 
@@ -100,6 +101,7 @@ impl fmt::Display for AuditLogEntityType {
             AuditLogEntityType::OAuthApplication => write!(f, "OAUTH_APPLICATION"),
             AuditLogEntityType::Settings => write!(f, "SETTINGS"),
             AuditLogEntityType::RegistrationToken => write!(f, "REGISTRATION_TOKEN"),
+            AuditLogEntityType::Passkey => write!(f, "PASSKEY"),
             AuditLogEntityType::Unknown => write!(f, "UNKNOWN"),
         }
     }
@@ -110,11 +112,12 @@ impl AuditLog {
     pub const COLLECTION_NAME_ROLES: &'static str = "role-logs";
     pub const COLLECTION_NAME_OAUTH_APPLICATIONS: &'static str = "oauth-application-logs";
     pub const COLLECTION_NAME_REGISTRATION_TOKENS: &'static str = "registration-token-logs";
+    pub const COLLECTION_NAME_PASSKEYS: &'static str = "passkey-logs";
     pub const COLLECTION_NAME_SYSTEM: &'static str = "system-logs";
 
     #[allow(unused)]
     pub fn new(
-        entity_id: Uuid,
+        entity_id: String,
         entity_type: AuditLogEntityType,
         action: AuditLogAction,
         reason: String,
@@ -249,6 +252,16 @@ impl AuditLog {
                 }
             };
 
+        let passkey_logs_collection =
+            match Self::get_collection(&AuditLogEntityType::Passkey, connection) {
+                Some(coll) => coll,
+                None => {
+                    return Err(AuditLogError::InvalidEntityType(
+                        "Passkey entity type invalid".to_string(),
+                    ))
+                }
+            };
+
         let system_ = match Self::get_collection(&AuditLogEntityType::Settings, connection) {
             Some(coll) => coll,
             None => {
@@ -364,6 +377,29 @@ impl AuditLog {
             }
         };
 
+        // Fetch passkey logs
+        let passkey_logs = match passkey_logs_collection.find(filter.clone(), None).await {
+            Ok(cursor) => {
+                let mut logs = Vec::new();
+                let mut stream = cursor;
+
+                while let Some(result) = stream.next().await {
+                    match result {
+                        Ok(doc) => logs.push(doc),
+                        Err(err) => return Err(AuditLogError::DatabaseError(err.to_string())),
+                    }
+                }
+
+                logs
+            }
+            Err(err) => {
+                return Err(AuditLogError::DatabaseError(format!(
+                    "Error fetching passkey audit logs: {}",
+                    err
+                )))
+            }
+        };
+
         // Fetch system logs
         let system_logs = match system_.find(filter.clone(), None).await {
             Ok(cursor) => {
@@ -391,6 +427,7 @@ impl AuditLog {
         all_logs.extend(role_logs);
         all_logs.extend(oauth_application_logs);
         all_logs.extend(registration_token_logs);
+        all_logs.extend(passkey_logs);
         all_logs.extend(system_logs);
 
         all_logs.sort_by(|a, b| a.created_at.cmp(&b.created_at));
@@ -464,13 +501,18 @@ impl AuditLog {
     ) -> Option<Collection<AuditLog>> {
         let db = get_logs_db(connection);
 
-        match entity_type {
-            &AuditLogEntityType::User => Some(db.collection(Self::COLLECTION_NAME_USERS)),
-            &AuditLogEntityType::Role => Some(db.collection(Self::COLLECTION_NAME_ROLES)),
-            &AuditLogEntityType::OAuthApplication => Some(db.collection(Self::COLLECTION_NAME_OAUTH_APPLICATIONS)),
-            &AuditLogEntityType::RegistrationToken => Some(db.collection(Self::COLLECTION_NAME_REGISTRATION_TOKENS)),
-            &AuditLogEntityType::Settings => Some(db.collection(Self::COLLECTION_NAME_SYSTEM)),
-            &AuditLogEntityType::Unknown => None,
+        match *entity_type {
+            AuditLogEntityType::User => Some(db.collection(Self::COLLECTION_NAME_USERS)),
+            AuditLogEntityType::Role => Some(db.collection(Self::COLLECTION_NAME_ROLES)),
+            AuditLogEntityType::OAuthApplication => {
+                Some(db.collection(Self::COLLECTION_NAME_OAUTH_APPLICATIONS))
+            }
+            AuditLogEntityType::RegistrationToken => {
+                Some(db.collection(Self::COLLECTION_NAME_REGISTRATION_TOKENS))
+            }
+            AuditLogEntityType::Passkey => Some(db.collection(Self::COLLECTION_NAME_PASSKEYS)),
+            AuditLogEntityType::Settings => Some(db.collection(Self::COLLECTION_NAME_SYSTEM)),
+            AuditLogEntityType::Unknown => None,
         }
     }
 }
