@@ -22,7 +22,7 @@ services:
     image: auth-rs-backend:latest
     container_name: auth-rs-backend
     ports:
-      - "8000:80"
+      - "8000:8000"
     depends_on:
       mongodb:
         condition: service_healthy
