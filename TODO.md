@@ -24,6 +24,7 @@
 - [x] show code users used to join in logs
 - [x] show code full warning
 - [x] add copy join url button to registration codes
+- [ ] "notification" popups in the bottom right corner -> success and error messages
 
 ## Both
 
