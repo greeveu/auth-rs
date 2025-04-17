@@ -21,5 +21,5 @@
 
 <div class="flex flex-col gap-[20px] items-center justify-center h-screen w-screen">
     <h1 class="text-3xl">Successfully logged out!</h1>
-    <p>Redirecting to <i>{redirect}</i> in {redirectCooldown > 0 ? redirectCooldown : 'now'}...</p>
+    <p>Redirecting to <i>{redirect.split('?')[0]}</i> in {redirectCooldown > 0 ? redirectCooldown : 'now'}...</p>
 </div>
