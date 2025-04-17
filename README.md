@@ -46,7 +46,7 @@ Before starting the services, ensure the following environment variables are pro
 
 #### Frontend Service (`auth-rs-frontend`)
 
-- **`VITE_PUBLIC_API_URL`**: The base URL for the backend API that the frontend will communicate with.  
+- **`PUBLIC_API_URL`**: The base URL for the backend API that the frontend will communicate with.  
   - **Example**: `https://yourdomain.com/api`.  
   - **Note**: Ensure this matches the actual URL where your backend is hosted.
 
