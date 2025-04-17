@@ -12,7 +12,7 @@
         Lock,
         CircleX
     } from "lucide-svelte";
-	import { INVALID_SCOPES } from "$lib/models/OAuthScopes";
+	import { INVALID_SCOPES, SCOPES } from "$lib/models/OAuthScopes";
 	import User from "$lib/models/User";
 	import OAuthApplication from "$lib/models/OAuthApplication";
 	import { apiUrl } from '$lib/store/config';
@@ -26,6 +26,7 @@
         clientId: string;
         state: string;
         scopes: string[];
+        invalidScopes: string[];
         redirect: string,
         redirectBase: string,
         activeSince: string,
@@ -33,6 +34,7 @@
         clientId: '',
         state: '',
         scopes: [],
+        invalidScopes: [],
         redirect: '',
         redirectBase: '',
         activeSince: ''
@@ -82,12 +84,15 @@
 
         let scopes = scope.split(',').map(s => s.toLowerCase());
         scopes = scopes.filter((scope) => !INVALID_SCOPES.includes(scope));
+
+        const invalidScopes = scopes.filter(scope => !Object.keys(SCOPES).includes(scope));
         scopes = scopes.filter(scope => scope.split(':')[1] != '*' ? !scopes.includes(`${scope.split(':')[0]}:*`): true);
 
         oAuthData = {
             clientId,
             state,
             scopes: scopes,
+            invalidScopes,
             redirect,
             redirectBase: url.origin,
             activeSince: ''
@@ -116,6 +121,20 @@
                     class="text-blue-500 cursor-pointer opacity-75 hover:opacity-100 text-[18px] transition-all"
                     href="/logout?redirect_uri={encodeURIComponent(currentPath ?? '/')}"
                 >&rarr; <i>Switch Account</i> &larr;</a>
+            </div>
+        {:else if oAuthData.scopes.length < 1 || oAuthData.invalidScopes.length > 0}
+            <div class="flex flex-col items-center justify-center text-center gap-[25px] max-w-[500px]">
+                <CircleX size="150" color="var(--color-red-500)" />
+                {#if oAuthData.invalidScopes.length > 0}
+                    <p>The following scopes are invalid:</p>
+                    <p class="opacity-75">{oAuthData.invalidScopes.join(', ')}</p>
+                {:else}
+                    <p>Invalid scopes requested!</p>
+                {/if}
+                <a
+                    class="text-blue-500 cursor-pointer opacity-75 hover:opacity-100 text-[18px] transition-all"
+                    href={oAuthData.redirect ?? '/'}
+                >&rarr; <i>Go back!</i> &larr;</a>
             </div>
         {:else}
             <div class="flex flex-col gap-2 items-center">
