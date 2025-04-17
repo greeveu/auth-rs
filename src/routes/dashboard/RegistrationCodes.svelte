@@ -192,7 +192,7 @@
                     on:click={() => showAddRegistrationTokenAutoRolesPopup = null}
                 >Close</p>
             {:else} 
-                <div class="flex flex-col items-center justify-center w-max-[400px] h-max-[400px] gap-[25px]">
+                <div class="flex flex-col items-center justify-center max-w-[600px] max-h-[300px] gap-[25px]">
                     <i class="text-[14px] text-[#777] w-[400px] text-center">Selected auto roles will automatically be added to users that register their account using this code.</i>
                     <div class="flex flex-wrap items-center justify-center overflow-y-scroll gap-[25px]">
                         {#each roles.filter(r => {

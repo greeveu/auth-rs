@@ -163,7 +163,7 @@
                 </div>
                 <p class="text-[12px] opacity-35 h-[20px]">Created at {DateUtils.getDateString(Role.getCreatedAt(role))}</p>
                 {#if role.system}
-                    <p class="text-[12px] opacity-35 h-[20px]">This is a system role wich cannot be edited or deleted.</p>
+                    <p class="text-[12px] opacity-35 h-[20px] max-w-[250px]">This is a system role wich cannot be edited or deleted.</p>
                 {/if}
             </div>
         {/each}

@@ -154,7 +154,7 @@
                     on:click={() => showAddUserRolesPopup = null}
                 >Close</p>
             {:else} 
-                <div class="flex flex-wrap items-center justify-center overflow-y-scroll w-max-[400px] h-max-[400px] gap-[25px]">
+                <div class="flex flex-wrap items-center justify-center overflow-y-scroll max-w-[500px] max-h-[300px] gap-[25px]">
                     {#each roles.filter(r => !users.find(u => u._id == showAddUserRolesPopup?._id)?.roles.includes(r._id)) as role}
                         <!-- svelte-ignore a11y_no_static_element_interactions -->
                         <!-- svelte-ignore a11y_click_events_have_key_events -->
