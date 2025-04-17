@@ -311,7 +311,7 @@
             <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
             <!-- svelte-ignore a11y_click_events_have_key_events -->
             <p
-                class="text-green-600 rounded-md text-[18px]"
+                class="text-green-600 rounded-md cursor-pointer text-[18px]"
                 style="margin-top: 25px;"
                 class:enabled={enablePassword.length > 0}
                 on:click={enablePassword.length > 0 ? () => {
