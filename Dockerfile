@@ -2,6 +2,9 @@ FROM oven/bun:1 AS builder
 
 WORKDIR /app
 
+LABEL org.opencontainers.image.source="https://github.com/timlohrer/auth-rs"
+LABEL org.opencontainers.image.authors="Tim Lohrer"
+
 # Copy package files
 COPY package.json package-lock.json bun.lockb .npmrc ./
 COPY .prettierrc .prettierignore ./
