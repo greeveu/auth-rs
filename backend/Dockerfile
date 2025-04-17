@@ -4,7 +4,7 @@ WORKDIR /app
 
 # Copy the actual source code
 COPY src ./src
-COPY Cargo.toml Cargo.lock Rocket.toml ./
+COPY Cargo.toml Rocket.toml ./
 
 ENV ROCKET_ADDRESS=0.0.0.0
 
