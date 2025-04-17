@@ -345,7 +345,7 @@
                     </div>
                 </div>
                 <p class="text-[12px] opacity-35 h-[10px]">Created at {DateUtils.getFullDateString(RegistrationToken.getCreatedAt(token))}</p>
-                {#if token.expiresIn == null}
+                {#if token.expiresIn == 0}
                     <p class="text-[12px] opacity-75 {token.uses.length >= token.maxUses ? 'h-[10px]' : 'h-[20px]'} text-green-600">Never expires!</p>
                 {:else if RegistrationToken.getExpiresAt(token)!.getTime() >= 0}
                     <p class="text-[12px] opacity-75 {token.uses.length >= token.maxUses ? 'h-[10px]' : 'h-[20px]'} text-green-600">Expires in {DateUtils.getDurationString(RegistrationToken.getExpiresAt(token)!.getTime())}</p>
