@@ -298,7 +298,7 @@
                 style="padding: 15px;"
             >
                 <div class="flex flex-row justify-between w-full gap-[20px]">
-                    <p class="text-[20px] font-bold h-[20px]">{user.firstName} {user.lastName}</p>
+                    <p class="text-[20px] font-bold h-[20px]">{`${user.firstName} ${user.lastName}`.length > 20 ? `${user.firstName} ${user.lastName}`.substring(0, 19) + '...' : `${user.firstName} ${user.lastName}`}</p>
                     <div class="flex flex-row">
                         <Tooltip tip="Edit User" bottom>
                             <!-- svelte-ignore a11y_click_events_have_key_events -->

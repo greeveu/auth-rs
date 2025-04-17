@@ -236,7 +236,7 @@
                         <!-- svelte-ignore a11y_no_static_element_interactions -->
                         <!-- svelte-ignore a11y_click_events_have_key_events -->
                         <div
-                            class="flex flex-col gap-[25px] min-w-[250px] max-w-[200px] min-h-[100px] border-[2px] border-[#333] rounded-md transition-all"
+                            class="flex flex-col gap-[25px] min-w-[250px] max-w-[400px] min-h-[100px] border-[2px] border-[#333] rounded-md transition-all"
                             class:items-start={passkey.id != 'REGISTER_BUTTON'}
                             class:items-center={passkey.id == 'REGISTER_BUTTON'}
                             class:justify-center={passkey.id == 'REGISTER_BUTTON'}
@@ -262,8 +262,8 @@
                                     {/if}
                                 </div>
                             {:else}
-                                <div class="flex flex-row justify-between w-full">
-                                    <p class="text-[20px] font-bold h-[20px]">{passkey.name}</p>
+                                <div class="flex flex-row justify-between gap-[20px] w-full">
+                                    <p class="text-[20px] font-bold h-[20px]">{passkey.name.length > 20 ? passkey.name.substring(0, 19) + '...' : passkey.name}</p>
                                     <div class="flex flex-row">
                                         <Tooltip tip="Edit Passkey" bottom>
                                             <!-- svelte-ignore a11y_click_events_have_key_events -->
