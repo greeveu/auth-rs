@@ -6,10 +6,11 @@
 	import TextInput from '$lib/components/global/TextInput.svelte';
 	import { goto } from '$app/navigation';
 	import { Circle } from 'svelte-loading-spinners';
-    import { Info, TicketCheck } from 'lucide-svelte';
+    import { TicketCheck } from 'lucide-svelte';
+	import { apiUrl } from '$lib/store/config';
 
-    const authStateManager = new AuthStateManager();
-    const api = new AuthRsApi();
+    const authStateManager = new AuthStateManager($apiUrl);
+    const api = new AuthRsApi($apiUrl);
     let settings: Settings | null = null;
     let step = 0;
 

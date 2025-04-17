@@ -1,3 +1,4 @@
+
 import AuthStateManager from "./auth";
 import type { AuditLog } from "./models/AuditLog";
 import type OAuthApplication from "./models/OAuthApplication";
@@ -16,24 +17,27 @@ import type UserUpdates from "./models/UserUpdates";
 import PasskeyUtils from "./passkeyUtils";
 
 class AuthRsApi {
-    public static baseUrl = import.meta.env.VITE_PUBLIC_API_URL ?? 'http://localhost/api';
+    private baseUrl: string;
     private token: string | null = null;
     private currentMfaFlowId: string | null = null;
 
-    constructor() {}
+    constructor(url: string) {
+        console.info('Base URL:', url);
+        this.baseUrl = url;
+    }
 
     setToken(token: string | null) {
         this.token = token;
     }
 
     async checkOnlineState(): Promise<boolean> {
-        const response = await fetch(AuthRsApi.baseUrl);
+        const response = await fetch(this.baseUrl);
 
         return response.ok;
     }
 
     async getSettings(): Promise<Settings> {
-        const response = await fetch(`${AuthRsApi.baseUrl}/settings`, {
+        const response = await fetch(`${this.baseUrl}/settings`, {
             method: 'GET'
         });
 
@@ -51,7 +55,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/admin/settings`, {
+        const response = await fetch(`${this.baseUrl}/admin/settings`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -70,7 +74,7 @@ class AuthRsApi {
     }
 
     async login(email: string, password: string) {
-        const response = await fetch(`${AuthRsApi.baseUrl}/auth/login`, {
+        const response = await fetch(`${this.baseUrl}/auth/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -85,7 +89,7 @@ class AuthRsApi {
 
                 return data.data;
             }
-            new AuthStateManager().setToken(data.data.token);
+            new AuthStateManager(this.baseUrl).setToken(data.data.token);
             this.token = data.data.token;
             return data.data;
         } else {
@@ -99,7 +103,7 @@ class AuthRsApi {
             throw new Error('No MFA flow ID');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/auth/mfa`, {
+        const response = await fetch(`${this.baseUrl}/auth/mfa`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -109,7 +113,7 @@ class AuthRsApi {
 
         if (response.ok) {
             const data = await response.json();
-            new AuthStateManager().setToken(data.data.token);
+            new AuthStateManager(this.baseUrl).setToken(data.data.token);
             this.token = data.data.token;
             return data.data;
         } else {
@@ -119,7 +123,7 @@ class AuthRsApi {
     }
 
     async startPasskeyAuth() {
-        const startResponse = await fetch(`${AuthRsApi.baseUrl}/auth/passkeys/authenticate/start`);
+        const startResponse = await fetch(`${this.baseUrl}/auth/passkeys/authenticate/start`);
 
         if (!startResponse.ok) {
             console.error((await startResponse.json()));
@@ -141,7 +145,7 @@ class AuthRsApi {
             throw new Error('No credential created!');
         }
 
-        const finishResponse = await fetch(`${AuthRsApi.baseUrl}/auth/passkeys/authenticate/finish`, {
+        const finishResponse = await fetch(`${this.baseUrl}/auth/passkeys/authenticate/finish`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -168,7 +172,7 @@ class AuthRsApi {
 
         if (finishResponse.ok) {
             const finishData = await finishResponse.json();
-            new AuthStateManager().setToken(finishData.data.token);
+            new AuthStateManager(this.baseUrl).setToken(finishData.data.token);
             this.token = finishData.data.token;
             return finishData.data;
         } else {
@@ -182,7 +186,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/users/${user._id}/mfa/totp/enable`, {
+        const response = await fetch(`${this.baseUrl}/users/${user._id}/mfa/totp/enable`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -208,7 +212,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/users/${user._id}/mfa/totp/disable`, {
+        const response = await fetch(`${this.baseUrl}/users/${user._id}/mfa/totp/disable`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -227,7 +231,7 @@ class AuthRsApi {
     }
 
     async createUser(email: string, password: string, firstName: string, lastName: string, registrationCode: string | null): Promise<User> {
-        const response = await fetch(`${AuthRsApi.baseUrl}/users`, {
+        const response = await fetch(`${this.baseUrl}/users`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -250,7 +254,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/users/@me`, {
+        const response = await fetch(`${this.baseUrl}/users/@me`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${this.token}`,
@@ -271,7 +275,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/users`, {
+        const response = await fetch(`${this.baseUrl}/users`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${this.token}`,
@@ -292,7 +296,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const startResponse = await fetch(`${AuthRsApi.baseUrl}/passkeys/register/start?type=${type}`, {
+        const startResponse = await fetch(`${this.baseUrl}/passkeys/register/start?type=${type}`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${this.token}`,
@@ -324,7 +328,7 @@ class AuthRsApi {
             throw new Error('No credential created!');
         }
 
-        const finishResponse = await fetch(`${AuthRsApi.baseUrl}/passkeys/register/finish`, {
+        const finishResponse = await fetch(`${this.baseUrl}/passkeys/register/finish`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -364,7 +368,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/users/${userId}/passkeys`, {
+        const response = await fetch(`${this.baseUrl}/users/${userId}/passkeys`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${this.token}`,
@@ -385,7 +389,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/passkeys`, {
+        const response = await fetch(`${this.baseUrl}/passkeys`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${this.token}`,
@@ -406,7 +410,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/passkeys/${passkeyId}`, {
+        const response = await fetch(`${this.baseUrl}/passkeys/${passkeyId}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -429,7 +433,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/passkeys/${passkeyId}`, {
+        const response = await fetch(`${this.baseUrl}/passkeys/${passkeyId}`, {
             method: 'DELETE',
             headers: {
                 Authorization: `Bearer ${this.token}`,
@@ -450,7 +454,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/users/${user._id}`, {
+        const response = await fetch(`${this.baseUrl}/users/${user._id}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -473,7 +477,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/users/${user._id}`, {
+        const response = await fetch(`${this.baseUrl}/users/${user._id}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
@@ -495,7 +499,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/roles`, {
+        const response = await fetch(`${this.baseUrl}/roles`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -518,7 +522,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/roles`, {
+        const response = await fetch(`${this.baseUrl}/roles`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${this.token}`,
@@ -539,7 +543,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/roles/${roleId}`, {
+        const response = await fetch(`${this.baseUrl}/roles/${roleId}`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${this.token}`,
@@ -560,7 +564,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/roles/${role._id}`, {
+        const response = await fetch(`${this.baseUrl}/roles/${role._id}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -583,7 +587,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/roles/${role._id}`, {
+        const response = await fetch(`${this.baseUrl}/roles/${role._id}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
@@ -605,7 +609,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/users/${user._id}/connections`, {
+        const response = await fetch(`${this.baseUrl}/users/${user._id}/connections`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${this.token}`,
@@ -626,7 +630,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/connections/${connection.application._id}`, {
+        const response = await fetch(`${this.baseUrl}/connections/${connection.application._id}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
@@ -648,7 +652,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/oauth-applications`, {
+        const response = await fetch(`${this.baseUrl}/oauth-applications`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -676,7 +680,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/oauth-applications/${clientId}`, {
+        const response = await fetch(`${this.baseUrl}/oauth-applications/${clientId}`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${this.token}`,
@@ -697,7 +701,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/oauth-applications`, {
+        const response = await fetch(`${this.baseUrl}/oauth-applications`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${this.token}`,
@@ -718,7 +722,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/oauth/authorize`, {
+        const response = await fetch(`${this.baseUrl}/oauth/authorize`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -745,7 +749,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/oauth-applications/${application._id}`, {
+        const response = await fetch(`${this.baseUrl}/oauth-applications/${application._id}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -768,7 +772,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/oauth-applications/${application._id}`, {
+        const response = await fetch(`${this.baseUrl}/oauth-applications/${application._id}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
@@ -792,9 +796,9 @@ class AuthRsApi {
 
         let url: string;
         if (user) {
-            url = `${AuthRsApi.baseUrl}/users/${user._id}/audit-logs`;
+            url = `${this.baseUrl}/users/${user._id}/audit-logs`;
         } else {
-            url = `${AuthRsApi.baseUrl}/audit-logs`;
+            url = `${this.baseUrl}/audit-logs`;
         }
 
         const response = await fetch(url, {
@@ -818,7 +822,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/users`, {
+        const response = await fetch(`${this.baseUrl}/users`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${this.token}`,
@@ -839,7 +843,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/registration-tokens`, {
+        const response = await fetch(`${this.baseUrl}/registration-tokens`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -862,7 +866,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/registration-tokens/${tokenId}`, {
+        const response = await fetch(`${this.baseUrl}/registration-tokens/${tokenId}`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${this.token}`,
@@ -883,7 +887,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/registration-tokens`, {
+        const response = await fetch(`${this.baseUrl}/registration-tokens`, {
             method: 'GET',
             headers: {
                 Authorization: `Bearer ${this.token}`,
@@ -904,7 +908,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/registration-tokens/${token._id}`, {
+        const response = await fetch(`${this.baseUrl}/registration-tokens/${token._id}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -927,7 +931,7 @@ class AuthRsApi {
             throw new Error('No token');
         }
 
-        const response = await fetch(`${AuthRsApi.baseUrl}/registration-tokens/${token._id}`, {
+        const response = await fetch(`${this.baseUrl}/registration-tokens/${token._id}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',

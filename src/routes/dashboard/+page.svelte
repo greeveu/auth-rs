@@ -20,9 +20,10 @@
 	import type RegistrationToken from '$lib/models/RegistrationToken';
 	import RegistrationCodes from './RegistrationCodes.svelte';
 	import type Passkey from '$lib/models/Passkey';
+	import { apiUrl } from '$lib/store/config';
 
-    const authStateManager = new AuthStateManager();
-    let api = new AuthRsApi();
+    const authStateManager = new AuthStateManager($apiUrl);
+    let api = new AuthRsApi($apiUrl);
 
     let currentTabIndex = 0;
 

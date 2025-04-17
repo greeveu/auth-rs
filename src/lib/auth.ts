@@ -3,7 +3,10 @@ import AuthRsApi from "./api";
 import type User from "./models/User";
 
 class AuthStateManager {
-    constructor() {}
+    private apiUrl: string;
+    constructor(apiUrl: string) {
+        this.apiUrl = apiUrl;
+    }
 
     getToken() {
         return localStorage.getItem('token');
@@ -20,7 +23,7 @@ class AuthStateManager {
     async handlePageLoad(params: string[] | null = null): Promise<[AuthRsApi, User] | null> {
         const token = this.getToken();
         if (token) {
-            const api = new AuthRsApi();
+            const api = new AuthRsApi(this.apiUrl);
             api.setToken(token);
             try {
                 const user = await api.getCurrentUser();

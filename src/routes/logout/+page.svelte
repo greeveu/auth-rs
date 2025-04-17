@@ -1,12 +1,13 @@
 <script lang="ts">
     import AuthStateManager from "$lib/auth";
+	import { apiUrl } from "$lib/store/config";
     import { onMount } from "svelte";
 
     let redirectCooldown = 3;
     let redirect: string = '/login';
 
     onMount(() => {
-        new AuthStateManager().clearToken();
+        new AuthStateManager($apiUrl).clearToken();
 
         redirect =  new URL(window.location.href).searchParams.get('redirect_uri') ?? '/login';
         setInterval(() => {

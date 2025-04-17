@@ -7,9 +7,10 @@
 	import { onMount, tick } from "svelte";
 	import type Settings from '$lib/models/Settings';
 	import TextInput from '$lib/components/global/TextInput.svelte';
+	import { apiUrl } from '$lib/store/config';
 
-    const authStateManager = new AuthStateManager();
-    const api = new AuthRsApi();
+    const authStateManager = new AuthStateManager($apiUrl);
+    const api = new AuthRsApi($apiUrl);
     let settings: Settings | null = null;
     let step = 0;
     let supportsPasskeys = false;

@@ -14,6 +14,7 @@
 	import { INVALID_SCOPES } from "$lib/models/OAuthScopes";
 	import type User from "$lib/models/User";
 	import OAuthApplication from "$lib/models/OAuthApplication";
+	import { apiUrl } from '$lib/store/config';
 
     let api: AuthRsApi | null = null;
     let user: User | null = null;
@@ -69,7 +70,7 @@
             return;
         }
         
-        const pageData = await new AuthStateManager().handlePageLoad([`redirect_uri=${encodeURIComponent(currentPath)}`]);
+        const pageData = await new AuthStateManager($apiUrl).handlePageLoad([`redirect_uri=${encodeURIComponent(currentPath)}`]);
         api = pageData?.[0] ?? null;
         user = pageData?.[1] ?? null;
 
