@@ -130,7 +130,7 @@
                     showNewRegistrationTokenPopup = false;
                     newRegistrationTokenExpiresInInput = getExpiresIn(newRegistrationTokeneEpiresInIndex, newRegistrationTokenExpiresInInput);
 
-                    api.createRegistrationToken(newRegistrationTokenMaxUses, newRegistrationTokenExpiresInInput)
+                    api.createRegistrationToken(newRegistrationTokenMaxUses, newRegistrationTokenExpiresInInput > 0 ? newRegistrationTokenExpiresInInput : null)
                         .then(createdRegistrationToken => {
                             registrationTokens = [...registrationTokens, createdRegistrationToken]
                         })
@@ -165,7 +165,7 @@
                     editRegistrationTokenPopup = false;
                     editRegistrationTokenExpiresIn = getExpiresIn(editRegistrationTokenExpiresInIndex, editRegistrationTokenExpiresInInput);
 
-                    api.updateRegistrationToken(editRegistrationToken!, new RegistrationTokenUpdates({ maxUses: editRegistrationTokenMaxUses, expiresIn: editRegistrationTokenExpiresIn, autoRoles: null }))
+                    api.updateRegistrationToken(editRegistrationToken!, new RegistrationTokenUpdates({ maxUses: editRegistrationTokenMaxUses, expiresIn: editRegistrationTokenExpiresIn < 1 ? null : editRegistrationTokenExpiresIn, autoRoles: null }))
                         .then(editedRegistrationToken => {
                             registrationTokens[registrationTokens.map(user => user._id).indexOf(editRegistrationToken!._id)] = editedRegistrationToken;
                         })
@@ -345,9 +345,9 @@
                     </div>
                 </div>
                 <p class="text-[12px] opacity-35 h-[10px]">Created at {DateUtils.getFullDateString(RegistrationToken.getCreatedAt(token))}</p>
-                {#if token.expiresIn == 0}
+                {#if token.expiresIn == null || token.expiresIn == 0}
                     <p class="text-[12px] opacity-75 {token.uses.length >= token.maxUses ? 'h-[10px]' : 'h-[20px]'} text-green-600">Never expires!</p>
-                {:else if RegistrationToken.getExpiresAt(token)!.getTime() >= 0}
+                {:else if RegistrationToken.getExpiresAt(token)?.getTime() ?? 0 >= 0}
                     <p class="text-[12px] opacity-75 {token.uses.length >= token.maxUses ? 'h-[10px]' : 'h-[20px]'} text-green-600">Expires in {DateUtils.getDurationString(RegistrationToken.getExpiresAt(token)!.getTime())}</p>
                 {:else}
                     <p class="text-[12px] opacity-75 {token.uses.length >= token.maxUses ? 'h-[10px]' : 'h-[20px]'} text-red-600">Expired!</p>
