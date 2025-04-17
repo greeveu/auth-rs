@@ -9,7 +9,7 @@
     import { TicketCheck } from 'lucide-svelte';
 	import { apiUrl } from '$lib/store/config';
 
-    const authStateManager = new AuthStateManager($apiUrl);
+    new AuthStateManager($apiUrl);
     const api = new AuthRsApi($apiUrl);
     let settings: Settings | null = null;
     let step = 0;
@@ -25,7 +25,7 @@
     let redirect: string | null = null;
     let registrationCode: string | null = null;
 
-    $: dataIsValid = email != '' && password != '' && confirmPassword != '' && firstName != '' && lastName != '' && email.includes('@') && email.includes('.') && password.length >= 8 && password == confirmPassword;
+    $: dataIsValid = email != '' && password != '' && confirmPassword != '' && firstName != '' && email.includes('@') && email.includes('.') && password.length >= 8 && password == confirmPassword;
 
     async function register() {
         if (!dataIsValid) {

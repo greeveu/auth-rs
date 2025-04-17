@@ -237,7 +237,7 @@ class AuthRsApi {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${this.token}`,
             },
-            body: JSON.stringify({ email, password, firstName, lastName, registrationCode }),
+            body: JSON.stringify({ email, password, firstName, lastName: lastName.length > 0 ? lastName : null, registrationCode }),
         });
 
         if (response.ok) {
