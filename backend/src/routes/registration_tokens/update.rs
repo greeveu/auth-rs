@@ -85,7 +85,7 @@ impl RegistrationTokenUpdate {
         if self.token.expires_in != new_expires_in {
             let old_expires_in = self.token.expires_in;
             self.token.expires_in = if new_expires_in.is_some() {
-                Some(new_expires_in)
+                new_expires_in
             } else {
                 None
             };
@@ -97,10 +97,10 @@ impl RegistrationTokenUpdate {
             self.update_field(
                 "expires_in",
                 old_expires_in
-                    .map(|v| v.to_string())
+                    .map(|v| format!("{:?}", v))
                     .unwrap_or("None".to_string()),
                 Some(new_expires_in)
-                    .map(|v| v.to_string())
+                    .map(|v| format!("{:?}", v))
                     .unwrap_or("None".to_string()),
             );
         }
