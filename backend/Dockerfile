@@ -6,6 +6,8 @@ WORKDIR /app
 COPY src ./src
 COPY Cargo.toml Cargo.lock Rocket.toml ./
 
+ENV ROCKET_ADDRESS=0.0.0.0
+
 # install required packages
 RUN apt-get update -y && \
     apt-get install -y pkg-config make g++ libssl-dev && \
