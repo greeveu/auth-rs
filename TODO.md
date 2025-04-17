@@ -25,8 +25,9 @@
 - [x] show code full warning
 - [x] add copy join url button to registration codes
 - [ ] "notification" popups in the bottom right corner -> success and error messages
-- [ ] passkey name overflow fix
-- [ ] display info for system user on oauth screen
+- [x] passkey name overflow fix
+- [x] display info for system user on oauth screen
+- [x] show invalid oauth scopes
 
 ## Both
 
