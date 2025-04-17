@@ -81,15 +81,15 @@ impl RegistrationTokenUpdate {
         }
     }
 
-    fn update_expires_in(&mut self, new_expires_in: u64) {
-        if self.token.expires_in != Some(new_expires_in) {
+    fn update_expires_in(&mut self, new_expires_in: Option<u64>) {
+        if self.token.expires_in != new_expires_in {
             let old_expires_in = self.token.expires_in;
-            self.token.expires_in = if new_expires_in > 0 {
+            self.token.expires_in = if new_expires_in.is_some() {
                 Some(new_expires_in)
             } else {
                 None
             };
-            self.token.expires_from = if new_expires_in > 0 {
+            self.token.expires_from = if new_expires_in.is_some() {
                 Some(DateTime::now())
             } else {
                 None
@@ -203,9 +203,7 @@ async fn update_registration_token_internal(
         update.update_max_uses(max_uses);
     }
 
-    if let Some(expires_in) = data.expires_in {
-        update.update_expires_in(expires_in);
-    }
+    update.update_expires_in(data.expires_in);
 
     if let Some(auto_roles) = data.auto_roles {
         update.update_roles(auto_roles, &db).await?;
