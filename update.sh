@@ -1,0 +1,1 @@
+docker pull timlohrer/auth-rs-backend && docker pull timlohrer/auth-rs-frontend && docker compose down auth-rs-frontend && docker compose down auth-rs-backend && docker compose up auth-rs-backend -d && docker compose up auth-rs-frontend -d
