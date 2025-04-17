@@ -9,8 +9,6 @@ services:
     # environment:
       # - MONGO_INITDB_ROOT_USERNAME= optional -> has to be included in the backend mongo_uri variable if you use it
       # - MONGO_INITDB_ROOT_PASSWORD= optional -> has to be included in the backend mongo_uri variable if you use it
-    networks:
-      - auth-rs-network
     healthcheck:
       test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 10s
@@ -34,9 +32,6 @@ services:
       - WEBAUTHN_RP_ORIGIN= # https://subdomain.yourdomain.com -> enter the url of your frontend
       - WEBAUTHN_RP_NAME=auth-rs # The name of the RP (Relying Party) that will be displayed to the user !Do not include spaces or special characters!
       - TOTP_ISSUER_NAME=auth-rs # The name of the TOTP issuer that will be displayed to the user !Do not include spaces or special characters!
-    networks:
-      - auth-rs-network
-      - auth-rs-public
     restart: unless-stopped
 
   frontend:
@@ -48,16 +43,7 @@ services:
       - backend
     environment:
       - VITE_PUBLIC_API_URL=https://yourdomain.com/api
-    networks:
-      - auth-rs-network
-      - auth-rs-public
     restart: unless-stopped
-
-networks:
-  auth-rs-network:
-    driver: bridge
-  auth-rs-public:
-    driver: host
 
 volumes:
   mongodb_data:
