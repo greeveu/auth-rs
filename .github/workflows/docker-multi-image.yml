@@ -48,7 +48,9 @@ jobs:
         push: true
         tags: |
           timlohrer/auth-rs-frontend:${{ steps.extract_tag.outputs.VERSION }}
+          timlohrer/auth-rs-frontend:latest
           ghcr.io/timlohrer/auth-rs-frontend:${{ steps.extract_tag.outputs.VERSION }}
+          ghcr.io/timlohrer/auth-rs-frontend:latest
         labels: |
           org.opencontainers.image.source=https://github.com/timlohrer/auth-rs
 
@@ -60,7 +62,9 @@ jobs:
         file: ./backend/Dockerfile
         push: true
         tags: |
-          timlohrer/auth-rs-backend:${{ steps.extract_tag.outputs.VERSION }}
-          ghcr.io/timlohrer/auth-rs-backend:${{ steps.extract_tag.outputs.VERSION }}
+          timlohrer/auth-rs-frontend:${{ steps.extract_tag.outputs.VERSION }}
+          timlohrer/auth-rs-frontend:latest
+          ghcr.io/timlohrer/auth-rs-frontend:${{ steps.extract_tag.outputs.VERSION }}
+          ghcr.io/timlohrer/auth-rs-frontend:latest
         labels: |
           org.opencontainers.image.source=https://github.com/timlohrer/auth-rs
