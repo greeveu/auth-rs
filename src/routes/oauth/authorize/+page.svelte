@@ -16,6 +16,7 @@
 	import User from "$lib/models/User";
 	import OAuthApplication from "$lib/models/OAuthApplication";
 	import { apiUrl } from '$lib/store/config';
+	import DateUtils from '$lib/dateUtils';
 
     let api: AuthRsApi | null = null;
     let user: User | null = null;
@@ -101,7 +102,7 @@
         api.getOAuthApplication(clientId)
             .then((app) => {
                 oAuthApplication = app;
-                oAuthData.activeSince = `${OAuthApplication.getCreatedAt(app).getDate()}.${OAuthApplication.getCreatedAt(app).getMonth() + 1}.${OAuthApplication.getCreatedAt(app).getFullYear()}`;
+                oAuthData.activeSince = `${DateUtils.getDateString(OAuthApplication.getCreatedAt(app))}`;
             })
             .catch((err) => {
                 console.error('Failed to load OAuth application data!', err);
@@ -122,7 +123,7 @@
                     href="/logout?redirect_uri={encodeURIComponent(currentPath ?? '/')}"
                 >&rarr; <i>Switch Account</i> &larr;</a>
             </div>
-        {:else if oAuthData.scopes.length < 1 || oAuthData.invalidScopes.length > 0}
+        {:else if oAuthData.clientId.length > 0 && (oAuthData.scopes.length < 1 || oAuthData.invalidScopes.length > 0)}
             <div class="flex flex-col items-center justify-center text-center gap-[25px] max-w-[500px]">
                 <CircleX size="150" color="var(--color-red-500)" />
                 {#if oAuthData.invalidScopes.length > 0}
@@ -163,7 +164,7 @@
                     <SquareArrowOutUpRight class="w-[20px] h-[20px] opacity-50" />
                     <p class="text-[11px]">
                         <span class="opacity-50">Once you authorize you will be redirected to:</span>
-                        <span class="font-bold opacity-85"><br>{oAuthData.redirectBase}</span>
+                        <span class="font-bold opacity-85">{oAuthData.redirectBase}</span>
                     </p>
                 </div>
                 <div class="flex flex-row items-center gap-[12.5px]">
