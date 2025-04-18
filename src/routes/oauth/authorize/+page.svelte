@@ -94,7 +94,7 @@
             scopes: scopes,
             invalidScopes,
             redirect,
-            redirectBase: url.origin,
+            redirectBase: new URL(decodeURIComponent(redirect)).origin,
             activeSince: ''
         };
 
@@ -163,7 +163,7 @@
                     <SquareArrowOutUpRight class="w-[20px] h-[20px] opacity-50" />
                     <p class="text-[11px]">
                         <span class="opacity-50">Once you authorize you will be redirected to:</span>
-                        <span class="font-bold opacity-85">{oAuthData.redirectBase}</span>
+                        <span class="font-bold opacity-85"><br>{oAuthData.redirectBase}</span>
                     </p>
                 </div>
                 <div class="flex flex-row items-center gap-[12.5px]">
