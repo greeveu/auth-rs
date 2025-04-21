@@ -77,10 +77,16 @@ impl UserUpdate {
         self.modified = true;
     }
 
-    fn update_email(&mut self, new_email: String) -> UserResult<()> {
+    async fn update_email(&mut self, new_email: String, db: &Connection<AuthRsDatabase>) -> UserResult<()> {
         if self.user.email != new_email {
             if !new_email.contains(".") || !new_email.contains("@") || new_email.len() < 5 {
                 return Err(UserError::InvalidEmail);
+            }
+            if User::get_by_email(&new_email, &db)
+                .await
+                .is_ok()
+            {
+                return Err(UserError::EmailAlreadyExists(new_email));
             }
             let old_email = self.user.email.clone();
             self.update_field("email", old_email, new_email.clone());
@@ -267,7 +273,7 @@ async fn update_user_internal(
 
     // Apply updates
     if let Some(email) = data.email {
-        update.update_email(email)?;
+        update.update_email(email, &db).await?;
     }
 
     if let Some(password) = data.password {
