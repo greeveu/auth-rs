@@ -174,7 +174,7 @@ impl UserUpdate {
         }
 
         // Admin role assignment check
-        if final_roles.contains(&ADMIN_ROLE_ID) && !req_user.is_system_admin() {
+        if final_roles.contains(&ADMIN_ROLE_ID) && !self.user.roles.contains(&ADMIN_ROLE_ID) && !req_user.is_system_admin() {
             return Err(UserError::AdminRoleAssignment);
         }
 

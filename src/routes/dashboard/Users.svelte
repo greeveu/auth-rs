@@ -74,7 +74,7 @@
             password: null, 
             firstName: null, 
             lastName: null, 
-            roles: user.roles.filter(r => r._id != role._id).map(r => r._id), 
+            roles: user.roles.filter(r => r != role._id), 
             disabled: null 
         });
         api.updateUser(user, updates)
