@@ -88,8 +88,8 @@ pub async fn get_oauth_token(
 
 #[allow(unused)]
 #[post(
-    "/oauth/token",
-    format = "application/json",
+    "/oauth/token/json",
+    format = "json",
     data = "<data>"
 )]
 pub async fn get_oauth_token_json(
