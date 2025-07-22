@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Security from './Security.svelte';
 	import SidebarButton from '$lib/components/dashboard/SidebarButton.svelte';
+	import VersionInfo from '$lib/components/dashboard/VersionInfo.svelte';
 	import Profile from './Profile.svelte';
 	import AuthRsApi from "$lib/api";
 	import AuthStateManager from "$lib/auth";
@@ -84,7 +85,10 @@
                     {/if}
                 {/each}
             </div>
-            <SidebarButton tab={{ name: 'Logout', icon: 'log-out' }} active={false} selectTab={() => authStateManager.logout()} isLogout={true} />
+            <div class="flex flex-col items-center gap-[10px]">
+                <SidebarButton tab={{ name: 'Logout', icon: 'log-out' }} active={false} selectTab={() => authStateManager.logout()} isLogout={true} />
+                <VersionInfo />
+            </div>
         </div>
         <!-- svelte-ignore element_invalid_self_closing_tag -->
         <div class="w-[4px] h-[90%] bg-[#333] rounded-[2px]" style="margin: 0 15px 0 7.5px;" />

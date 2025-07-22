@@ -46,6 +46,8 @@ jobs:
         context: .
         file: ./Dockerfile
         push: true
+        build-args: |
+          VERSION=${{ steps.extract_tag.outputs.VERSION }}
         tags: |
           timlohrer/auth-rs-frontend:${{ steps.extract_tag.outputs.VERSION }}
           timlohrer/auth-rs-frontend:latest

@@ -6,5 +6,8 @@ export default defineConfig({
 	plugins: [sveltekit(), tailwindcss()],
 	server: {
 		allowedHosts: true
+	},
+	define: {
+		__VERSION__: JSON.stringify(process.env.VITE_VERSION || 'dev')
 	}
 });

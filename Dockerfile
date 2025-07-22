@@ -1,5 +1,8 @@
 FROM oven/bun:1 AS builder
 
+# Accept version as build argument
+ARG VERSION=dev
+
 WORKDIR /app
 
 LABEL org.opencontainers.image.source="https://github.com/timlohrer/auth-rs"
@@ -16,6 +19,9 @@ RUN bun install
 COPY src/ ./src/
 COPY static/ ./static/
 COPY svelte.config.js tsconfig.json vite.config.ts ./
+
+# Set environment variable for build
+ENV VITE_VERSION=$VERSION
 
 # Build the application
 RUN bun run build
