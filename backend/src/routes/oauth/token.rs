@@ -95,7 +95,7 @@ pub async fn get_oauth_token(
 pub async fn get_oauth_token_json(
     db: Connection<AuthRsDatabase>,
     data: Json<TokenOAuthJsonData>,
-) -> (Status, Option<Json<TokenOAuthResponse>>) {
+) -> (Status, Option<Json<Option<TokenOAuthResponse>>>) {
     let data = data.into_inner();
 
     match handle_token_request(
@@ -106,8 +106,8 @@ pub async fn get_oauth_token_json(
         data.code,
         data.redirect_uri,
     ).await {
-        Ok(response) => (Status::Ok, Some(Json(response))),
-        Err(status) => (status, None),
+        Ok(response) => (Status::Ok, Some(Json(Some(response)))),
+        Err(status) => (status, Some(Json(None))),
     }
 }
 
