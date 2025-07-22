@@ -29,6 +29,16 @@ pub struct TokenOAuthFieldData {
     pub redirect_uri: String,
 }
 
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(crate = "rocket::serde")]
+pub struct TokenOAuthJsonData {
+    pub client_id: String,
+    pub client_secret: String,
+    pub grant_type: String,
+    pub code: u32,
+    pub redirect_uri: String,
+}
+
 #[derive(Debug, Deserialize)]
 #[serde(crate = "rocket::serde")]
 #[serde(rename_all = "camelCase")]
@@ -63,25 +73,72 @@ pub async fn get_oauth_token(
 ) -> (Status, Option<Json<TokenOAuthResponse>>) {
     let form_data = data.into_inner();
 
-    let client_id = match Uuid::parse_str(&form_data.client_id) {
+    match handle_token_request(
+        db,
+        form_data.client_id,
+        form_data.client_secret,
+        form_data.grant_type,
+        form_data.code,
+        form_data.redirect_uri,
+    ).await {
+        Ok(response) => (Status::Ok, Some(Json(response))),
+        Err(status) => (status, None),
+    }
+}
+
+#[allow(unused)]
+#[post(
+    "/oauth/token",
+    format = "application/json",
+    data = "<data>"
+)]
+pub async fn get_oauth_token_json(
+    db: Connection<AuthRsDatabase>,
+    data: Json<TokenOAuthJsonData>,
+) -> (Status, Option<Json<TokenOAuthResponse>>) {
+    let data = data.into_inner();
+
+    match handle_token_request(
+        db,
+        data.client_id,
+        data.client_secret,
+        data.grant_type,
+        data.code,
+        data.redirect_uri,
+    ).await {
+        Ok(response) => (Status::Ok, Some(Json(response))),
+        Err(status) => (status, None),
+    }
+}
+
+
+async fn handle_token_request(
+    db: Connection<AuthRsDatabase>,
+    client_id: String,
+    client_secret: String,
+    grant_type: String,
+    code: u32,
+    redirect_uri: String,
+) -> Result<TokenOAuthResponse, Status> {
+    let client_id = match Uuid::parse_str(&client_id) {
         Ok(client_id) => client_id,
-        Err(_) => return (Status::BadRequest, None),
+        Err(_) => return Err(Status::BadRequest),
     };
 
     let data = TokenOAuthData {
         client_id,
-        client_secret: form_data.client_secret,
-        grant_type: form_data.grant_type,
+        client_secret: client_secret,
+        grant_type: grant_type,
         user_id: None,
-        code: form_data.code,
+        code: code,
         scope: None,
-        redirect_uri: form_data.redirect_uri,
+        redirect_uri: redirect_uri,
     };
 
     let mut codes = OAUTH_CODES.lock().await;
     let code_data = match codes.get(&data.code) {
         Some(code_data) => code_data,
-        None => return (Status::Unauthorized, None),
+        None => return Err(Status::Unauthorized),
     };
 
     if code_data.client_id != data.client_id
@@ -89,7 +146,7 @@ pub async fn get_oauth_token(
         || code_data.client_secret.trim() != data.client_secret.trim()
         || code_data.redirect_uri.trim() != data.redirect_uri.trim()
     {
-        return (Status::Unauthorized, None);
+        return Err(Status::Unauthorized);
     }
 
     let mut existing_tokens = match OAuthToken::get_by_user_and_application_id(
@@ -100,7 +157,7 @@ pub async fn get_oauth_token(
     .await
     {
         Ok(tokens) => tokens,
-        Err(err) => return (Status::BadRequest, None),
+        Err(_) => return Err(Status::BadRequest),
     };
 
     let token = if !existing_tokens.is_empty() {
@@ -125,7 +182,7 @@ pub async fn get_oauth_token(
         .await
         {
             Ok(token) => token,
-            Err(_) => return (Status::InternalServerError, None),
+            Err(_) => return Err(Status::InternalServerError),
         }
     };
 
@@ -133,18 +190,15 @@ pub async fn get_oauth_token(
 
     drop(codes);
 
-    (
-        Status::Ok,
-        Some(Json(TokenOAuthResponse {
-            access_token: token.token.to_string(),
-            token_type: "Bearer".to_string(),
-            expires_in: token.expires_in,
-            scope: token
-                .scope
-                .iter()
-                .map(|s| s.to_string())
-                .collect::<Vec<String>>()
-                .join(","),
-        })),
-    )
+    Ok(TokenOAuthResponse {
+        access_token: token.token.to_string(),
+        token_type: "Bearer".to_string(),
+        expires_in: token.expires_in,
+        scope: token
+            .scope
+            .iter()
+            .map(|s| s.to_string())
+            .collect::<Vec<String>>()
+            .join(","),
+    })
 }
