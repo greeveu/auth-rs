@@ -49,12 +49,12 @@ jobs:
         build-args: |
           VERSION=${{ steps.extract_tag.outputs.VERSION }}
         tags: |
-          timlohrer/auth-rs-frontend:${{ steps.extract_tag.outputs.VERSION }}
-          timlohrer/auth-rs-frontend:latest
-          ghcr.io/timlohrer/auth-rs-frontend:${{ steps.extract_tag.outputs.VERSION }}
-          ghcr.io/timlohrer/auth-rs-frontend:latest
+          greeveu/auth-rs-frontend:${{ steps.extract_tag.outputs.VERSION }}
+          greeveu/auth-rs-frontend:latest
+          ghcr.io/greeveu/auth-rs-frontend:${{ steps.extract_tag.outputs.VERSION }}
+          ghcr.io/greeveu/auth-rs-frontend:latest
         labels: |
-          org.opencontainers.image.source=https://github.com/timlohrer/auth-rs
+          org.opencontainers.image.source=https://github.com/greeveu/auth-rs
 
     ### BACKEND IMAGE ###
     - name: Build & Push Backend Image (Docker Hub + GHCR)
@@ -64,9 +64,9 @@ jobs:
         file: ./backend/Dockerfile
         push: true
         tags: |
-          timlohrer/auth-rs-backend:${{ steps.extract_tag.outputs.VERSION }}
-          timlohrer/auth-rs-backend:latest
-          ghcr.io/timlohrer/auth-rs-backend:${{ steps.extract_tag.outputs.VERSION }}
-          ghcr.io/timlohrer/auth-rs-backend:latest
+          greeveu/auth-rs-backend:${{ steps.extract_tag.outputs.VERSION }}
+          greeveu/auth-rs-backend:latest
+          ghcr.io/greeveu/auth-rs-backend:${{ steps.extract_tag.outputs.VERSION }}
+          ghcr.io/greeveu/auth-rs-backend:latest
         labels: |
-          org.opencontainers.image.source=https://github.com/timlohrer/auth-rs
+          org.opencontainers.image.source=https://github.com/greeveu/auth-rs

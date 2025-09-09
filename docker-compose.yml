@@ -17,7 +17,7 @@ services:
       start_period: 10s
 
   backend:
-    image: timlohrer/auth-rs-backend:latest
+    image: greeveu/auth-rs-backend:latest
     container_name: auth-rs-backend
     ports:
       - "8000:8000"
@@ -36,7 +36,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    image: timlohrer/auth-rs-frontend:latest
+    image: greeveu/auth-rs-frontend:latest
     container_name: auth-rs-frontend
     ports:
       - "3000:3000"

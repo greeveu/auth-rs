@@ -5,7 +5,7 @@ ARG VERSION=dev
 
 WORKDIR /app
 
-LABEL org.opencontainers.image.source="https://github.com/timlohrer/auth-rs"
+LABEL org.opencontainers.image.source="https://github.com/greeveu/auth-rs"
 LABEL org.opencontainers.image.authors="Tim Lohrer"
 
 # Copy package files
