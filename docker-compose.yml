@@ -17,7 +17,7 @@ services:
       start_period: 10s
 
   backend:
-    image: greeveu/auth-rs-backend:latest
+    image: ghcr.io/greeveu/auth-rs-backend:latest
     container_name: auth-rs-backend
     ports:
       - "8000:8000"
@@ -27,23 +27,23 @@ services:
     environment:
       - ROCKET_ADDRESS=0.0.0.0
       - ROCKET_DATABASES={auth-rs-db={url="mongodb://mongodb:27017"}} # adjust the url="" part if needed
-      - SYSTEM_EMAIL=admin@example.com
-      - SYSTEM_PASSWORD= # Create a strong system user password here
-      - WEBAUTHN_RP_ID= # yourdomain.com !Do not include http:// or https:// or any subdomains.
-      - WEBAUTHN_RP_ORIGIN= # https://subdomain.yourdomain.com -> enter the url of your frontend
-      - WEBAUTHN_RP_NAME=auth-rs # The name of the RP (Relying Party) that will be displayed to the user !Do not include spaces or special characters!
-      - TOTP_ISSUER_NAME=auth-rs # The name of the TOTP issuer that will be displayed to the user !Do not include spaces or special characters!
+      - SYSTEM_EMAIL=admin@greev.eu
+      - SYSTEM_PASSWORD=${SYSTEM_PASSWORD}
+      - WEBAUTHN_RP_ID=greev.eu
+      - WEBAUTHN_RP_ORIGIN=https://auth.greev.eu
+      - WEBAUTHN_RP_NAME=Greev
+      - TOTP_ISSUER_NAME=Greev
     restart: unless-stopped
 
   frontend:
-    image: greeveu/auth-rs-frontend:latest
+    image: ghcr.io/greeveu/auth-rs-frontend:latest
     container_name: auth-rs-frontend
     ports:
       - "3000:3000"
     depends_on:
       - backend
     environment:
-      - PUBLIC_API_URL=https://yourdomain.com/api
+      - PUBLIC_API_URL=https://auth.greev.eu/api
     restart: unless-stopped
 
 volumes:
