@@ -1,0 +1,47 @@
+{
+  "name": "auth-rs DevContainer",
+  "dockerComposeFile": [
+    ".devcontainer/docker-compose.yml"
+  ],
+  "service": "dev",
+  "workspaceFolder": "/workspaces/auth-rs",
+  "features": {
+    "ghcr.io/devcontainers/features/rust:1": {
+      "version": "latest",
+      "profile": "default",
+      "components": "rustfmt,clippy"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
+    },
+    "ghcr.io/devcontainers-contrib/features/bun:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "editor.formatOnSave": true,
+        "rust-analyzer.checkOnSave.command": "clippy"
+      },
+      "extensions": [
+        "rust-lang.rust-analyzer",
+        "serayuzgur.crates",
+        "tamasfe.even-better-toml",
+        "svelte.svelte-vscode",
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint"
+      ]
+    }
+  },
+  "forwardPorts": [3000, 8000, 27017],
+  "portsAttributes": {
+    "3000": { "label": "Frontend" },
+    "8000": { "label": "Backend" },
+    "27017": { "label": "MongoDB" }
+  },
+  "postCreateCommand": "bash -lc 'cd backend && rustup component add rustfmt clippy || true; cd .. && bun install'",
+  "remoteEnv": {
+    "ROCKET_ADDRESS": "0.0.0.0",
+    "ROCKET_DATABASES": "{auth-rs-db={url=\"mongodb://mongodb:27017\"}}",
+    "PUBLIC_API_URL": "http://localhost:8000/api"
+  }
+}
