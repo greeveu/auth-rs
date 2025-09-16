@@ -2,8 +2,9 @@ version: '3.8'
 
 services:
   dev:
-    image: mcr.microsoft.com/devcontainers/base:bookworm
-    container_name: auth-rs-dev
+    build:
+      context: .
+      dockerfile: Dockerfile
     volumes:
       - ..:/workspaces/auth-rs:cached
     command: sleep infinity
@@ -12,10 +13,6 @@ services:
     depends_on:
       mongodb:
         condition: service_healthy
-    environment:
-      - ROCKET_ADDRESS=0.0.0.0
-      - ROCKET_DATABASES={auth-rs-db={url="mongodb://mongodb:27017"}}
-      - PUBLIC_API_URL=http://localhost:8000/api
     ports:
       - "3000:3000"
       - "8000:8000"
