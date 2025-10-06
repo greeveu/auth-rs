@@ -18,7 +18,6 @@ use crate::{
         audit_log::{AuditLog, AuditLogAction, AuditLogEntityType},
         http_response::HttpResponse,
     },
-    MFA_SESSIONS,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -34,14 +33,17 @@ async fn process_mfa(
     db: &Connection<AuthRsDatabase>,
     mfa_data: MfaData,
 ) -> ApiResult<(String, LoginResponse)> {
-    let mfa_sessions = MFA_SESSIONS.lock().await;
-    let cloned_sessions = mfa_sessions.clone();
+    let session_id = format!("mfa_{}", mfa_data.flow_id);
+    let session = match crate::models::session::Session::get_by_id(&session_id, db).await {
+        Ok(Some(session)) => session,
+        Ok(None) => return Err(ApiError::NotFound("Invalid or expired MFA flow".to_string())),
+        Err(_) => return Err(ApiError::InternalError("Failed to retrieve MFA session".to_string())),
+    };
 
-    let flow = cloned_sessions
-        .get(&mfa_data.flow_id)
-        .ok_or_else(|| ApiError::NotFound("Invalid or expired MFA flow".to_string()))?;
-
-    drop(mfa_sessions);
+    let flow = match session.data {
+        crate::models::session::SessionData::MfaSession(ref handler) => handler,
+        _ => return Err(ApiError::BadRequest("Invalid session type".to_string())),
+    };
 
     if flow.state == MfaState::Complete {
         return Err(ApiError::BadRequest(
@@ -53,7 +55,7 @@ async fn process_mfa(
         return Err(ApiError::BadRequest("Invalid MFA type".to_string()));
     }
 
-    if !flow.verify_current_totp(&mfa_data.code).await {
+    if !flow.verify_current_totp(&mfa_data.code, db).await {
         return Err(ApiError::Unauthorized("Invalid TOTP code".to_string()));
     }
 

@@ -11,7 +11,6 @@ use rocket_db_pools::Connection;
 use crate::{
     db::AuthRsDatabase,
     models::{oauth_scope::OAuthScope, oauth_token::OAuthToken},
-    OAUTH_CODES,
 };
 
 #[derive(Debug, Deserialize, FromForm)]
@@ -39,7 +38,7 @@ pub struct TokenOAuthJsonData {
     pub redirect_uri: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
 #[serde(rename_all = "camelCase")]
 pub struct TokenOAuthData {
@@ -135,10 +134,16 @@ async fn handle_token_request(
         redirect_uri: redirect_uri,
     };
 
-    let mut codes = OAUTH_CODES.lock().await;
-    let code_data = match codes.get(&data.code) {
-        Some(code_data) => code_data,
-        None => return Err(Status::Unauthorized),
+    let session_id = format!("oauth_{}", data.code);
+    let session = match crate::models::session::Session::get_by_id(&session_id, &db).await {
+        Ok(Some(session)) => session,
+        Ok(None) => return Err(Status::Unauthorized),
+        Err(_) => return Err(Status::InternalServerError),
+    };
+
+    let code_data = match session.data {
+        crate::models::session::SessionData::OAuthCode(ref data) => data,
+        _ => return Err(Status::Unauthorized),
     };
 
     if code_data.client_id != data.client_id
@@ -186,9 +191,7 @@ async fn handle_token_request(
         }
     };
 
-    codes.remove(&data.code);
-
-    drop(codes);
+    let _ = crate::models::session::Session::delete_by_id(&session_id, &db).await;
 
     Ok(TokenOAuthResponse {
         access_token: token.token.to_string(),

@@ -54,7 +54,7 @@ async fn process_login(
     }
 
     if MfaHandler::is_mfa_required(&user) {
-        let mfa_flow = MfaHandler::start_login_flow(&user)
+        let mfa_flow = MfaHandler::start_login_flow(&user, db)
             .await
             .map_err(|err| ApiError::InternalError(format!("Failed to start MFA flow: {}", err)))?;
 

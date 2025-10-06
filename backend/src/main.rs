@@ -5,13 +5,12 @@ mod models;
 mod routes;
 mod utils;
 
-use std::{collections::HashMap, env};
+use std::env;
 
-use auth::mfa::MfaHandler;
 use db::AuthRsDatabase;
 use dotenv::dotenv;
 use errors::{AppError, AppResult};
-use models::{role::Role, settings::Settings, user::User};
+use models::{role::Role, session::Session, settings::Settings, user::User};
 use mongodb::bson::{doc, Uuid};
 use rocket::{
     fairing::AdHoc,
@@ -21,18 +20,8 @@ use rocket::{
 };
 use rocket_cors::{AllowedHeaders, AllowedOrigins, CorsOptions};
 use rocket_db_pools::{mongodb::Collection, Database};
-use routes::oauth::token::TokenOAuthData;
-use webauthn_rs::prelude::{DiscoverableAuthentication, PasskeyRegistration};
 
-// oauth codes stored in memory
 lazy_static::lazy_static! {
-    //TODO: Replace with Redis or other cache, so this application can be stateless
-    static ref OAUTH_CODES: Mutex<HashMap<u32, TokenOAuthData>> = Mutex::new(HashMap::new());
-    static ref MFA_SESSIONS: Mutex<HashMap<Uuid, MfaHandler>> = Mutex::new(HashMap::new());
-    static ref REGISTRATIONS: Mutex<HashMap<Uuid, (Uuid, PasskeyRegistration)>> =
-        Mutex::new(HashMap::new());
-    static ref AUTHENTICATIONS: Mutex<HashMap<Uuid, DiscoverableAuthentication>> =
-        Mutex::new(HashMap::new());
     static ref SETTINGS: Mutex<Settings> = Mutex::new(Settings::default());
 
     static ref SETTINGS_ID: Uuid = Uuid::parse_str("00000000-0000-0000-0000-000000000000")
@@ -45,13 +34,28 @@ lazy_static::lazy_static! {
         .expect("Failed to parse SYSTEM_USER_ID UUID");
 }
 
-/// Initialize the database with default roles and system user
 async fn initialize_database(db: &AuthRsDatabase) -> AppResult<()> {
     let data_db = db.database(db::get_main_db_name());
 
     let settings_collection: Collection<Settings> = data_db.collection(Settings::COLLECTION_NAME);
     let roles_collection: Collection<Role> = data_db.collection(Role::COLLECTION_NAME);
     let users_collection: Collection<User> = data_db.collection(User::COLLECTION_NAME);
+    let sessions_collection: Collection<Session> = data_db.collection(Session::COLLECTION_NAME);
+
+    sessions_collection
+        .create_index(
+            rocket_db_pools::mongodb::IndexModel::builder()
+                .keys(doc! { "expires_at": 1 })
+                .options(
+                    rocket_db_pools::mongodb::options::IndexOptions::builder()
+                        .expire_after(std::time::Duration::from_secs(0))
+                        .build(),
+                )
+                .build(),
+            None,
+        )
+        .await
+        .map_err(AppError::RocketMongoError)?;
 
     // Initialize settings if they don't exist
     let settings_filter = doc! {

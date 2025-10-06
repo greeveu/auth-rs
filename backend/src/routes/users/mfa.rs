@@ -57,7 +57,7 @@ async fn process_enable_totp_mfa(
         ));
     }
 
-    let flow = MfaHandler::start_enable_flow(&user)
+    let flow = MfaHandler::start_enable_flow(&user, db)
         .await
         .map_err(|err| ApiError::InternalError(format!("Failed to start MFA flow: {}", err)))?;
 

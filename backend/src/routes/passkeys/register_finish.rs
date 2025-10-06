@@ -9,8 +9,8 @@ use crate::{
         http_response::HttpResponse,
     },
     utils::response::json_response,
-    REGISTRATIONS,
 };
+use base64::Engine;
 use mongodb::bson::{DateTime, Uuid};
 use rocket::{
     http::Status,
@@ -68,12 +68,22 @@ async fn process_register_finish(
         return Err(ApiError::NotFound("User not found".into()));
     };
 
-    // Get the registration state
-    let (user_id, reg_state) = REGISTRATIONS
-        .lock()
+    let session_id = format!("passkey_reg_{}", data.registration_id);
+    let session = crate::models::session::Session::get_by_id(&session_id, &db)
         .await
-        .remove(&data.registration_id)
+        .map_err(|e| ApiError::InternalError(format!("Failed to retrieve registration session: {}", e)))?
         .ok_or(ApiError::InvalidState("Registration not found".to_string()))?;
+
+    let (user_id, state_base64) = match session.data {
+        crate::models::session::SessionData::PasskeyRegistration { user_id, state } => (user_id, state),
+        _ => return Err(ApiError::InvalidState("Invalid session type".to_string())),
+    };
+
+    let state_bytes = base64::engine::general_purpose::STANDARD.decode(&state_base64)
+        .map_err(|e| ApiError::InternalError(format!("Failed to decode registration state: {}", e)))?;
+    
+    let reg_state: webauthn_rs::prelude::PasskeyRegistration = serde_json::from_slice(&state_bytes)
+        .map_err(|e| ApiError::InternalError(format!("Failed to deserialize registration state: {}", e)))?;
 
     if user.id != user_id {
         return Err(ApiError::Unauthorized(
@@ -112,7 +122,8 @@ async fn process_register_finish(
     .await
     .map_err(|e| ApiError::AppError(AppError::DatabaseError(e.to_string())))?;
 
-    // Return success response
+    let _ = crate::models::session::Session::delete_by_id(&session_id, &db).await;
+
     Ok(PasskeyRegisterFinishResponse {
         id: passkey.id,
         name: passkey.name,
