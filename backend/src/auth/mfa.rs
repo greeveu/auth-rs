@@ -202,8 +202,16 @@ impl MfaHandler {
                 .insert(db)
                 .await
                 {
-                    Ok(_) => (),
-                    Err(err) => eprintln!("{:?}", err),
+                    Ok(_) => tracing::info!(
+                        user_id = %user.id,
+                        actor_id = %req_user.user_id,
+                        "TOTP disabled for user"
+                    ),
+                    Err(err) => tracing::error!(
+                        user_id = %user.id,
+                        error = ?err,
+                        "Failed to insert audit log for TOTP disable"
+                    ),
                 };
                 Ok(user.to_owned())
             }

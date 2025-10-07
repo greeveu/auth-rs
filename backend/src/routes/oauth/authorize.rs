@@ -48,7 +48,10 @@ pub async fn authorize_oauth_application(
         || req_entity.user.as_ref().unwrap().disabled
         || req_entity.user.unwrap().is_system_admin()
     {
-        eprintln!("User is not allowed to authorize applications");
+        tracing::warn!(
+            user_id = %req_entity.user_id,
+            "User is not allowed to authorize applications"
+        );
         return (Status::Unauthorized, None);
     }
 
@@ -61,13 +64,21 @@ pub async fn authorize_oauth_application(
     let oauth_application = match OAuthApplication::get_by_id(data.client_id, &db).await {
         Ok(app) => app,
         Err(err) => {
-            eprintln!("Error getting oauth application: {:?}", err);
+            tracing::error!(
+                client_id = %data.client_id,
+                error = ?err,
+                "Error getting oauth application"
+            );
             return (Status::InternalServerError, None);
         }
     };
 
     if !oauth_application.redirect_uris.contains(&data.redirect_uri) {
-        eprintln!("Redirect uri is not allowed for this application");
+        tracing::warn!(
+            client_id = %data.client_id,
+            redirect_uri = %data.redirect_uri,
+            "Redirect uri is not allowed for this application"
+        );
         return (Status::Forbidden, None);
     }
 
@@ -86,6 +97,13 @@ pub async fn authorize_oauth_application(
         },
     );
     drop(codes);
+
+    tracing::info!(
+        client_id = %oauth_application.id,
+        user_id = %req_entity.user_id,
+        code = code,
+        "OAuth authorization code issued"
+    );
 
     //TODO: Store this state in the db with a timestamp, and check for expiration
     //  We can not and should not rely on the application not crashing or restarting

@@ -5,18 +5,20 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.86"
+argon2 = "0.5.3"
 base64 = "0.22.1"
 dotenv = "0.15.0"
 lazy_static = "1.5.0"
 mongodb = { version = "3.1.0", features = ["sync"] }
-argon2 = "0.5.3"
 rand = "0.9.0"
 rocket = { version = "0.5.0", features = ["json"] }
 rocket_cors = "0.6.0"
 rocket_db_pools = { version = "0.2.0", features = ["mongodb"] }
+serde_json = "1.0"
 thiserror = "2.0.12"
 totp-rs = { version = "5.6.0", features = ["gen_secret", "otpauth", "qr"] }
-webauthn-rs = { version = "0.5.1", features = ["conditional-ui", "resident-key-support", "workaround-google-passkey-specific-issues"] }
-serde_json = "1.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 url = "2.5.0"
 uuid = { version = "1.15.1", features = ["v4"] }
+webauthn-rs = { version = "0.5.1", features = ["conditional-ui", "resident-key-support", "workaround-google-passkey-specific-issues"] }
