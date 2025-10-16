@@ -1,8 +1,9 @@
-version: '3.8'
-
 services:
   dev:
-    image: mcr.microsoft.com/devcontainers/base:bookworm
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: localhost/auth-rs-dev:latest
     container_name: auth-rs-dev
     volumes:
       - ..:/workspaces/auth-rs:cached
