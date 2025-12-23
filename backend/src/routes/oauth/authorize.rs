@@ -4,7 +4,6 @@ use rocket::http::Status;
 use rocket::{
     post,
     serde::{json::Json, Deserialize, Serialize},
-    tokio,
 };
 use rocket_db_pools::Connection;
 
@@ -12,7 +11,6 @@ use crate::{
     auth::AuthEntity,
     db::AuthRsDatabase,
     models::{oauth_application::OAuthApplication, oauth_scope::OAuthScope},
-    OAUTH_CODES,
 };
 
 use super::token::TokenOAuthData;
@@ -71,32 +69,22 @@ pub async fn authorize_oauth_application(
         return (Status::Forbidden, None);
     }
 
-    let mut codes = OAUTH_CODES.lock().await;
     let redirect_uri = data.redirect_uri.clone();
-    codes.insert(
+    let token_data = TokenOAuthData {
+        client_id: oauth_application.id,
+        client_secret: oauth_application.secret,
+        user_id: Some(req_entity.user_id),
         code,
-        TokenOAuthData {
-            client_id: oauth_application.id,
-            client_secret: oauth_application.secret,
-            user_id: Some(req_entity.user_id),
-            code,
-            scope: Some(data.scope),
-            grant_type: "authorization_code".to_string(),
-            redirect_uri: data.redirect_uri,
-        },
-    );
-    drop(codes);
+        scope: Some(data.scope),
+        grant_type: "authorization_code".to_string(),
+        redirect_uri: data.redirect_uri,
+    };
 
-    //TODO: Store this state in the db with a timestamp, and check for expiration
-    //  We can not and should not rely on the application not crashing or restarting
-    //  This application should be completely stateless
-    // delete code after 5 minutes
-    tokio::spawn(async move {
-        tokio::time::sleep(tokio::time::Duration::from_secs(300)).await;
-        let mut codes = OAUTH_CODES.lock().await;
-        codes.remove(&code);
-        drop(codes);
-    });
+    let session = crate::models::session::Session::new_oauth_code(code, token_data, 300);
+    if let Err(e) = session.insert(&db).await {
+        eprintln!("Error storing OAuth code session: {:?}", e);
+        return (Status::InternalServerError, None);
+    }
 
     (
         Status::Ok,

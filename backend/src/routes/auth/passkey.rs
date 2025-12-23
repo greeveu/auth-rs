@@ -1,5 +1,4 @@
 use crate::models::passkey::Passkey;
-use crate::AUTHENTICATIONS;
 use crate::{
     db::AuthRsDatabase,
     errors::{ApiError, ApiResult, AppError},
@@ -10,6 +9,7 @@ use crate::{
     },
     utils::response::json_response,
 };
+use base64::Engine;
 use lazy_static::lazy_static;
 use mongodb::bson::Uuid;
 use rocket::{
@@ -82,9 +82,11 @@ pub struct PasskeyAuthenticateFinishResponse {
 }
 
 #[get("/auth/passkeys/authenticate/start")]
-pub async fn authenticate_start() -> (Status, Json<HttpResponse<PasskeyAuthenticateStartResponse>>)
+pub async fn authenticate_start(
+    db: Connection<AuthRsDatabase>,
+) -> (Status, Json<HttpResponse<PasskeyAuthenticateStartResponse>>)
 {
-    match process_authenticate_start().await {
+    match process_authenticate_start(db).await {
         Ok(response) => json_response(HttpResponse {
             status: 200,
             message: "Authentication initiated".to_string(),
@@ -94,20 +96,32 @@ pub async fn authenticate_start() -> (Status, Json<HttpResponse<PasskeyAuthentic
     }
 }
 
-async fn process_authenticate_start() -> ApiResult<PasskeyAuthenticateStartResponse> {
-    // Initialize Webauthn
+async fn process_authenticate_start(
+    db: Connection<AuthRsDatabase>,
+) -> ApiResult<PasskeyAuthenticateStartResponse> {
     let webauthn = get_webauthn();
 
     let (challenge, auth_state) = webauthn
         .start_discoverable_authentication()
         .map_err(|_| ApiError::AppError(AppError::WebauthnError))?;
 
-    // Store authentication state
     let authentication_id = Uuid::new();
-    AUTHENTICATIONS
-        .lock()
+    
+    let state_base64 = base64::engine::general_purpose::STANDARD.encode(
+        &serde_json::to_vec(&auth_state)
+            .map_err(|e| ApiError::InternalError(format!("Failed to serialize authentication state: {}", e)))?
+    );
+    
+    let session = crate::models::session::Session::new_passkey_authentication(
+        authentication_id,
+        state_base64,
+        300,
+    );
+
+    session
+        .insert(&db)
         .await
-        .insert(authentication_id, auth_state);
+        .map_err(|e| ApiError::InternalError(format!("Failed to store authentication session: {}", e)))?;
 
     Ok(PasskeyAuthenticateStartResponse {
         challenge,
@@ -137,14 +151,22 @@ async fn process_authenticate_finish(
     db: Connection<AuthRsDatabase>,
     data: PasskeyAuthenticateFinishRequest,
 ) -> ApiResult<PasskeyAuthenticateFinishResponse> {
-    // Get the authentication state
-    let auth_state = AUTHENTICATIONS
-        .lock()
+    let session_id = format!("passkey_auth_{}", data.authentication_id);
+    let session = crate::models::session::Session::get_by_id(&session_id, &db)
         .await
-        .remove(&data.authentication_id)
-        .ok_or(ApiError::InvalidState(
-            "Authentication not found".to_string(),
-        ))?;
+        .map_err(|e| ApiError::InternalError(format!("Failed to retrieve authentication session: {}", e)))?
+        .ok_or(ApiError::InvalidState("Authentication not found".to_string()))?;
+
+    let state_base64 = match session.data {
+        crate::models::session::SessionData::PasskeyAuthentication(state) => state,
+        _ => return Err(ApiError::InvalidState("Invalid session type".to_string())),
+    };
+
+    let state_bytes = base64::engine::general_purpose::STANDARD.decode(&state_base64)
+        .map_err(|e| ApiError::InternalError(format!("Failed to decode authentication state: {}", e)))?;
+    
+    let auth_state: webauthn_rs::prelude::DiscoverableAuthentication = serde_json::from_slice(&state_bytes)
+        .map_err(|e| ApiError::InternalError(format!("Failed to deserialize authentication state: {}", e)))?;
 
     // Initialize Webauthn
     let webauthn = get_webauthn();
@@ -183,7 +205,8 @@ async fn process_authenticate_finish(
     .await
     .ok();
 
-    // Return success with user information and token
+    let _ = crate::models::session::Session::delete_by_id(&session_id, &db).await;
+
     Ok(PasskeyAuthenticateFinishResponse {
         user: user.to_dto(),
         token: user.token,

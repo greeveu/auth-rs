@@ -6,8 +6,8 @@ use crate::{
     auth::AuthEntity,
     db::AuthRsDatabase,
     errors::{ApiError, ApiResult, AppError},
-    REGISTRATIONS,
 };
+use base64::Engine;
 use mongodb::bson::Uuid;
 use rocket::{
     get,
@@ -76,12 +76,24 @@ async fn process_register_start(
         return Err(ApiError::AppError(AppError::WebauthnError));
     };
 
-    // Store registration state
     let registration_id = Uuid::new();
-    REGISTRATIONS
-        .lock()
+    
+    let state_base64 = base64::engine::general_purpose::STANDARD.encode(
+        &serde_json::to_vec(&reg_state)
+            .map_err(|e| ApiError::InternalError(format!("Failed to serialize registration state: {}", e)))?
+    );
+    
+    let session = crate::models::session::Session::new_passkey_registration(
+        registration_id,
+        user.id,
+        state_base64,
+        300,
+    );
+
+    session
+        .insert(&db)
         .await
-        .insert(registration_id, (user.id, reg_state));
+        .map_err(|e| ApiError::InternalError(format!("Failed to store registration session: {}", e)))?;
 
     Ok(PasskeyRegisterStartResponse {
         registration_id,

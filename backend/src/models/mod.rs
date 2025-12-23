@@ -6,6 +6,7 @@ pub mod oauth_token;
 pub mod passkey;
 pub mod registration_token;
 pub mod role;
+pub mod session;
 pub mod settings;
 pub mod user;
 pub mod user_error;

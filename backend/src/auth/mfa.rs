@@ -1,8 +1,7 @@
-use std::{collections::HashMap, env, time::Duration};
+use std::{collections::HashMap, env};
 
 use anyhow::Result;
 use mongodb::bson::{doc, Uuid};
-use rocket::tokio::{spawn, time::sleep};
 use rocket_db_pools::Connection;
 use totp_rs::{Algorithm, Secret, TOTP};
 
@@ -12,29 +11,30 @@ use crate::{
         audit_log::{AuditLog, AuditLogAction, AuditLogEntityType},
         user::User,
     },
-    MFA_SESSIONS,
 };
 
 use super::AuthEntity;
+use rocket::serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum MfaState {
     Pending,
     Complete,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum MfaType {
     Totp,
     EnableTotp,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MfaHandler {
     pub flow_id: Uuid,
     pub state: MfaState,
     pub r#type: MfaType,
     pub user: User,
+    #[serde(skip)]
     pub totp: Option<TOTP>,
 }
 
@@ -43,7 +43,7 @@ impl MfaHandler {
         user.totp_secret.is_some()
     }
 
-    pub async fn start_enable_flow(user: &User) -> Result<Self, String> {
+    pub async fn start_enable_flow(user: &User, db: &Connection<AuthRsDatabase>) -> Result<Self, String> {
         let flow = Self {
             flow_id: Uuid::new(),
             state: MfaState::Pending,
@@ -63,26 +63,15 @@ impl MfaHandler {
             ),
         };
 
-        let mut mfa_sessions = MFA_SESSIONS.lock().await;
-        mfa_sessions.insert(flow.flow_id, flow.clone());
-        drop(mfa_sessions);
-
-        //TODO: Store this state in the db with a timestamp, and check for expiration
-        //  We can not and should not rely on the application not crashing or restarting
-        //  This application should be completely stateless
-        // invalidate flow after 5 minutes
-        spawn(async move {
-            sleep(Duration::from_secs(300)).await;
-
-            let mut mfa_sessions = MFA_SESSIONS.lock().await;
-            mfa_sessions.remove(&flow.flow_id);
-            drop(mfa_sessions);
-        });
+        let session = crate::models::session::Session::new_mfa_session(flow.flow_id, flow.clone(), 300);
+        if let Err(e) = session.insert(db).await {
+            return Err(format!("Failed to store MFA session: {:?}", e));
+        }
 
         Ok(flow)
     }
 
-    pub async fn start_login_flow(user: &User) -> Result<Self, String> {
+    pub async fn start_login_flow(user: &User, db: &Connection<AuthRsDatabase>) -> Result<Self, String> {
         if user.totp_secret.is_none() {
             return Err("User does not have TOTP enabled".to_string());
         }
@@ -110,34 +99,22 @@ impl MfaHandler {
             .unwrap(),
         );
 
-        let mut mfa_sessions = MFA_SESSIONS.lock().await;
-        mfa_sessions.insert(flow.flow_id, flow.clone());
-        drop(mfa_sessions);
-
-        //TODO: Store this state in the db with a timestamp, and check for expiration
-        //  We can not and should not rely on the application not crashing or restarting
-        //  This application should be completely stateless
-        // invalidate flow after 5 minutes
-        spawn(async move {
-            sleep(Duration::from_secs(300)).await;
-
-            let mut mfa_sessions = MFA_SESSIONS.lock().await;
-            mfa_sessions.remove(&flow.flow_id);
-            drop(mfa_sessions);
-        });
+        let session = crate::models::session::Session::new_mfa_session(flow.flow_id, flow.clone(), 300);
+        if let Err(e) = session.insert(db).await {
+            return Err(format!("Failed to store MFA session: {:?}", e));
+        }
 
         Ok(flow)
     }
 
-    pub async fn verify_current_totp(&self, code: &str) -> bool {
+    pub async fn verify_current_totp(&self, code: &str, db: &Connection<AuthRsDatabase>) -> bool {
         if self.totp.is_none() || code.is_empty() {
             return false;
         }
 
         if self.totp.as_ref().unwrap().generate_current().unwrap() == code {
-            let mut mfa_sessions = MFA_SESSIONS.lock().await;
-            mfa_sessions.remove(&self.flow_id);
-            drop(mfa_sessions);
+            let session_id = format!("mfa_{}", self.flow_id);
+            let _ = crate::models::session::Session::delete_by_id(&session_id, db).await;
 
             true
         } else {
