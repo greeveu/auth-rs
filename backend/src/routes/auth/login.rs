@@ -41,13 +41,30 @@ async fn process_login(
 ) -> ApiResult<LoginResponse> {
     let user = User::get_by_email(&login_data.email, db)
         .await
-        .map_err(|err| ApiError::InternalError(err.to_string()))?;
+        .map_err(|err| {
+            tracing::warn!(
+                email = %login_data.email,
+                error = %err,
+                "Failed login attempt - user not found"
+            );
+            ApiError::InternalError(err.to_string())
+        })?;
 
     if user.disabled {
+        tracing::warn!(
+            user_id = %user.id,
+            email = %user.email,
+            "Login attempt for disabled user"
+        );
         return Err(ApiError::Forbidden("User is disabled".to_string()));
     }
 
     if user.verify_password(&login_data.password).is_err() {
+        tracing::warn!(
+            user_id = %user.id,
+            email = %user.email,
+            "Failed login attempt - invalid password"
+        );
         return Err(ApiError::Unauthorized(
             "Invalid email or password".to_string(),
         ));
@@ -56,7 +73,21 @@ async fn process_login(
     if MfaHandler::is_mfa_required(&user) {
         let mfa_flow = MfaHandler::start_login_flow(&user)
             .await
-            .map_err(|err| ApiError::InternalError(format!("Failed to start MFA flow: {}", err)))?;
+            .map_err(|err| {
+                tracing::error!(
+                    user_id = %user.id,
+                    error = %err,
+                    "Failed to start MFA flow"
+                );
+                ApiError::InternalError(format!("Failed to start MFA flow: {}", err))
+            })?;
+
+        tracing::info!(
+            user_id = %user.id,
+            email = %user.email,
+            flow_id = %mfa_flow.flow_id,
+            "MFA flow started for login"
+        );
 
         return Ok(LoginResponse {
             user: None,
@@ -65,6 +96,12 @@ async fn process_login(
             mfa_flow_id: Some(mfa_flow.flow_id),
         });
     }
+
+    tracing::info!(
+        user_id = %user.id,
+        email = %user.email,
+        "User login successful"
+    );
 
     Ok(LoginResponse {
         user: Some(user.to_dto()),

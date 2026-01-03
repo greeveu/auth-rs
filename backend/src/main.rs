@@ -1,6 +1,8 @@
 mod auth;
 mod db;
 mod errors;
+mod fairings;
+mod logging;
 mod models;
 mod routes;
 mod utils;
@@ -88,7 +90,7 @@ async fn initialize_database(db: &AuthRsDatabase) -> AppResult<()> {
             .await
             .map_err(AppError::RocketMongoError)?;
 
-        println!("Inserted default roles into the database");
+        tracing::info!("Inserted default roles into the database");
     }
 
     // Initialize system user if no users exist
@@ -100,6 +102,8 @@ async fn initialize_database(db: &AuthRsDatabase) -> AppResult<()> {
     if users_count == 0 {
         let system_email = env::var("SYSTEM_EMAIL")?;
         let system_password = env::var("SYSTEM_PASSWORD")?;
+
+        tracing::info!(email = %system_email, "Creating system user");
 
         let system_user = User::new_system(
             *SYSTEM_USER_ID,
@@ -116,7 +120,7 @@ async fn initialize_database(db: &AuthRsDatabase) -> AppResult<()> {
             .await
             .map_err(AppError::RocketMongoError)?;
 
-        println!("Inserted system user into the database");
+        tracing::info!("Inserted system user into the database");
     }
 
     Ok(())
@@ -125,6 +129,13 @@ async fn initialize_database(db: &AuthRsDatabase) -> AppResult<()> {
 #[launch]
 fn rocket() -> _ {
     dotenv().ok();
+    logging::init_logging();
+    
+    tracing::info!(
+        version = env!("CARGO_PKG_VERSION"),
+        "Starting auth-rs server"
+    );
+
     let cors = CorsOptions::default()
         .allowed_origins(AllowedOrigins::all())
         .allowed_methods(
@@ -139,19 +150,23 @@ fn rocket() -> _ {
     rocket::build()
         .attach(db::AuthRsDatabase::init())
         .attach(cors.to_cors().expect("Failed to create CORS fairing"))
+        .attach(fairings::request_logger::RequestLogger)
         .attach(AdHoc::try_on_ignite("Default Values", |rocket| async {
             let db = match AuthRsDatabase::fetch(&rocket) {
                 Some(db) => db,
                 None => {
-                    eprintln!("Failed to fetch database connection");
+                    tracing::error!("Failed to fetch database connection");
                     return Err(rocket);
                 }
             };
 
             match initialize_database(db).await {
-                Ok(_) => Ok(rocket),
+                Ok(_) => {
+                    tracing::info!("Database initialized successfully");
+                    Ok(rocket)
+                }
                 Err(err) => {
-                    eprintln!("Failed to initialize database: {}", err);
+                    tracing::error!(error = %err, "Failed to initialize database");
                     Err(rocket)
                 }
             }

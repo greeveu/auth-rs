@@ -39,7 +39,7 @@ pub struct TokenOAuthJsonData {
     pub redirect_uri: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(crate = "rocket::serde")]
 #[serde(rename_all = "camelCase")]
 pub struct TokenOAuthData {
@@ -137,9 +137,11 @@ async fn handle_token_request(
 
     let mut codes = OAUTH_CODES.lock().await;
     let code_data = match codes.get(&data.code) {
-        Some(code_data) => code_data,
+        Some(code_data) => code_data.clone(),
         None => return Err(Status::Unauthorized),
     };
+    codes.remove(&data.code);
+    drop(codes);
 
     if code_data.client_id != data.client_id
         || code_data.grant_type.trim() != data.grant_type.trim()
@@ -186,9 +188,12 @@ async fn handle_token_request(
         }
     };
 
-    codes.remove(&data.code);
-
-    drop(codes);
+    tracing::info!(
+        user_id = %code_data.user_id.unwrap(),
+        client_id = %code_data.client_id,
+        token_id = %token.id,
+        "OAuth access token issued"
+    );
 
     Ok(TokenOAuthResponse {
         access_token: token.token.to_string(),
